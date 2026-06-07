@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Response Schema",
+  "type": "object",
+  "properties": {
+    "responseText": {"type": "string"},
+    "confidence": {"type": "number"},
+    "explanation": {"type": "string"},
+    "metadata": {"type": "object"}
+  },
+  "required": ["responseText"]
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Prompt Input Schema",
+  "type": "object",
+  "properties": {
+    "prompt": {"type": "string"},
+    "learningStyle": {"type": "string"},
+    "context": {"type": "string"},
+    "modelPreferences": {"type": "object"}
+  },
+  "required": ["prompt"]
+}
