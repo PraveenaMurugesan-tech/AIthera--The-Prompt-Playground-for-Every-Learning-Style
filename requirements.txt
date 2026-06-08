@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+
+alembic
+python-dotenv
+python-jose
+passlib[bcrypt]
+redis
+pytest
+pymysql
