@@ -88,15 +88,18 @@ if not database_url:
 
 # Force Alembic to use the URL from .env
 config.set_main_option("sqlalchemy.url", database_url)
-
 # --------------------------------------------------
 # Import metadata
 # --------------------------------------------------
 
 from src.database.base import Base
 
-target_metadata = Base.metadata
+# Import models so SQLAlchemy registers them
+from src.models.user import User
 
+print("Registered tables:", Base.metadata.tables.keys())
+
+target_metadata = Base.metadata
 # --------------------------------------------------
 # Offline migrations
 # --------------------------------------------------
