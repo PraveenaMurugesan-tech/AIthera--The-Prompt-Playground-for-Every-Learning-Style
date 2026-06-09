@@ -34,8 +34,8 @@ class PromptRequest(Base):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="requests")
 
-    council_responses: Mapped[List["CouncilResponse"]] = relationship(
-        "CouncilResponse",
+    council_responses: Mapped[List["CouncilResponseDB"]] = relationship(
+        "CouncilResponseDB",
         back_populates="request",
         cascade="all, delete-orphan",
     )
