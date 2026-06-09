@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from sqlalchemy import Boolean, DateTime, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import List
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
 
@@ -27,4 +28,8 @@ class User(Base):
         nullable=False,
     )
 
-    # TODO: Add PromptRequest relationship later
+    requests: Mapped[List[PromptRequest]] = relationship(
+        "PromptRequest",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
