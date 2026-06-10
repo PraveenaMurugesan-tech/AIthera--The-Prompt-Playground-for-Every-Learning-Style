@@ -1,3 +1,8 @@
 """Consensus package initializer."""
 
-from . import *
+from .consensus_builder import ConsensusBuilder, ConsensusBuilderError
+
+__all__ = [
+    "ConsensusBuilder",
+    "ConsensusBuilderError",
+]

@@ -13,6 +13,14 @@ class PromptRequest(Base):
 
     __tablename__ = "prompt_requests"
 
+    def __init__(self, **kwargs):
+        # Pop out fields that aren't database columns in the current schema
+        self.objective = kwargs.pop("objective", None)
+        self.education_level = kwargs.pop("education_level", None)
+        self.output_length = kwargs.pop("output_length", None)
+        self.status = kwargs.pop("status", "pending")
+        super().__init__(**kwargs)
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
