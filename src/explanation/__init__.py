@@ -1,3 +1,8 @@
 """Explanation package initializer."""
 
-from . import *
+from .explanation_generator import ExplanationGenerator, ExplanationGenerationError
+
+__all__ = [
+    "ExplanationGenerator",
+    "ExplanationGenerationError",
+]
