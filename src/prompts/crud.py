@@ -59,3 +59,17 @@ def update_generated_prompt(db: Session, request_id: int, generated_prompt: str)
     db.refresh(request)
 
     return request
+
+
+def delete_prompt_request(db: Session, request_id: int) -> bool:
+    """Delete a PromptRequest by id. Returns True if deleted, False if not found."""
+
+    request = get_prompt_request(db, request_id)
+
+    if not request:
+        return False
+
+    db.delete(request)
+    db.commit()
+
+    return True
