@@ -23,15 +23,13 @@ class PromptRequest(Base):
     generated_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
     )
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="prompt_requests")
-
-    explanation: Mapped[Optional["Explanation"]] = relationship(
-        "Explanation",
-        back_populates="request",
-        uselist=False,
-        cascade="all, delete-orphan",
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="prompt_requests",
     )

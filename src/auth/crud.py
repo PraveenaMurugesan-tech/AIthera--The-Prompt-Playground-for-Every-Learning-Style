@@ -29,7 +29,6 @@ def create_user(db: Session, email: str, password: str) -> User:
 
     return user
 
-
 def authenticate_user(
     db: Session,
     email: str,
@@ -39,10 +38,19 @@ def authenticate_user(
 
     user = get_user_by_email(db, email)
 
+    print("LOGIN EMAIL:", email)
+
     if not user:
+        print("USER NOT FOUND")
         return None
 
-    if not verify_password(password, user.password_hash):
+    print("USER FOUND:", user.email)
+    print("HASH:", user.password_hash)
+
+    result = verify_password(password, user.password_hash)
+    print("PASSWORD MATCH:", result)
+
+    if not result:
         return None
 
     return user
