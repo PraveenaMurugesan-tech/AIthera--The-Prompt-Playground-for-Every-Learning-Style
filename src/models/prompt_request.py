@@ -33,3 +33,10 @@ class PromptRequest(Base):
         "User",
         back_populates="prompt_requests",
     )
+    
+    explanation: Mapped[Optional["Explanation"]] = relationship(
+        "Explanation",
+        back_populates="request",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

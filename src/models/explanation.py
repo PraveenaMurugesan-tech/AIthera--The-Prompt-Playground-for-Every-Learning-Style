@@ -18,11 +18,11 @@ class Explanation(Base):
     __tablename__ = "explanations"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    request_id: Mapped[int] = mapped_column(Integer, ForeignKey("prompt_requests.id"), nullable=False, unique=True, index=True)
+    request_id: Mapped[int] = mapped_column(ForeignKey("prompt_requests.id"), nullable=False, unique=True)
 
     explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # One-to-one back to the request
-    request: Mapped["PromptRequest"] = relationship("PromptRequest", back_populates="explanation", uselist=False)
+    request: Mapped["PromptRequest"] = relationship("PromptRequest", back_populates="explanation")

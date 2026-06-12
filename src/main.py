@@ -18,6 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.auth.router import router as auth_router
+from src.prompts.router import router as prompts_router
 
 
 # Application metadata
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(auth_router)
+    app.include_router(prompts_router)
 
     @app.on_event("startup")
     async def _startup_event() -> None:
