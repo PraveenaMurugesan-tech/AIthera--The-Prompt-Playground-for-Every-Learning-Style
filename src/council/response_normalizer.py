@@ -19,6 +19,7 @@ class ResponseNormalizer:
         """Initialize the ResponseNormalizer."""
         self._provider_default_roles = {
             "openai": "creator",
+            "groq": "creator",
             "claude": "validator",
             "gemini": "refiner",
             "deepseek": "critic"
@@ -39,7 +40,7 @@ class ResponseNormalizer:
         """
         provider_lower = provider.lower()
         try:
-            if "openai" in provider_lower or "deepseek" in provider_lower:
+            if "openai" in provider_lower or "deepseek" in provider_lower or "groq" in provider_lower:
                 return raw_response["choices"][0]["message"]["content"]
             elif "claude" in provider_lower:
                 content_item = raw_response["content"][0]
@@ -211,7 +212,7 @@ class ResponseNormalizer:
             response_time = raw_response.get("response_time")
             provider_version = None
 
-            if "openai" in provider_lower or "deepseek" in provider_lower:
+            if "openai" in provider_lower or "deepseek" in provider_lower or "groq" in provider_lower:
                 usage = raw_response.get("usage", {})
                 tokens_used = usage.get("total_tokens")
                 provider_version = raw_response.get("model")
@@ -295,6 +296,19 @@ class ResponseNormalizer:
         logger.info("Normalizing OpenAI response")
         return self._normalize_common(raw_response, "OpenAI", role)
 
+    def normalize_groq_response(self, raw_response: Dict[str, Any], role: Optional[str] = None) -> CouncilResponse:
+        """Normalize a raw Groq completions response into a CouncilResponse.
+
+        Args:
+            raw_response: The raw response dictionary.
+            role: The assigned role.
+
+        Returns:
+            CouncilResponse: Standardized response object.
+        """
+        logger.info("Normalizing Groq response")
+        return self._normalize_common(raw_response, "Groq", role)
+
     def normalize_claude_response(self, raw_response: Dict[str, Any], role: Optional[str] = None) -> CouncilResponse:
         """Normalize a raw Claude message response into a CouncilResponse.
 
@@ -354,6 +368,8 @@ class ResponseNormalizer:
         provider_clean = provider_name.strip().lower()
         if "openai" in provider_clean:
             return self.normalize_openai_response(raw_response, role)
+        elif "groq" in provider_clean:
+            return self.normalize_groq_response(raw_response, role)
         elif "claude" in provider_clean:
             return self.normalize_claude_response(raw_response, role)
         elif "gemini" in provider_clean:

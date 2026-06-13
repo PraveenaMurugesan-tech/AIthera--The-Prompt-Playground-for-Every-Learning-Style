@@ -16,16 +16,16 @@ pytestmark = pytest.mark.anyio
 # Mock Responses
 # ==============================================================================
 
-MOCK_OPENAI_DICT = {
+MOCK_GROQ_DICT = {
     "choices": [
         {
             "message": {
-                "content": '{"prompt": "OpenAI visual prompt", "reasoning": "OpenAI visual reasoning", "strengths": ["Visual layout"]}'
+                "content": '{"prompt": "Groq visual prompt", "reasoning": "Groq visual reasoning", "strengths": ["Visual layout"]}'
             }
         }
     ],
     "usage": {"total_tokens": 100},
-    "model": "gpt-4o",
+    "model": "llama-3.3-70b-versatile",
     "response_time": 0.5
 }
 
@@ -135,7 +135,7 @@ def test_build_provider_prompt():
     """Verify provider specific prompts are correctly built."""
     executor = CouncilExecutor()
     prompt = executor.build_provider_prompt(
-        provider_name="openai",
+        provider_name="groq",
         topic="Physics",
         objective="Learn gravity",
         learning_style="visual",
@@ -181,18 +181,18 @@ def test_validation():
         executor._validate_learning_style("kinesthetic")
 
 
-@patch("src.council.council_executor.OpenAIClient")
+@patch("src.council.council_executor.GroqClient")
 @patch("src.council.council_executor.ClaudeClient")
 @patch("src.council.council_executor.GeminiClient")
 @patch("src.council.council_executor.DeepSeekClient")
 async def test_execute_success(
-    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_openai_class
+    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
 ):
     """Verify success flow where all providers succeed and results are normalized."""
     # Setup mock instances and generate_response return values
-    mock_openai = mock_openai_class.return_value
-    mock_openai.generate_response = AsyncMock(return_value=MOCK_OPENAI_DICT)
-    mock_openai.get_role.return_value = "creator"
+    mock_groq = mock_groq_class.return_value
+    mock_groq.generate_response = AsyncMock(return_value=MOCK_GROQ_DICT)
+    mock_groq.get_role.return_value = "creator"
 
     mock_claude = mock_claude_class.return_value
     mock_claude.generate_response = AsyncMock(return_value=MOCK_CLAUDE_DICT)
@@ -226,7 +226,7 @@ async def test_execute_success(
     assert len(result.failed_providers) == 0
     assert result.execution_time > 0.0
     
-    for name in ["OpenAI", "Claude", "Gemini", "DeepSeek"]:
+    for name in ["Groq", "Claude", "Gemini", "DeepSeek"]:
         assert name in result.successful_providers
 
     # Assert normalized values
@@ -239,17 +239,17 @@ async def test_execute_success(
         assert response.metadata.response_time > 0
 
 
-@patch("src.council.council_executor.OpenAIClient")
+@patch("src.council.council_executor.GroqClient")
 @patch("src.council.council_executor.ClaudeClient")
 @patch("src.council.council_executor.GeminiClient")
 @patch("src.council.council_executor.DeepSeekClient")
 async def test_execute_partial_failures(
-    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_openai_class
+    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
 ):
     """Verify executor succeeds partially and logs failures when some providers fail."""
-    mock_openai = mock_openai_class.return_value
-    mock_openai.generate_response = AsyncMock(return_value=MOCK_OPENAI_DICT)
-    mock_openai.get_role.return_value = "creator"
+    mock_groq = mock_groq_class.return_value
+    mock_groq.generate_response = AsyncMock(return_value=MOCK_GROQ_DICT)
+    mock_groq.get_role.return_value = "creator"
 
     # Claude fails with exception
     mock_claude = mock_claude_class.return_value
@@ -280,11 +280,11 @@ async def test_execute_partial_failures(
     result = await executor.execute(request)
 
     assert isinstance(result, CouncilExecutionResult)
-    assert len(result.responses) == 2  # OpenAI, Gemini
+    assert len(result.responses) == 2  # Groq, Gemini
     assert len(result.successful_providers) == 2
     assert len(result.failed_providers) == 2
     
-    assert "OpenAI" in result.successful_providers
+    assert "Groq" in result.successful_providers
     assert "Gemini" in result.successful_providers
     
     assert "Claude" in result.failed_providers
@@ -294,17 +294,17 @@ async def test_execute_partial_failures(
     assert "Provider returned None" in result.error_details["DeepSeek"]
 
 
-@patch("src.council.council_executor.OpenAIClient")
+@patch("src.council.council_executor.GroqClient")
 @patch("src.council.council_executor.ClaudeClient")
 @patch("src.council.council_executor.GeminiClient")
 @patch("src.council.council_executor.DeepSeekClient")
 async def test_execute_normalization_failure(
-    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_openai_class
+    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
 ):
     """Verify normalization failures are caught, logged, and executor continues."""
-    mock_openai = mock_openai_class.return_value
-    mock_openai.generate_response = AsyncMock(return_value=MOCK_OPENAI_DICT)
-    mock_openai.get_role.return_value = "creator"
+    mock_groq = mock_groq_class.return_value
+    mock_groq.generate_response = AsyncMock(return_value=MOCK_GROQ_DICT)
+    mock_groq.get_role.return_value = "creator"
 
     # Claude returns a malformed response dict
     mock_claude = mock_claude_class.return_value
@@ -333,22 +333,22 @@ async def test_execute_normalization_failure(
     result = await executor.execute(request)
 
     assert isinstance(result, CouncilExecutionResult)
-    assert len(result.responses) == 3  # OpenAI, Gemini, DeepSeek
+    assert len(result.responses) == 3  # Groq, Gemini, DeepSeek
     assert "Claude" in result.failed_providers
     assert "Normalization failed" in result.error_details["Claude"]
 
 
-@patch("src.council.council_executor.OpenAIClient")
+@patch("src.council.council_executor.GroqClient")
 @patch("src.council.council_executor.ClaudeClient")
 @patch("src.council.council_executor.GeminiClient")
 @patch("src.council.council_executor.DeepSeekClient")
 async def test_execute_all_failures(
-    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_openai_class
+    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
 ):
     """Verify that a CouncilExecutionError is raised if all providers fail."""
-    mock_openai = mock_openai_class.return_value
-    mock_openai.generate_response = AsyncMock(side_effect=Exception("OpenAI error"))
-    mock_openai.get_role.return_value = "creator"
+    mock_groq = mock_groq_class.return_value
+    mock_groq.generate_response = AsyncMock(side_effect=Exception("Groq error"))
+    mock_groq.get_role.return_value = "creator"
 
     mock_claude = mock_claude_class.return_value
     mock_claude.generate_response = AsyncMock(side_effect=Exception("Claude error"))

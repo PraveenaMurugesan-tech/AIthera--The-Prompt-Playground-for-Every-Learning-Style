@@ -155,7 +155,7 @@ class CouncilResponse(BaseModel):
     def validate_model(cls, v: str) -> str:
         """Validate that the model name belongs to one of the approved council providers."""
         v_lower = v.lower()
-        valid_providers = ["gpt", "claude", "gemini", "deepseek"]
+        valid_providers = ["gpt", "claude", "gemini", "deepseek", "llama", "mixtral", "gemma", "groq"]
         if not any(provider in v_lower for provider in valid_providers):
             raise ValueError(
                 f"Model '{v}' must be associated with one of the approved council providers: "

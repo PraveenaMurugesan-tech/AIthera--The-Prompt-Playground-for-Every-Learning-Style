@@ -26,7 +26,7 @@ from src.models.council_response import CouncilResponse
 from src.council.response_normalizer import ResponseNormalizer, NormalizationError
 from src.learning.style_engine import LearningStyleEngine, InvalidLearningStyleError
 from src.providers.base_provider import BaseProvider, ProviderConfig
-from src.providers.openai_client import OpenAIClient
+from src.providers.groq_client import GroqClient
 from src.providers.claude_client import ClaudeClient
 from src.providers.gemini_client import GeminiClient
 from src.providers.deepseek_client import DeepSeekClient
@@ -119,7 +119,7 @@ class CouncilExecutor:
 
     # Provider templates mapping
     PROVIDER_TEMPLATES = {
-        "openai": "gpt_teacher.txt",
+        "groq": "gpt_teacher.txt",
         "claude": "claude_reasoning.txt",
         "gemini": "gemini_visual.txt",
         "deepseek": "deepseek_logic.txt",
@@ -430,7 +430,7 @@ class CouncilExecutor:
 
             # Step 3: Build provider-specific prompts (validates templates exist)
             providers_info = [
-                ("openai", "OpenAI"),
+                ("groq", "Groq"),
                 ("claude", "Claude"),
                 ("gemini", "Gemini"),
                 ("deepseek", "DeepSeek"),
@@ -455,10 +455,10 @@ class CouncilExecutor:
 
             # Step 4: Instantiate providers
             provider_configs = {
-                "OpenAI": ProviderConfig(
-                    provider_name="OpenAI",
+                "Groq": ProviderConfig(
+                    provider_name="Groq",
                     role="creator",
-                    model_name="gpt-4o",
+                    model_name="llama-3.3-70b-versatile",
                     enabled=True,
                 ),
                 "Claude": ProviderConfig(
@@ -482,7 +482,7 @@ class CouncilExecutor:
             }
 
             providers = {
-                "OpenAI": OpenAIClient(provider_configs["OpenAI"]),
+                "Groq": GroqClient(provider_configs["Groq"]),
                 "Claude": ClaudeClient(provider_configs["Claude"]),
                 "Gemini": GeminiClient(provider_configs["Gemini"]),
                 "DeepSeek": DeepSeekClient(provider_configs["DeepSeek"]),
