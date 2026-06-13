@@ -36,4 +36,4 @@ class User(Base):
     )
 
     # Backwards-compatible alias for older code that used `requests`
-    requests = prompt_requests
+  
