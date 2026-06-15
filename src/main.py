@@ -23,6 +23,7 @@ from src.prompts.router import router as prompts_router
 from src.explanations.router import router as explanations_router
 from src.council_responses.router import router as council_responses_router
 from src.consensus_results.router import router as consensus_results_router
+from src.workflow.router import router as workflow_router
 
 
 # Application metadata
@@ -75,6 +76,7 @@ def create_app() -> FastAPI:
     app.include_router(explanations_router)
     app.include_router(council_responses_router)
     app.include_router(consensus_results_router)
+    app.include_router(workflow_router)
 
     @app.on_event("startup")
     async def _startup_event() -> None:
