@@ -46,3 +46,4 @@ tenacity
 
 groq
 google-generativeai
+anthropic
