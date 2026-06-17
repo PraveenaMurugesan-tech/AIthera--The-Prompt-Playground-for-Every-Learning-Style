@@ -30,6 +30,8 @@ from src.providers.groq_client import GroqClient
 from src.providers.claude_client import ClaudeClient
 from src.providers.gemini_client import GeminiClient
 from src.providers.deepseek_client import DeepSeekClient
+from src.providers.provider_registry import ProviderRegistry
+from src.providers.provider_health import ProviderHealthTracker
 
 # Configure logging
 logger = logging.getLogger("aithera.council_executor")
@@ -130,6 +132,8 @@ class CouncilExecutor:
         prompts_dir: Optional[Path] = None,
         style_engine: Optional[LearningStyleEngine] = None,
         response_normalizer: Optional[ResponseNormalizer] = None,
+        provider_registry: Optional[ProviderRegistry] = None,
+        health_tracker: Optional[ProviderHealthTracker] = None,
     ) -> None:
         """Initialize the CouncilExecutor.
         
@@ -137,9 +141,17 @@ class CouncilExecutor:
             prompts_dir: Path to the prompts directory. Defaults to src/../prompts
             style_engine: LearningStyleEngine instance. Creates new if not provided
             response_normalizer: ResponseNormalizer instance. Creates new if not provided
+            provider_registry: ProviderRegistry instance. Creates new if not provided
+            health_tracker: ProviderHealthTracker instance. Creates new if not provided
         """
         self.learning_style_engine = style_engine or LearningStyleEngine()
         self.response_normalizer = response_normalizer or ResponseNormalizer()
+        self.provider_registry = provider_registry or ProviderRegistry()
+        self.health_tracker = health_tracker or ProviderHealthTracker()
+
+        # Track failed and successful providers across executions
+        self.failed_providers: List[str] = []
+        self.successful_providers: List[str] = []
 
         # Resolve prompts directory
         if prompts_dir is None:
@@ -585,4 +597,106 @@ class CouncilExecutor:
                 exc_info=True
             )
             raise CouncilExecutionError(f"Unexpected execution error: {str(e)}")
+
+    async def execute_council(
+        self,
+        request: PromptRequest
+    ) -> List[CouncilResponse]:
+        """Execute the live council by invoking all active providers in parallel.
+        
+        Uses asyncio.gather(..., return_exceptions=True) for concurrent execution.
+        Succeeds as long as at least one active provider succeeds (failover).
+        Updates provider health metrics.
+        
+        Args:
+            request: The PromptRequest containing all required parameters.
+            
+        Returns:
+            List[CouncilResponse]: List of normalized responses from successful providers.
+            
+        Raises:
+            CouncilExecutionError: If all providers fail or a critical error occurs.
+        """
+        logger.info("Starting execute_council for topic: %s", request.topic)
+        self._validate_request(request)
+        self._validate_learning_style(request.learning_style)
+
+        active_providers = self.provider_registry.get_active_providers()
+        if not active_providers:
+            raise CouncilExecutionError("No active providers found in the registry.")
+
+        tasks = []
+        provider_names = list(active_providers.keys())
+
+        for name, provider_instance in active_providers.items():
+            task = self.execute_provider(
+                provider=provider_instance,
+                provider_name=provider_instance.get_provider_name(),
+                topic=request.topic,
+                objective=request.objective,
+                learning_style=request.learning_style,
+                difficulty=request.difficulty,
+                education_level=request.education_level,
+                output_length=request.output_length,
+            )
+            tasks.append(task)
+
+        # Execute simultaneously using gather with exceptions returned
+        logger.info("Gathering %d provider tasks", len(tasks))
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        normalized_responses: List[CouncilResponse] = []
+        self.failed_providers = []
+        self.successful_providers = []
+
+        for name, response in zip(provider_names, results):
+            provider_instance = active_providers[name]
+            provider_display_name = provider_instance.get_provider_name()
+
+            if isinstance(response, Exception):
+                logger.error("Provider %s execution failed: %s", provider_display_name, response)
+                self.failed_providers.append(provider_display_name)
+                self.health_tracker.record_failure(provider_display_name)
+            elif response is None:
+                logger.warning("Provider %s returned None", provider_display_name)
+                self.failed_providers.append(provider_display_name)
+                self.health_tracker.record_failure(provider_display_name)
+            else:
+                try:
+                    if isinstance(response, dict):
+                        # Normalize raw dict response
+                        normalized = self.response_normalizer.normalize(
+                            provider_name=provider_display_name,
+                            raw_response=response,
+                            role=provider_instance.get_role(),
+                        )
+                    elif isinstance(response, CouncilResponse):
+                        normalized = response
+                    else:
+                        raise ValueError(f"Unexpected response type: {type(response)}")
+
+                    normalized_responses.append(normalized)
+                    self.successful_providers.append(provider_display_name)
+                    
+                    # Record health metrics
+                    res_time = normalized.metadata.response_time if (normalized.metadata and normalized.metadata.response_time) else 0.0
+                    self.health_tracker.record_success(provider_display_name, response_time=res_time)
+                    logger.info("Successfully normalized response for %s", provider_display_name)
+                except Exception as ne:
+                    logger.error("Failed to normalize response for %s: %s", provider_display_name, ne)
+                    self.failed_providers.append(provider_display_name)
+                    self.health_tracker.record_failure(provider_display_name)
+
+        if not normalized_responses:
+            error_msg = "All providers failed. Council cannot proceed."
+            logger.error(error_msg)
+            raise CouncilExecutionError(error_msg)
+
+        logger.info(
+            "execute_council completed. Successful: %s, Failed: %s",
+            self.successful_providers,
+            self.failed_providers,
+        )
+        return normalized_responses
+
 

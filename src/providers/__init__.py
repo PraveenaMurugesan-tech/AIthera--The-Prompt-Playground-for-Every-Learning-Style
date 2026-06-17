@@ -4,7 +4,14 @@ from .base_provider import BaseProvider, ProviderConfig
 from .groq_client import GroqClient
 from .claude_client import ClaudeClient
 from .gemini_client import GeminiClient
-from .deepseek_client import DeepSeekClient
+from .deepseek_client import (
+    DeepSeekClient,
+    DeepSeekProviderError,
+    DeepSeekConfigError,
+    DeepSeekAuthError,
+    DeepSeekTransientError,
+    DeepSeekNonTransientError,
+)
 
 __all__ = [
     "BaseProvider",
@@ -13,4 +20,9 @@ __all__ = [
     "ClaudeClient",
     "GeminiClient",
     "DeepSeekClient",
+    "DeepSeekProviderError",
+    "DeepSeekConfigError",
+    "DeepSeekAuthError",
+    "DeepSeekTransientError",
+    "DeepSeekNonTransientError",
 ]

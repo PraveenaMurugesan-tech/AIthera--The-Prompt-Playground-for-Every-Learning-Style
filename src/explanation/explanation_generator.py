@@ -40,6 +40,11 @@ PROVIDER_ASPECTS = {
         "name": "DeepSeek",
         "aspects": ["technical precision", "logical accuracy"],
         "verb": "added"
+    },
+    "groq": {
+        "name": "Groq",
+        "aspects": ["educational structure", "prompt organization"],
+        "verb": "contributed"
     }
 }
 
