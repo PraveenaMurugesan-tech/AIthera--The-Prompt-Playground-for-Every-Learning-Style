@@ -156,7 +156,7 @@ class ConsensusBuilder:
 
         for r in responses:
             model_lower = r.model.lower()
-            if "gpt" in model_lower:
+            if "gpt" in model_lower or "groq" in model_lower or "llama" in model_lower:
                 has_gpt = True
             elif "claude" in model_lower:
                 has_claude = True
@@ -220,9 +220,12 @@ class ConsensusBuilder:
         contributors = []
         for r in responses:
             model_lower = r.model.lower()
-            for provider in ["gpt", "claude", "gemini", "deepseek"]:
+            for provider in ["gpt", "claude", "gemini", "deepseek", "groq", "llama"]:
                 if provider in model_lower:
-                    if provider not in contributors:
-                        contributors.append(provider)
+                    mapped = provider
+                    if provider in ["groq", "llama"]:
+                        mapped = "groq"
+                    if mapped not in contributors:
+                        contributors.append(mapped)
                     break
         return contributors
