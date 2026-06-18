@@ -12,6 +12,14 @@ from .deepseek_client import (
     DeepSeekTransientError,
     DeepSeekNonTransientError,
 )
+from .openrouter_client import (
+    OpenRouterClient,
+    OpenRouterProviderError,
+    OpenRouterConfigError,
+    OpenRouterAuthError,
+    OpenRouterTransientError,
+    OpenRouterNonTransientError,
+)
 
 __all__ = [
     "BaseProvider",
@@ -25,4 +33,10 @@ __all__ = [
     "DeepSeekAuthError",
     "DeepSeekTransientError",
     "DeepSeekNonTransientError",
+    "OpenRouterClient",
+    "OpenRouterProviderError",
+    "OpenRouterConfigError",
+    "OpenRouterAuthError",
+    "OpenRouterTransientError",
+    "OpenRouterNonTransientError",
 ]

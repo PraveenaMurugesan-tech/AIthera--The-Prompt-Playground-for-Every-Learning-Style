@@ -5,15 +5,9 @@ import asyncio
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
-import google.generativeai as genai
-from google.api_core.exceptions import (
-    GoogleAPICallError,
-    Unauthenticated,
-    PermissionDenied,
-    DeadlineExceeded,
-    ServiceUnavailable,
-    ResourceExhausted,
-)
+from google import genai
+from google.genai import types
+from google.genai.errors import APIError
 from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, retry_if_exception
 
 from src.models.council_response import CouncilResponse
@@ -87,12 +81,9 @@ class GeminiClient(BaseProvider):
         # Load API key and timeout from environment
         self.api_key = os.getenv("GEMINI_API_KEY")
         try:
-            self.timeout = float(os.getenv("GEMINI_TIMEOUT", "30"))
+            self.timeout = float(os.getenv("GEMINI_TIMEOUT", "20"))
         except (ValueError, TypeError):
-            self.timeout = 30.0
-
-        if self.api_key and self.api_key.strip():
-            genai.configure(api_key=self.api_key)
+            self.timeout = 20.0
 
     def validate_config(self) -> None:
         """Validate that Gemini client has required configuration."""
@@ -189,16 +180,15 @@ class GeminiClient(BaseProvider):
         model_name = self.get_model_name()
         logger.info("Request start - Provider: Gemini, Model: %s", model_name)
 
-        # Re-configure on request in case API key environment changed
-        genai.configure(api_key=self.api_key)
-        model = genai.GenerativeModel(model_name)
+        # Client instantiation
+        client = genai.Client(api_key=self.api_key)
 
         # Retry logic with tenacity
         def is_transient_error(exception: Exception) -> bool:
-            if isinstance(exception, (DeadlineExceeded, ServiceUnavailable, ResourceExhausted, asyncio.TimeoutError)):
+            if isinstance(exception, asyncio.TimeoutError):
                 return True
-            if isinstance(exception, GoogleAPICallError):
-                # Status codes: 408 (Timeout), 429 (Rate Limit / ResourceExhausted), 5xx (Server errors)
+            if isinstance(exception, APIError):
+                # Status codes: 408 (Timeout), 429 (Rate Limit), 5xx (Server errors)
                 if exception.code in (408, 429) or (exception.code and exception.code >= 500):
                     return True
             return False
@@ -207,20 +197,29 @@ class GeminiClient(BaseProvider):
 
         try:
             async for attempt in AsyncRetrying(
-                stop=stop_after_attempt(3),
+                stop=stop_after_attempt(2),
                 wait=wait_exponential(multiplier=1, min=1, max=5),
                 retry=retry_if_exception(is_transient_error),
                 reraise=True
             ):
                 with attempt:
                     attempt_num = attempt.retry_state.attempt_number
-                    logger.info("Sending Gemini API request (attempt %d/3)...", attempt_num)
+                    logger.info("Sending Gemini API request (attempt %d/2)...", attempt_num)
                     
-                    # Call async generation with timeout
-                    response = await model.generate_content_async(
-                        resolved_prompt,
-                        request_options={"timeout": self.timeout}
+                    # Call async generation with timeout via config
+                    config = types.GenerateContentConfig(
+                        temperature=0.7,
                     )
+                    
+                    # Ensure timeout wrapper
+                    async def fetch_with_timeout():
+                        return await client.aio.models.generate_content(
+                            model=model_name,
+                            contents=resolved_prompt,
+                            config=config
+                        )
+                        
+                    response = await asyncio.wait_for(fetch_with_timeout(), timeout=self.timeout)
                     
                     duration = time.time() - start_time
                     logger.info("Request completed successfully in %.2f seconds", duration)
@@ -257,22 +256,19 @@ class GeminiClient(BaseProvider):
                         "response_time": duration
                     }
 
-        except (Unauthenticated, PermissionDenied) as e:
-            logger.error("Authentication failed: %s", str(e))
-            raise GeminiAuthError(f"Gemini Authentication failed: {str(e)}") from e
-        except GoogleAPICallError as e:
-            if e.code in (401, 403):
+        except APIError as e:
+            if getattr(e, 'code', None) in (401, 403):
                 logger.error("Authentication failed: %s", str(e))
                 raise GeminiAuthError(f"Gemini Authentication failed: {str(e)}") from e
-            elif e.code in (408, 429) or (e.code and e.code >= 500):
+            elif getattr(e, 'code', None) in (408, 429) or (getattr(e, 'code', 0) >= 500):
                 logger.error("Transient error encountered: %s", str(e))
                 raise GeminiTransientError(f"Gemini transient error: {str(e)}") from e
             else:
                 logger.error("Non-transient error: %s", str(e))
                 raise GeminiNonTransientError(f"Gemini non-transient API error: {str(e)}") from e
-        except (DeadlineExceeded, ServiceUnavailable, ResourceExhausted, asyncio.TimeoutError) as e:
-            logger.error("Transient error encountered: %s", str(e))
-            raise GeminiTransientError(f"Gemini transient error: {str(e)}") from e
+        except asyncio.TimeoutError as e:
+            logger.error("Transient error encountered: Timeout")
+            raise GeminiTransientError(f"Gemini transient error: Timeout") from e
         except Exception as e:
             logger.error("Unexpected error occurred: %s", str(e))
             raise GeminiProviderError(f"Unexpected Gemini provider error: {str(e)}") from e

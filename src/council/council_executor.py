@@ -30,6 +30,7 @@ from src.providers.groq_client import GroqClient
 from src.providers.claude_client import ClaudeClient
 from src.providers.gemini_client import GeminiClient
 from src.providers.deepseek_client import DeepSeekClient
+from src.providers.openrouter_client import OpenRouterClient
 from src.providers.provider_registry import ProviderRegistry
 from src.providers.provider_health import ProviderHealthTracker
 
@@ -125,6 +126,7 @@ class CouncilExecutor:
         "claude": "claude_reasoning.txt",
         "gemini": "gemini_visual.txt",
         "deepseek": "deepseek_logic.txt",
+        "openrouter": "gpt_teacher.txt",
     }
 
     def __init__(
@@ -446,6 +448,7 @@ class CouncilExecutor:
                 ("claude", "Claude"),
                 ("gemini", "Gemini"),
                 ("deepseek", "DeepSeek"),
+                ("openrouter", "OpenRouter"),
             ]
             
             for provider_key, _ in providers_info:
@@ -491,6 +494,12 @@ class CouncilExecutor:
                     model_name="deepseek-chat",
                     enabled=True,
                 ),
+                "OpenRouter": ProviderConfig(
+                    provider_name="OpenRouter",
+                    role="creator",
+                    model_name="openai/gpt-oss-120b",
+                    enabled=True,
+                ),
             }
 
             providers = {
@@ -498,6 +507,7 @@ class CouncilExecutor:
                 "Claude": ClaudeClient(provider_configs["Claude"]),
                 "Gemini": GeminiClient(provider_configs["Gemini"]),
                 "DeepSeek": DeepSeekClient(provider_configs["DeepSeek"]),
+                "OpenRouter": OpenRouterClient(provider_configs["OpenRouter"]),
             }
 
             logger.info("All providers instantiated")

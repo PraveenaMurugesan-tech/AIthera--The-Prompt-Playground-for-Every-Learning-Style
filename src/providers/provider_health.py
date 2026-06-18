@@ -130,6 +130,32 @@ class ProviderHealthTracker:
         """
         return {name: tracker.get_health_report() for name, tracker in self._trackers.items()}
 
+    def get_provider_status(self, provider_name: str) -> str:
+        """Get a human-readable status for a specific provider.
+        
+        Args:
+            provider_name: The name of the provider.
+            
+        Returns:
+            str: "Healthy (XX%)" or "Failing".
+        """
+        tracker = self.get_provider_health(provider_name)
+        if tracker.total_requests == 0:
+            return "Healthy (100%)"
+        
+        pct = int(tracker.success_rate * 100)
+        if pct < 50 and tracker.total_requests >= 2:
+            return f"Failing ({pct}%)"
+        return f"Healthy ({pct}%)"
+
+    def get_all_provider_stats(self) -> Dict[str, str]:
+        """Get formatted status for all providers.
+        
+        Returns:
+            Dict[str, str]: Map of provider name to human-readable status.
+        """
+        return {name.capitalize(): self.get_provider_status(name) for name in self._trackers.keys()}
+
     def reset(self) -> None:
         """Reset all trackers."""
         for tracker in self._trackers.values():
