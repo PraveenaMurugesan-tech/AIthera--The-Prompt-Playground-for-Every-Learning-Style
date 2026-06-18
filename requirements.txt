@@ -45,5 +45,5 @@ openai
 tenacity
 
 groq
-google-generativeai
+google-genai
 anthropic

@@ -70,6 +70,19 @@ MOCK_DEEPSEEK_DICT = {
     "response_time": 0.7
 }
 
+MOCK_OPENROUTER_DICT = {
+    "choices": [
+        {
+            "message": {
+                "content": '{"prompt": "OpenRouter teacher prompt", "reasoning": "OpenRouter reasoning", "strengths": ["Teaching steps"]}'
+            }
+        }
+    ],
+    "usage": {"total_tokens": 80},
+    "model": "openai/gpt-oss-120b",
+    "response_time": 0.3
+}
+
 
 # ==============================================================================
 # Unit Tests
@@ -185,8 +198,9 @@ def test_validation():
 @patch("src.council.council_executor.ClaudeClient")
 @patch("src.council.council_executor.GeminiClient")
 @patch("src.council.council_executor.DeepSeekClient")
+@patch("src.council.council_executor.OpenRouterClient")
 async def test_execute_success(
-    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
+    mock_openrouter_class, mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
 ):
     """Verify success flow where all providers succeed and results are normalized."""
     # Setup mock instances and generate_response return values
@@ -206,6 +220,10 @@ async def test_execute_success(
     mock_deepseek.generate_response = AsyncMock(return_value=MOCK_DEEPSEEK_DICT)
     mock_deepseek.get_role.return_value = "critic"
 
+    mock_openrouter = mock_openrouter_class.return_value
+    mock_openrouter.generate_response = AsyncMock(return_value=MOCK_OPENROUTER_DICT)
+    mock_openrouter.get_role.return_value = "creator"
+
     executor = CouncilExecutor()
     request = PromptRequest(
         user_id=1,
@@ -221,12 +239,12 @@ async def test_execute_success(
     
     # Assert structure and metrics
     assert isinstance(result, CouncilExecutionResult)
-    assert len(result.responses) == 4
-    assert len(result.successful_providers) == 4
+    assert len(result.responses) == 5
+    assert len(result.successful_providers) == 5
     assert len(result.failed_providers) == 0
     assert result.execution_time > 0.0
     
-    for name in ["Groq", "Claude", "Gemini", "DeepSeek"]:
+    for name in ["Groq", "Claude", "Gemini", "DeepSeek", "OpenRouter"]:
         assert name in result.successful_providers
 
     # Assert normalized values
@@ -243,8 +261,9 @@ async def test_execute_success(
 @patch("src.council.council_executor.ClaudeClient")
 @patch("src.council.council_executor.GeminiClient")
 @patch("src.council.council_executor.DeepSeekClient")
+@patch("src.council.council_executor.OpenRouterClient")
 async def test_execute_partial_failures(
-    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
+    mock_openrouter_class, mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
 ):
     """Verify executor succeeds partially and logs failures when some providers fail."""
     mock_groq = mock_groq_class.return_value
@@ -266,6 +285,11 @@ async def test_execute_partial_failures(
     mock_deepseek.generate_response = AsyncMock(return_value=None)
     mock_deepseek.get_role.return_value = "critic"
 
+    # OpenRouter succeeds
+    mock_openrouter = mock_openrouter_class.return_value
+    mock_openrouter.generate_response = AsyncMock(return_value=MOCK_OPENROUTER_DICT)
+    mock_openrouter.get_role.return_value = "creator"
+
     executor = CouncilExecutor()
     request = PromptRequest(
         user_id=1,
@@ -280,12 +304,13 @@ async def test_execute_partial_failures(
     result = await executor.execute(request)
 
     assert isinstance(result, CouncilExecutionResult)
-    assert len(result.responses) == 2  # Groq, Gemini
-    assert len(result.successful_providers) == 2
+    assert len(result.responses) == 3  # Groq, Gemini, OpenRouter
+    assert len(result.successful_providers) == 3
     assert len(result.failed_providers) == 2
     
     assert "Groq" in result.successful_providers
     assert "Gemini" in result.successful_providers
+    assert "OpenRouter" in result.successful_providers
     
     assert "Claude" in result.failed_providers
     assert "DeepSeek" in result.failed_providers
@@ -298,8 +323,9 @@ async def test_execute_partial_failures(
 @patch("src.council.council_executor.ClaudeClient")
 @patch("src.council.council_executor.GeminiClient")
 @patch("src.council.council_executor.DeepSeekClient")
+@patch("src.council.council_executor.OpenRouterClient")
 async def test_execute_normalization_failure(
-    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
+    mock_openrouter_class, mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
 ):
     """Verify normalization failures are caught, logged, and executor continues."""
     mock_groq = mock_groq_class.return_value
@@ -319,6 +345,10 @@ async def test_execute_normalization_failure(
     mock_deepseek.generate_response = AsyncMock(return_value=MOCK_DEEPSEEK_DICT)
     mock_deepseek.get_role.return_value = "critic"
 
+    mock_openrouter = mock_openrouter_class.return_value
+    mock_openrouter.generate_response = AsyncMock(return_value=MOCK_OPENROUTER_DICT)
+    mock_openrouter.get_role.return_value = "creator"
+
     executor = CouncilExecutor()
     request = PromptRequest(
         user_id=1,
@@ -333,7 +363,7 @@ async def test_execute_normalization_failure(
     result = await executor.execute(request)
 
     assert isinstance(result, CouncilExecutionResult)
-    assert len(result.responses) == 3  # Groq, Gemini, DeepSeek
+    assert len(result.responses) == 4  # Groq, Gemini, DeepSeek, OpenRouter
     assert "Claude" in result.failed_providers
     assert "Normalization failed" in result.error_details["Claude"]
 
@@ -342,8 +372,9 @@ async def test_execute_normalization_failure(
 @patch("src.council.council_executor.ClaudeClient")
 @patch("src.council.council_executor.GeminiClient")
 @patch("src.council.council_executor.DeepSeekClient")
+@patch("src.council.council_executor.OpenRouterClient")
 async def test_execute_all_failures(
-    mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
+    mock_openrouter_class, mock_deepseek_class, mock_gemini_class, mock_claude_class, mock_groq_class
 ):
     """Verify that a CouncilExecutionError is raised if all providers fail."""
     mock_groq = mock_groq_class.return_value
@@ -361,6 +392,10 @@ async def test_execute_all_failures(
     mock_deepseek = mock_deepseek_class.return_value
     mock_deepseek.generate_response = AsyncMock(side_effect=Exception("DeepSeek error"))
     mock_deepseek.get_role.return_value = "critic"
+
+    mock_openrouter = mock_openrouter_class.return_value
+    mock_openrouter.generate_response = AsyncMock(side_effect=Exception("OpenRouter error"))
+    mock_openrouter.get_role.return_value = "creator"
 
     executor = CouncilExecutor()
     request = PromptRequest(

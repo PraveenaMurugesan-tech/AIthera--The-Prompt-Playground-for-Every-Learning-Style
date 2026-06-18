@@ -54,8 +54,9 @@ def make_mock_message(content: str, model: str = "claude-3-5-sonnet", input_toke
 # ==============================================================================
 
 @patch("src.providers.claude_client.AsyncAnthropic")
-async def test_claude_client_success_prompt(mock_async_anthropic):
+async def test_claude_client_success_prompt(mock_async_anthropic, monkeypatch):
     """Verify that a successful response with direct prompt is handled correctly."""
+    monkeypatch.setenv("CLAUDE_MODEL", "claude-3-5-sonnet")
     mock_client = AsyncMock()
     mock_async_anthropic.return_value = mock_client
     

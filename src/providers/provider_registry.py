@@ -11,6 +11,7 @@ from src.providers.groq_client import GroqClient
 from src.providers.gemini_client import GeminiClient
 from src.providers.claude_client import ClaudeClient
 from src.providers.deepseek_client import DeepSeekClient
+from src.providers.openrouter_client import OpenRouterClient
 
 logger = logging.getLogger("aithera.provider_registry")
 
@@ -32,6 +33,7 @@ class ProviderRegistry:
         "gemini": GeminiClient,
         "claude": ClaudeClient,
         "deepseek": DeepSeekClient,
+        "openrouter": OpenRouterClient,
     }
 
     def __init__(self) -> None:
