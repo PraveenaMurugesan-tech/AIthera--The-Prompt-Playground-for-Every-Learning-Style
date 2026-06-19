@@ -20,6 +20,14 @@ from .openrouter_client import (
     OpenRouterTransientError,
     OpenRouterNonTransientError,
 )
+from .cerebras_client import (
+    CerebrasClient,
+    CerebrasError,
+    CerebrasAuthError,
+    CerebrasRateLimitError,
+    CerebrasTransientError,
+    CerebrasNonTransientError,
+)
 
 __all__ = [
     "BaseProvider",
@@ -39,4 +47,10 @@ __all__ = [
     "OpenRouterAuthError",
     "OpenRouterTransientError",
     "OpenRouterNonTransientError",
+    "CerebrasClient",
+    "CerebrasError",
+    "CerebrasAuthError",
+    "CerebrasRateLimitError",
+    "CerebrasTransientError",
+    "CerebrasNonTransientError",
 ]
