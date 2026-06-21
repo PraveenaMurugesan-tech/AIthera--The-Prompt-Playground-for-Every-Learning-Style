@@ -23,7 +23,8 @@ class ResponseNormalizer:
             "claude": "validator",
             "gemini": "refiner",
             "deepseek": "critic",
-            "openrouter": "creator"
+            "openrouter": "creator",
+            "cerebras": "creator"
         }
 
     def _get_content_string(self, raw_response: Dict[str, Any], provider: str) -> str:
@@ -41,7 +42,7 @@ class ResponseNormalizer:
         """
         provider_lower = provider.lower()
         try:
-            if "openai" in provider_lower or "deepseek" in provider_lower or "groq" in provider_lower or "openrouter" in provider_lower:
+            if "openai" in provider_lower or "deepseek" in provider_lower or "groq" in provider_lower or "openrouter" in provider_lower or "cerebras" in provider_lower:
                 return raw_response["choices"][0]["message"]["content"]
             elif "claude" in provider_lower:
                 content_item = raw_response["content"][0]
@@ -213,7 +214,7 @@ class ResponseNormalizer:
             response_time = raw_response.get("response_time")
             provider_version = None
 
-            if "openai" in provider_lower or "deepseek" in provider_lower or "groq" in provider_lower or "openrouter" in provider_lower:
+            if "openai" in provider_lower or "deepseek" in provider_lower or "groq" in provider_lower or "openrouter" in provider_lower or "cerebras" in provider_lower:
                 usage = raw_response.get("usage", {})
                 tokens_used = usage.get("total_tokens")
                 provider_version = raw_response.get("model")
@@ -362,6 +363,19 @@ class ResponseNormalizer:
         logger.info("Normalizing OpenRouter response")
         return self._normalize_common(raw_response, "OpenRouter", role)
 
+    def normalize_cerebras_response(self, raw_response: Dict[str, Any], role: Optional[str] = None) -> CouncilResponse:
+        """Normalize a raw Cerebras response into a CouncilResponse.
+
+        Args:
+            raw_response: The raw response dictionary.
+            role: The assigned role.
+
+        Returns:
+            CouncilResponse: Standardized response object.
+        """
+        logger.info("Normalizing Cerebras response")
+        return self._normalize_common(raw_response, "Cerebras", role)
+
     def normalize(self, provider_name: str, raw_response: Any, role: Optional[str] = None) -> CouncilResponse:
         """Universal dispatcher method to normalize any supported raw response.
 
@@ -392,5 +406,7 @@ class ResponseNormalizer:
             return self.normalize_deepseek_response(raw_response, role)
         elif "openrouter" in provider_clean:
             return self.normalize_openrouter_response(raw_response, role)
+        elif "cerebras" in provider_clean:
+            return self.normalize_cerebras_response(raw_response, role)
         else:
             raise NormalizationError(f"Unsupported AI provider: {provider_name}")

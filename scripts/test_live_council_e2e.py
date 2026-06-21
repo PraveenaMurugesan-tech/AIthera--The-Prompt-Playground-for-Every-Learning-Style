@@ -50,6 +50,7 @@ async def run_e2e():
         "claude": "CLAUDE_API_KEY",
         "deepseek": "DEEPSEEK_API_KEY",
         "openrouter": "OPENROUTER_API_KEY",
+        "cerebras": "CEREBRAS_API_KEY",
     }
 
     configured_count = 0
