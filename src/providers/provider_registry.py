@@ -13,6 +13,7 @@ from src.providers.claude_client import ClaudeClient
 from src.providers.deepseek_client import DeepSeekClient
 from src.providers.openrouter_client import OpenRouterClient
 from src.providers.cerebras_client import CerebrasClient
+from src.providers.sambanova_client import SambaNovaClient
 
 logger = logging.getLogger("aithera.provider_registry")
 
@@ -36,6 +37,7 @@ class ProviderRegistry:
         "deepseek": DeepSeekClient,
         "openrouter": OpenRouterClient,
         "cerebras": CerebrasClient,
+        "sambanova": SambaNovaClient,
     }
 
     def __init__(self) -> None:

@@ -28,6 +28,14 @@ from .cerebras_client import (
     CerebrasTransientError,
     CerebrasNonTransientError,
 )
+from .sambanova_client import (
+    SambaNovaClient,
+    SambaNovaError,
+    SambaNovaAuthError,
+    SambaNovaRateLimitError,
+    SambaNovaTransientError,
+    SambaNovaNonTransientError,
+)
 
 __all__ = [
     "BaseProvider",
@@ -53,4 +61,10 @@ __all__ = [
     "CerebrasRateLimitError",
     "CerebrasTransientError",
     "CerebrasNonTransientError",
+    "SambaNovaClient",
+    "SambaNovaError",
+    "SambaNovaAuthError",
+    "SambaNovaRateLimitError",
+    "SambaNovaTransientError",
+    "SambaNovaNonTransientError",
 ]

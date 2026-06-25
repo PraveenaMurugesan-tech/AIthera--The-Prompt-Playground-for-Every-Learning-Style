@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 from typing import Any, Dict, List, Optional
 
 from src.models.council_response import CouncilResponse
@@ -65,6 +66,11 @@ class ConsensusBuilder:
         quality_score = self.calculate_consensus_score(responses)
         contributors = self.extract_contributors(responses)
 
+        logger = logging.getLogger(__name__)
+        logger.debug("Provider scores averaged to calculate consensus score: %f", quality_score)
+        logger.debug("Selected winner: %s", best_response.model)
+        logger.debug("Consensus score value before result creation: %f", quality_score)
+
         # 3. Return ConsensusResult
         return ConsensusResult(
             request_id=request_id,
@@ -124,6 +130,9 @@ class ConsensusBuilder:
                 if priority > best_priority:
                     best_priority = priority
                     best_response = r
+            
+            logger = logging.getLogger(__name__)
+            logger.debug("Evaluated provider: %s, score: %f", r.model, score)
 
         if not best_response:
             raise ConsensusBuilderError("Could not determine best response from the list.")

@@ -368,6 +368,10 @@ class PromptScorer:
         depth = self.score_depth(prompt)
 
         overall_score = round(clarity + structure + personalization + educational_effectiveness + depth, 2)
+        
+        # Ensure the consensus_result tracks its own final computed score
+        consensus_result.quality_score = overall_score
+        logger.debug("Consensus score value returned to the E2E script: %f", overall_score)
 
         # Quality thresholds (from docs/SCORING_RULES.md, mapped to 0-100 scale)
         if overall_score >= 90.0:

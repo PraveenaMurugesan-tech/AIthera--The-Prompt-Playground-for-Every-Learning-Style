@@ -32,6 +32,7 @@ from src.providers.gemini_client import GeminiClient
 from src.providers.deepseek_client import DeepSeekClient
 from src.providers.openrouter_client import OpenRouterClient
 from src.providers.cerebras_client import CerebrasClient
+from src.providers.sambanova_client import SambaNovaClient
 from src.providers.provider_registry import ProviderRegistry
 from src.providers.provider_health import ProviderHealthTracker
 
@@ -129,6 +130,7 @@ class CouncilExecutor:
         "deepseek": "deepseek_logic.txt",
         "openrouter": "gpt_teacher.txt",
         "cerebras": "gpt_teacher.txt",
+        "sambanova": "gpt_teacher.txt",
     }
 
     def __init__(
@@ -452,6 +454,7 @@ class CouncilExecutor:
                 ("deepseek", "DeepSeek"),
                 ("openrouter", "OpenRouter"),
                 ("cerebras", "Cerebras"),
+                ("sambanova", "SambaNova"),
             ]
             
             for provider_key, _ in providers_info:
@@ -509,6 +512,12 @@ class CouncilExecutor:
                     model_name="llama-4-scout-17b-16e-instruct",
                     enabled=True,
                 ),
+                "SambaNova": ProviderConfig(
+                    provider_name="SambaNova",
+                    role="creator",
+                    model_name="Meta-Llama-3.3-70B-Instruct",
+                    enabled=True,
+                ),
             }
 
             providers = {
@@ -518,6 +527,7 @@ class CouncilExecutor:
                 "DeepSeek": DeepSeekClient(provider_configs["DeepSeek"]),
                 "OpenRouter": OpenRouterClient(provider_configs["OpenRouter"]),
                 "Cerebras": CerebrasClient(provider_configs["Cerebras"]),
+                "SambaNova": SambaNovaClient(provider_configs["SambaNova"]),
             }
 
             logger.info("All providers instantiated")
