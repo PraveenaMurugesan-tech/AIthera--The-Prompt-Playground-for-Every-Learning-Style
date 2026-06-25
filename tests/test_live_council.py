@@ -191,3 +191,44 @@ async def test_live_council_all_fail(mock_registry):
     
     with pytest.raises(LiveCouncilError, match="Live Council execution failed"):
         await live_council.execute(request)
+
+
+async def test_live_council_consensus_score_propagation(mock_registry):
+    """Verify that consensus_score correctly reflects the winning prompt's score."""
+    config1 = ProviderConfig(provider_name="Groq", role="creator", model_name="llama-3.3-70b-versatile", enabled=True)
+    p1 = MockProvider(config1)
+    
+    res1 = CouncilResponse(
+        role="creator",
+        model="llama-3.3-70b-versatile",
+        prompt="Explain photosynthesis clearly.",
+        reasoning="Simple clear explanation.",
+        strengths=["Clarity"],
+        metadata=ResponseMetadata(tokens_used=100, response_time=0.1)
+    )
+    p1.generate_response = AsyncMock(return_value=res1)
+    mock_registry.register_provider("groq", MockProvider)
+    mock_registry._providers["groq"] = p1
+    
+    live_council = LiveCouncil(provider_registry=mock_registry)
+    request = PromptRequest(
+        user_id=1,
+        topic="Photosynthesis",
+        objective="Understand leaf structure and reactions",
+        learning_style="visual",
+        difficulty="beginner",
+        education_level="elementary",
+        output_length="short"
+    )
+    request.id = 100
+    
+    result = await live_council.execute(request)
+    
+    consensus = result["consensus"]
+    score = result["score"]
+    
+    assert len(result["responses"]) > 0
+    assert consensus is not None
+    assert consensus.quality_score > 0.0
+    assert consensus.quality_score == score.overall_score
+
