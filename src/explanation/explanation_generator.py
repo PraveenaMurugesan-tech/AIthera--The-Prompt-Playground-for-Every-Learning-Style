@@ -45,6 +45,26 @@ PROVIDER_ASPECTS = {
         "name": "Groq",
         "aspects": ["educational structure", "prompt organization"],
         "verb": "contributed"
+    },
+    "openrouter": {
+        "name": "OpenRouter",
+        "aspects": ["educational structure", "prompt organization"],
+        "verb": "contributed"
+    },
+    "cerebras": {
+        "name": "Cerebras",
+        "aspects": ["rapid structural mapping", "prompt organization"],
+        "verb": "contributed"
+    },
+    "sambanova": {
+        "name": "SambaNova",
+        "aspects": ["rapid structural mapping", "prompt organization"],
+        "verb": "contributed"
+    },
+    "generic": {
+        "name": "AI Council Provider",
+        "aspects": ["general capabilities", "content generation"],
+        "verb": "provided"
     }
 }
 
@@ -86,7 +106,10 @@ class ExplanationGenerator:
                     matched_key = key
                     break
             if not matched_key:
-                raise ExplanationGenerationError(f"Unknown contributor: '{c}'")
+                logger.warning(f"Unknown contributor '{c}', falling back to generic explanation.")
+                matched_key = "generic"
+                PROVIDER_ASPECTS["generic"]["name"] = str(c).capitalize()
+                
             if matched_key not in normalized_keys:
                 normalized_keys.append(matched_key)
 

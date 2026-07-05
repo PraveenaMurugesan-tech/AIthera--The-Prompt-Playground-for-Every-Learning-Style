@@ -1,0 +1,152 @@
+[
+  {
+    "topic": "Python Programming",
+    "learning_style": "Step-by-step learner",
+    "difficulty": "Beginner",
+    "goal": "Understand variables and data types in Python"
+  },
+  {
+    "topic": "Java",
+    "learning_style": "Visual learner",
+    "difficulty": "Intermediate",
+    "goal": "Explain how Garbage Collection works with a visual analogy"
+  },
+  {
+    "topic": "Data Structures",
+    "learning_style": "Hands-on learner",
+    "difficulty": "Advanced",
+    "goal": "Implement a balanced AVL tree from scratch"
+  },
+  {
+    "topic": "Algorithms",
+    "learning_style": "Step-by-step learner",
+    "difficulty": "Intermediate",
+    "goal": "Explain Dijkstra's algorithm for shortest path"
+  },
+  {
+    "topic": "Mathematics",
+    "learning_style": "Visual learner",
+    "difficulty": "Advanced",
+    "goal": "Explain the geometric intuition behind eigenvectors and eigenvalues"
+  },
+  {
+    "topic": "Physics",
+    "learning_style": "Beginner learner",
+    "difficulty": "Beginner",
+    "goal": "Explain Newton's Laws of Motion simply"
+  },
+  {
+    "topic": "Chemistry",
+    "learning_style": "Visual learner",
+    "difficulty": "Intermediate",
+    "goal": "Explain the difference between ionic and covalent bonds"
+  },
+  {
+    "topic": "Biology",
+    "learning_style": "Hands-on learner",
+    "difficulty": "Intermediate",
+    "goal": "Describe the process of photosynthesis"
+  },
+  {
+    "topic": "History",
+    "learning_style": "Step-by-step learner",
+    "difficulty": "Beginner",
+    "goal": "Provide a timeline of the major events in the French Revolution"
+  },
+  {
+    "topic": "Geography",
+    "learning_style": "Visual learner",
+    "difficulty": "Beginner",
+    "goal": "Explain how tectonic plates form mountains"
+  },
+  {
+    "topic": "Business",
+    "learning_style": "Advanced learner",
+    "difficulty": "Advanced",
+    "goal": "Analyze the components of Porter's Five Forces model"
+  },
+  {
+    "topic": "Finance",
+    "learning_style": "Step-by-step learner",
+    "difficulty": "Intermediate",
+    "goal": "How to calculate the net present value (NPV) of an investment"
+  },
+  {
+    "topic": "Machine Learning",
+    "learning_style": "Visual learner",
+    "difficulty": "Intermediate",
+    "goal": "Explain how a support vector machine (SVM) classifies data"
+  },
+  {
+    "topic": "AI",
+    "learning_style": "Advanced learner",
+    "difficulty": "Advanced",
+    "goal": "Explain the architecture and mechanism of the Transformer model"
+  },
+  {
+    "topic": "English Grammar",
+    "learning_style": "Beginner learner",
+    "difficulty": "Beginner",
+    "goal": "Explain the difference between its and it's with examples"
+  },
+  {
+    "topic": "Communication",
+    "learning_style": "Hands-on learner",
+    "difficulty": "Intermediate",
+    "goal": "Provide exercises to improve active listening skills"
+  },
+  {
+    "topic": "Interview Preparation",
+    "learning_style": "Exam preparation",
+    "difficulty": "Advanced",
+    "goal": "Prepare for behavioral interview questions using the STAR method"
+  },
+  {
+    "topic": "Aptitude",
+    "learning_style": "Step-by-step learner",
+    "difficulty": "Intermediate",
+    "goal": "Solve a train and distance problem with formula and steps"
+  },
+  {
+    "topic": "Web Development",
+    "learning_style": "Project-based learning",
+    "difficulty": "Beginner",
+    "goal": "Build a simple to-do list using HTML, CSS, and JavaScript"
+  },
+  {
+    "topic": "Astronomy",
+    "learning_style": "Visual learner",
+    "difficulty": "Beginner",
+    "goal": "Explain the life cycle of a star"
+  },
+  {
+    "topic": "Cybersecurity",
+    "learning_style": "Advanced learner",
+    "difficulty": "Advanced",
+    "goal": "Explain how public key infrastructure (PKI) works"
+  },
+  {
+    "topic": "Psychology",
+    "learning_style": "Beginner learner",
+    "difficulty": "Intermediate",
+    "goal": "Explain classical conditioning vs operant conditioning"
+  },
+  {
+    "topic": "Economics",
+    "learning_style": "Step-by-step learner",
+    "difficulty": "Intermediate",
+    "goal": "Explain the law of supply and demand"
+  },
+  {
+    "topic": "Art History",
+    "learning_style": "Visual learner",
+    "difficulty": "Intermediate",
+    "goal": "Describe the key characteristics of the Renaissance period"
+  },
+  {
+    "topic": "Cloud Computing",
+    "learning_style": "Project-based learning",
+    "difficulty": "Advanced",
+    "goal": "Design a highly available architecture on AWS"
+  }
+]

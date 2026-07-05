@@ -278,6 +278,7 @@ class ResponseNormalizer:
         # Build CouncilResponse using the Pydantic schema
         return CouncilResponse(
             model=meta_dict.get("provider_version") or provider,
+            provider_name=provider,
             role=role,
             prompt=prompt,
             reasoning=reasoning,

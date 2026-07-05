@@ -74,7 +74,7 @@ def test_single_response():
     assert "GPT provided strong educational structure" in result.consensus_reasoning
     assert result.combined_strengths == ["Clear logic", "Good pacing"]
     assert result.quality_score == 0.85
-    assert result.contributors == ["gpt"]
+    assert result.contributors == ["gpt-4o"]
     assert result.response_count == 1
 
 
@@ -91,7 +91,7 @@ def test_multiple_responses():
     assert isinstance(result, ConsensusResult)
     assert result.final_prompt == "Claude Prompt"  # Claude had the highest score
     assert result.quality_score == 0.8  # Average of 0.8, 0.9, 0.7 = 0.8
-    assert set(result.contributors) == {"gpt", "claude", "gemini"}
+    assert set(result.contributors) == {"gpt-4o", "claude-3-5-sonnet", "gemini-1.5-pro"}
     assert result.response_count == 3
 
 
@@ -184,7 +184,7 @@ def test_contributor_extraction():
         r5,
     ]
     contributors = builder.extract_contributors(responses)
-    assert contributors == ["gpt", "claude", "gemini", "deepseek"]
+    assert contributors == ["gpt-4o-mini", "claude-3-5-sonnet", "gemini-2.0-flash", "deepseek-reasoner", "unknown-model-xyz"]
 
 
 def test_consensus_reasoning_generation():
@@ -245,7 +245,7 @@ def test_serialization_compatibility():
     assert serialized_dict["request_id"] == 99
     assert serialized_dict["final_prompt"] == "Selected Prompt"
     assert serialized_dict["quality_score"] == 0.92
-    assert serialized_dict["contributors"] == ["gpt"]
+    assert serialized_dict["contributors"] == ["gpt-4o"]
     assert serialized_dict["response_count"] == 1
     assert "best_model" in serialized_dict["response_metadata"]
     

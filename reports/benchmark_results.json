@@ -1,0 +1,289 @@
+{
+  "statistics": {
+    "total_runs": 3,
+    "successful_runs": 3,
+    "avg_execution_time": 64.723947763443,
+    "fastest_provider": "Cerebras",
+    "slowest_provider": "OpenRouter",
+    "avg_prompt_score": 95.93333333333332,
+    "highest_prompt_score": 97.1,
+    "lowest_prompt_score": 93.6,
+    "avg_consensus_score": 95.93333333333332,
+    "provider_success_rates": {
+      "Groq": 100.0,
+      "OpenRouter": 100.0,
+      "Cerebras": 100.0,
+      "Gemini": 66.66666666666666,
+      "Claude": 0.0,
+      "DeepSeek": 0.0,
+      "SambaNova": 33.33333333333333
+    },
+    "provider_failure_rates": {
+      "Groq": 0.0,
+      "OpenRouter": 0.0,
+      "Cerebras": 0.0,
+      "Gemini": 33.33333333333334,
+      "Claude": 100.0,
+      "DeepSeek": 100.0,
+      "SambaNova": 66.66666666666667
+    },
+    "avg_contributors": 4.0,
+    "most_frequent_winner": "Groq",
+    "winning_frequencies": {
+      "Groq": 3
+    },
+    "avg_provider_latencies": {
+      "Groq": 10872.880220413208,
+      "OpenRouter": 41782.98854827881,
+      "Cerebras": 3363.073984781901,
+      "Gemini": 35894.37460899353,
+      "SambaNova": 7143.494606018066
+    },
+    "provider_errors": {
+      "Gemini": [
+        "GeminiTransientError: Gemini transient error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+      ],
+      "Claude": [
+        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixN5DrWjVoqnzAawNFX'}",
+        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixSWxmjUarV2TMKeuaf'}",
+        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixY8xcizQcTxAURwxrj'}"
+      ],
+      "DeepSeek": [
+        "402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}",
+        "402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}",
+        "402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
+      ],
+      "SambaNova": [
+        "429 SambaNovaRateLimitError: SambaNova rate limit error: Error code: 429 - {'error': {'code': None, 'message': 'Rate limit exceeded', 'param': None, 'type': 'rate_limit_exceeded'}, 'request_id': '2bc1ae01-d8f4-43ed-8621-e740dc82a71a'}",
+        "429 SambaNovaRateLimitError: SambaNova rate limit error: Error code: 429 - {'error': {'code': None, 'message': 'Rate limit exceeded', 'param': None, 'type': 'rate_limit_exceeded'}, 'request_id': 'c5f4db49-c415-41ed-91ce-769165db5989'}"
+      ]
+    }
+  },
+  "runs": [
+    {
+      "topic": "Python Programming",
+      "learning_style": "Step-by-step learner",
+      "execution_time": 61.50900101661682,
+      "winning_provider": "Groq",
+      "contributors": [
+        "Groq",
+        "OpenRouter",
+        "Cerebras"
+      ],
+      "prompt_score": 93.6,
+      "consensus_score": 93.6,
+      "classification": "Excellent",
+      "provider_stats": [
+        {
+          "provider_name": "Groq",
+          "model_name": "llama-3.3-70b-versatile",
+          "success": true,
+          "latency": 8602.422714233398,
+          "response_length": 4695,
+          "error_message": null
+        },
+        {
+          "provider_name": "OpenRouter",
+          "model_name": "openai/gpt-oss-120b",
+          "success": true,
+          "latency": 31064.167261123657,
+          "response_length": 8202,
+          "error_message": null
+        },
+        {
+          "provider_name": "Cerebras",
+          "model_name": "gpt-oss-120b",
+          "success": true,
+          "latency": 3252.957820892334,
+          "response_length": 6967,
+          "error_message": null
+        },
+        {
+          "provider_name": "Gemini",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "GeminiTransientError: Gemini transient error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+        },
+        {
+          "provider_name": "Claude",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixN5DrWjVoqnzAawNFX'}"
+        },
+        {
+          "provider_name": "DeepSeek",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
+        },
+        {
+          "provider_name": "SambaNova",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "429 SambaNovaRateLimitError: SambaNova rate limit error: Error code: 429 - {'error': {'code': None, 'message': 'Rate limit exceeded', 'param': None, 'type': 'rate_limit_exceeded'}, 'request_id': '2bc1ae01-d8f4-43ed-8621-e740dc82a71a'}"
+        }
+      ],
+      "num_successful_providers": 3,
+      "error": null
+    },
+    {
+      "topic": "Java",
+      "learning_style": "Visual learner",
+      "execution_time": 64.5050003528595,
+      "winning_provider": "Groq",
+      "contributors": [
+        "Groq",
+        "Gemini",
+        "OpenRouter",
+        "Cerebras",
+        "SambaNova"
+      ],
+      "prompt_score": 97.1,
+      "consensus_score": 97.1,
+      "classification": "Excellent",
+      "provider_stats": [
+        {
+          "provider_name": "Groq",
+          "model_name": "llama-3.3-70b-versatile",
+          "success": true,
+          "latency": 6422.688722610474,
+          "response_length": 4454,
+          "error_message": null
+        },
+        {
+          "provider_name": "Gemini",
+          "model_name": "gemini-2.5-flash",
+          "success": true,
+          "latency": 29169.24524307251,
+          "response_length": 15879,
+          "error_message": null
+        },
+        {
+          "provider_name": "OpenRouter",
+          "model_name": "openai/gpt-oss-120b",
+          "success": true,
+          "latency": 61618.23272705078,
+          "response_length": 9158,
+          "error_message": null
+        },
+        {
+          "provider_name": "Cerebras",
+          "model_name": "gpt-oss-120b",
+          "success": true,
+          "latency": 2868.367910385132,
+          "response_length": 9978,
+          "error_message": null
+        },
+        {
+          "provider_name": "SambaNova",
+          "model_name": "Meta-Llama-3.3-70B-Instruct",
+          "success": true,
+          "latency": 7143.494606018066,
+          "response_length": 6111,
+          "error_message": null
+        },
+        {
+          "provider_name": "Claude",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixSWxmjUarV2TMKeuaf'}"
+        },
+        {
+          "provider_name": "DeepSeek",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
+        }
+      ],
+      "num_successful_providers": 5,
+      "error": null
+    },
+    {
+      "topic": "Data Structures",
+      "learning_style": "Hands-on learner",
+      "execution_time": 68.15784192085266,
+      "winning_provider": "Groq",
+      "contributors": [
+        "Groq",
+        "Gemini",
+        "OpenRouter",
+        "Cerebras"
+      ],
+      "prompt_score": 97.1,
+      "consensus_score": 97.1,
+      "classification": "Excellent",
+      "provider_stats": [
+        {
+          "provider_name": "Groq",
+          "model_name": "llama-3.3-70b-versatile",
+          "success": true,
+          "latency": 17593.529224395752,
+          "response_length": 5933,
+          "error_message": null
+        },
+        {
+          "provider_name": "Gemini",
+          "model_name": "gemini-2.5-flash",
+          "success": true,
+          "latency": 42619.50397491455,
+          "response_length": 18549,
+          "error_message": null
+        },
+        {
+          "provider_name": "OpenRouter",
+          "model_name": "openai/gpt-oss-120b",
+          "success": true,
+          "latency": 32666.565656661987,
+          "response_length": 8091,
+          "error_message": null
+        },
+        {
+          "provider_name": "Cerebras",
+          "model_name": "gpt-oss-120b",
+          "success": true,
+          "latency": 3967.8962230682373,
+          "response_length": 8105,
+          "error_message": null
+        },
+        {
+          "provider_name": "Claude",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixY8xcizQcTxAURwxrj'}"
+        },
+        {
+          "provider_name": "DeepSeek",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
+        },
+        {
+          "provider_name": "SambaNova",
+          "model_name": "unknown",
+          "success": false,
+          "latency": 0.0,
+          "response_length": 0,
+          "error_message": "429 SambaNovaRateLimitError: SambaNova rate limit error: Error code: 429 - {'error': {'code': None, 'message': 'Rate limit exceeded', 'param': None, 'type': 'rate_limit_exceeded'}, 'request_id': 'c5f4db49-c415-41ed-91ce-769165db5989'}"
+        }
+      ],
+      "num_successful_providers": 4,
+      "error": null
+    }
+  ]
+}

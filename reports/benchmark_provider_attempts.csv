@@ -1,0 +1,22 @@
+Topic,Provider Name,Model Name,Success,Latency (ms),Error Message
+Python Programming,Groq,llama-3.3-70b-versatile,Yes,8602.42,
+Python Programming,OpenRouter,openai/gpt-oss-120b,Yes,31064.17,
+Python Programming,Cerebras,gpt-oss-120b,Yes,3252.96,
+Python Programming,Gemini,unknown,No,0.00,"GeminiTransientError: Gemini transient error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+Python Programming,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixN5DrWjVoqnzAawNFX'}"
+Python Programming,DeepSeek,unknown,No,0.00,"402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
+Python Programming,SambaNova,unknown,No,0.00,"429 SambaNovaRateLimitError: SambaNova rate limit error: Error code: 429 - {'error': {'code': None, 'message': 'Rate limit exceeded', 'param': None, 'type': 'rate_limit_exceeded'}, 'request_id': '2bc1ae01-d8f4-43ed-8621-e740dc82a71a'}"
+Java,Groq,llama-3.3-70b-versatile,Yes,6422.69,
+Java,Gemini,gemini-2.5-flash,Yes,29169.25,
+Java,OpenRouter,openai/gpt-oss-120b,Yes,61618.23,
+Java,Cerebras,gpt-oss-120b,Yes,2868.37,
+Java,SambaNova,Meta-Llama-3.3-70B-Instruct,Yes,7143.49,
+Java,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixSWxmjUarV2TMKeuaf'}"
+Java,DeepSeek,unknown,No,0.00,"402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
+Data Structures,Groq,llama-3.3-70b-versatile,Yes,17593.53,
+Data Structures,Gemini,gemini-2.5-flash,Yes,42619.50,
+Data Structures,OpenRouter,openai/gpt-oss-120b,Yes,32666.57,
+Data Structures,Cerebras,gpt-oss-120b,Yes,3967.90,
+Data Structures,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcixY8xcizQcTxAURwxrj'}"
+Data Structures,DeepSeek,unknown,No,0.00,"402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
+Data Structures,SambaNova,unknown,No,0.00,"429 SambaNovaRateLimitError: SambaNova rate limit error: Error code: 429 - {'error': {'code': None, 'message': 'Rate limit exceeded', 'param': None, 'type': 'rate_limit_exceeded'}, 'request_id': 'c5f4db49-c415-41ed-91ce-769165db5989'}"

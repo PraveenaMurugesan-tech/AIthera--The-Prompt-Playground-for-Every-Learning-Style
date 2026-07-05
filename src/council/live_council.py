@@ -58,7 +58,7 @@ class LiveCouncil:
         self.prompt_scorer = prompt_scorer or PromptScorer()
         self.explanation_generator = explanation_generator or ExplanationGenerator()
 
-    async def execute(self, request: PromptRequest) -> Dict[str, Any]:
+    async def execute(self, request: PromptRequest, timeout: float = 300.0) -> Dict[str, Any]:
         """Execute the complete live council workflow for the given PromptRequest.
         
         Args:
@@ -79,7 +79,7 @@ class LiveCouncil:
         
         # Step 1 & 2: Execute providers & normalize responses
         try:
-            responses = await self.council_executor.execute_council(request)
+            responses = await self.council_executor.execute_council(request, timeout=timeout)
         except CouncilExecutionError as e:
             logger.error("Provider execution failed during live council: %s", e)
             raise LiveCouncilError(f"Live Council execution failed: {e}") from e
@@ -134,7 +134,9 @@ class LiveCouncil:
             "consensus": consensus_result,
             "score": score,
             "explanation": explanation,
-            "contributors": consensus_result.contributors
+            "contributors": consensus_result.contributors,
+            "failed_providers": getattr(self.council_executor, "failed_providers", []),
+            "error_details": getattr(self.council_executor, "error_details", {})
         }
         
         logger.info(
