@@ -208,8 +208,10 @@ def test_invalid_inputs_and_exceptions():
         generator.generate_provider_explanation([])
     with pytest.raises(ExplanationGenerationError):
         generator.generate_provider_explanation([123])
-    with pytest.raises(ExplanationGenerationError):
-        generator.generate_provider_explanation(["unknown-provider"])
+
+    # Unknown providers should trigger a fallback, not an exception
+    res_generic = generator.generate_provider_explanation(["unknown-provider"])
+    assert "Unknown-provider provided general capabilities" in res_generic
 
     # Invalid learning style
     with pytest.raises(ExplanationGenerationError):

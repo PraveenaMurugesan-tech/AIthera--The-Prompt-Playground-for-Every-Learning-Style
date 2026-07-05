@@ -68,7 +68,7 @@ class ConsensusBuilder:
 
         logger = logging.getLogger(__name__)
         logger.debug("Provider scores averaged to calculate consensus score: %f", quality_score)
-        logger.debug("Selected winner: %s", best_response.model)
+        logger.debug("Selected winner: %s", getattr(best_response, "provider_name", None) or best_response.model)
         logger.debug("Consensus score value before result creation: %f", quality_score)
 
         # 3. Return ConsensusResult
@@ -81,7 +81,7 @@ class ConsensusBuilder:
             contributors=contributors,
             response_count=len(responses),
             response_metadata={
-                "best_model": best_response.model,
+                "best_model": getattr(best_response, "provider_name", None) or best_response.model,
                 "best_role": best_response.role,
                 "contributors_count": len(contributors),
             }
@@ -92,15 +92,16 @@ class ConsensusBuilder:
 
         Priority order: GPT (highest) > Claude > Gemini > DeepSeek (lowest)
         """
-        def get_provider_priority(model_name: str) -> int:
+        def get_provider_priority(model_name: str, provider_name: str = "") -> int:
             model_lower = model_name.lower()
-            if "gpt" in model_lower:
+            provider_lower = (provider_name or "").lower()
+            if "gpt" in model_lower or "openai" in provider_lower:
                 return 4
-            elif "claude" in model_lower:
+            elif "claude" in model_lower or "claude" in provider_lower:
                 return 3
-            elif "gemini" in model_lower:
+            elif "gemini" in model_lower or "gemini" in provider_lower:
                 return 2
-            elif "deepseek" in model_lower:
+            elif "deepseek" in model_lower or "deepseek" in provider_lower:
                 return 1
             return 0
 
@@ -119,7 +120,8 @@ class ConsensusBuilder:
                     except Exception:
                         score = 0.0
 
-            priority = get_provider_priority(r.model)
+            p_name = getattr(r, "provider_name", None) or ""
+            priority = get_provider_priority(r.model, p_name)
 
             # High score wins, tie-breaks on provider priority
             if score > best_score:
@@ -132,7 +134,7 @@ class ConsensusBuilder:
                     best_response = r
             
             logger = logging.getLogger(__name__)
-            logger.debug("Evaluated provider: %s, score: %f", r.model, score)
+            logger.debug("Evaluated provider: %s, score: %f", p_name or r.model, score)
 
         if not best_response:
             raise ConsensusBuilderError("Could not determine best response from the list.")
@@ -165,13 +167,16 @@ class ConsensusBuilder:
 
         for r in responses:
             model_lower = r.model.lower()
-            if "gpt" in model_lower or "groq" in model_lower or "llama" in model_lower:
+            provider_name = getattr(r, "provider_name", None) or ""
+            provider_lower = provider_name.lower()
+            
+            if "gpt" in model_lower or "groq" in model_lower or "llama" in model_lower or "openai" in provider_lower or "groq" in provider_lower or "openrouter" in provider_lower or "cerebras" in provider_lower or "sambanova" in provider_lower:
                 has_gpt = True
-            elif "claude" in model_lower:
+            elif "claude" in model_lower or "claude" in provider_lower:
                 has_claude = True
-            elif "gemini" in model_lower:
+            elif "gemini" in model_lower or "gemini" in provider_lower:
                 has_gemini = True
-            elif "deepseek" in model_lower:
+            elif "deepseek" in model_lower or "deepseek" in provider_lower:
                 has_deepseek = True
 
         first_part = ""
@@ -228,13 +233,10 @@ class ConsensusBuilder:
         """Track unique contributor keys for responses that participated."""
         contributors = []
         for r in responses:
-            model_lower = r.model.lower()
-            for provider in ["gpt", "claude", "gemini", "deepseek", "groq", "llama"]:
-                if provider in model_lower:
-                    mapped = provider
-                    if provider in ["groq", "llama"]:
-                        mapped = "groq"
-                    if mapped not in contributors:
-                        contributors.append(mapped)
-                    break
+            name_to_use = getattr(r, "provider_name", None)
+            if not name_to_use:
+                name_to_use = r.model
+                
+            if name_to_use and name_to_use not in contributors:
+                contributors.append(name_to_use)
         return contributors

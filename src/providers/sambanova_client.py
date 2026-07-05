@@ -194,20 +194,33 @@ class SambaNovaClient(BaseProvider):
         start_time = time.time()
 
         try:
-            # We use AsyncRetrying to perform retries asynchronously
+            # Stagger request slightly to avoid immediate rate limit spikes when called concurrently
+            import asyncio
+            await asyncio.sleep(1.5)
+            
             async for attempt in AsyncRetrying(
-                stop=stop_after_attempt(3),
-                wait=wait_exponential(multiplier=1, min=1, max=5),
+                stop=stop_after_attempt(4),
+                wait=wait_exponential(multiplier=5, min=5, max=20),
                 retry=retry_if_exception(is_transient_error),
                 reraise=True
             ):
                 with attempt:
                     attempt_num = attempt.retry_state.attempt_number
-                    logger.info("Sending SambaNova API request (attempt %d/3)...", attempt_num)
+                    logger.info("=== SambaNova Request ===")
+                    logger.info("Endpoint: %s/chat/completions", self.BASE_URL)
+                    logger.info("Model: %s", model)
+                    logger.info("Timeout: %s", self.timeout)
+                    logger.info("Retry Number: %d/5", attempt_num)
+                    
                     response = await client.chat.completions.create(
                         model=model,
                         messages=[{"role": "user", "content": resolved_prompt}],
                     )
+                    
+                    # Try to extract request ID if available
+                    request_id = response.id if hasattr(response, 'id') else 'unknown'
+                    logger.info("Request ID: %s", request_id)
+                    
                     duration = time.time() - start_time
                     logger.info("Request completed successfully in %.2f seconds", duration)
 

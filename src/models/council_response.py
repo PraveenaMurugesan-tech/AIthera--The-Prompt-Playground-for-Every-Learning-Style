@@ -125,6 +125,10 @@ class CouncilResponse(BaseModel):
         ...,
         description="The AI provider model name (e.g. gpt-4o, claude-3-5-sonnet, gemini-1.5-pro, deepseek-chat)",
     )
+    provider_name: Optional[str] = Field(
+        None,
+        description="The name of the AI provider (e.g. Groq, Claude, Gemini, DeepSeek, OpenRouter, Cerebras, SambaNova)",
+    )
     role: str = Field(
         ...,
         description="The specific role assigned to the council member (e.g., creator, validator, refiner)",
@@ -206,6 +210,7 @@ class CouncilResponse(BaseModel):
         "json_schema_extra": {
             "example": {
                 "model": "gpt-4o",
+                "provider_name": "OpenAI",
                 "role": "creator",
                 "prompt": "Create an interactive lesson about photosynthesis for a visual learner...",
                 "reasoning": "Designed with visually structured headings and structured steps...",
@@ -250,6 +255,7 @@ class CouncilResponseDB(Base):
     request_id: Mapped[int] = mapped_column(Integer, ForeignKey("prompt_requests.id"), nullable=False, index=True)
 
     model: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    provider_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     role: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     reasoning: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

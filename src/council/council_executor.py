@@ -365,6 +365,7 @@ class CouncilExecutor:
         difficulty: str,
         education_level: str,
         output_length: str,
+        timeout: float = 300.0,
     ) -> Optional[CouncilResponse]:
         """Execute a single provider and return its response.
         
@@ -381,28 +382,58 @@ class CouncilExecutor:
         Returns:
             CouncilResponse if successful, None if provider fails
         """
+        import time
+        from datetime import datetime
+        start_time = time.time()
+        timestamp_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        model_name = getattr(provider, 'model_name', 'Unknown')
+        print(f"\n[Execution Start] Provider: {provider_name}, Model: {model_name}, Timestamp: {timestamp_str}")
+        
         try:
             logger.info("Starting provider: %s", provider_name)
             
-            response = await provider.generate_response(
-                topic=topic,
-                objective=objective,
-                learning_style=learning_style,
-                difficulty=difficulty,
-                education_level=education_level,
-                output_length=output_length,
+            response = await asyncio.wait_for(
+                provider.generate_response(
+                    topic=topic,
+                    objective=objective,
+                    learning_style=learning_style,
+                    difficulty=difficulty,
+                    education_level=education_level,
+                    output_length=output_length,
+                ),
+                timeout=timeout
             )
             
+            elapsed = time.time() - start_time
+            print(f"[Execution End] Success: True, Provider: {provider_name}, Time: {elapsed:.2f}s, HTTP Status: 200")
             logger.info("Provider succeeded: %s", provider_name)
             return response
+        except asyncio.TimeoutError as e:
+            elapsed = time.time() - start_time
+            print(f"[Execution End] Success: False, Provider: {provider_name}, Time: {elapsed:.2f}s, HTTP Status: Timeout")
+            logger.error("Provider timed out after %.1fs: %s", timeout, provider_name)
+            raise e
         except NotImplementedError as e:
+            elapsed = time.time() - start_time
+            print(f"[Execution End] Success: False, Provider: {provider_name}, Time: {elapsed:.2f}s, HTTP Status: N/A")
             logger.warning("Provider not implemented: %s - %s", provider_name, str(e))
             raise e
         except Exception as e:
+            elapsed = time.time() - start_time
+            # Try to extract HTTP status if available in string representation (e.g., Error code: 429)
+            status_code = "N/A"
+            error_str = str(e)
+            if "Error code:" in error_str:
+                import re
+                match = re.search(r"Error code:\s*(\d+)", error_str)
+                if match:
+                    status_code = match.group(1)
+            
+            print(f"[Execution End] Success: False, Provider: {provider_name}, Time: {elapsed:.2f}s, HTTP Status: {status_code}")
             logger.error(
                 "Provider failed with exception: %s - %s",
                 provider_name,
-                str(e),
+                error_str,
                 exc_info=True
             )
             raise e
@@ -567,11 +598,31 @@ class CouncilExecutor:
                         str(response)
                     )
                     result.failed_providers.append(provider_name)
-                    result.error_details[provider_name] = str(response)
+                    
+                    error_type = type(response).__name__
+                    status_code = getattr(response, "status_code", None)
+                    if status_code is None:
+                        error_str = str(response)
+                        import re
+                        match = re.search(r"Error code:\s*(\d+)", error_str)
+                        if match:
+                            status_code = match.group(1)
+                        else:
+                            status_code = "N/A"
+                    
+                    result.error_details[provider_name] = {
+                        "type": error_type,
+                        "status_code": status_code,
+                        "message": str(response)
+                    }
                 elif response is None:
                     logger.warning("Provider %s returned None", provider_name)
                     result.failed_providers.append(provider_name)
-                    result.error_details[provider_name] = "Provider returned None"
+                    result.error_details[provider_name] = {
+                        "type": "NoneTypeError",
+                        "status_code": "N/A",
+                        "message": "Provider returned None"
+                    }
                 else:
                     try:
                         if isinstance(response, dict):
@@ -597,7 +648,11 @@ class CouncilExecutor:
                             str(ne),
                         )
                         result.failed_providers.append(provider_name)
-                        result.error_details[provider_name] = f"Normalization failed: {str(ne)}"
+                        result.error_details[provider_name] = {
+                            "type": "NormalizationError",
+                            "status_code": "N/A",
+                            "message": f"Normalization failed: {str(ne)}"
+                        }
 
             # Check if at least one provider succeeded
             if not result.responses:
@@ -630,7 +685,8 @@ class CouncilExecutor:
 
     async def execute_council(
         self,
-        request: PromptRequest
+        request: PromptRequest,
+        timeout: float = 300.0,
     ) -> List[CouncilResponse]:
         """Execute the live council by invoking all active providers in parallel.
         
@@ -668,6 +724,7 @@ class CouncilExecutor:
                 difficulty=request.difficulty,
                 education_level=request.education_level,
                 output_length=request.output_length,
+                timeout=timeout,
             )
             tasks.append(task)
 
@@ -678,6 +735,7 @@ class CouncilExecutor:
         normalized_responses: List[CouncilResponse] = []
         self.failed_providers = []
         self.successful_providers = []
+        self.error_details = {}
 
         for name, response in zip(provider_names, results):
             provider_instance = active_providers[name]
@@ -686,10 +744,32 @@ class CouncilExecutor:
             if isinstance(response, Exception):
                 logger.error("Provider %s execution failed: %s", provider_display_name, response)
                 self.failed_providers.append(provider_display_name)
+                
+                error_type = type(response).__name__
+                status_code = getattr(response, "status_code", None)
+                if status_code is None:
+                    error_str = str(response)
+                    import re
+                    match = re.search(r"Error code:\s*(\d+)", error_str)
+                    if match:
+                        status_code = match.group(1)
+                    else:
+                        status_code = "N/A"
+                        
+                self.error_details[provider_display_name] = {
+                    "type": error_type,
+                    "status_code": status_code,
+                    "message": str(response) if str(response) else error_type
+                }
                 self.health_tracker.record_failure(provider_display_name)
             elif response is None:
                 logger.warning("Provider %s returned None", provider_display_name)
                 self.failed_providers.append(provider_display_name)
+                self.error_details[provider_display_name] = {
+                    "type": "NoneTypeError",
+                    "status_code": "N/A",
+                    "message": "Provider returned None"
+                }
                 self.health_tracker.record_failure(provider_display_name)
             else:
                 try:
@@ -715,6 +795,11 @@ class CouncilExecutor:
                 except Exception as ne:
                     logger.error("Failed to normalize response for %s: %s", provider_display_name, ne)
                     self.failed_providers.append(provider_display_name)
+                    self.error_details[provider_display_name] = {
+                        "type": "NormalizationError",
+                        "status_code": "N/A",
+                        "message": f"Normalization failed: {str(ne)}"
+                    }
                     self.health_tracker.record_failure(provider_display_name)
 
         if not normalized_responses:
