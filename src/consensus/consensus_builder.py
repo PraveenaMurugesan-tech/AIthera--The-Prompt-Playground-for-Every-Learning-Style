@@ -135,17 +135,29 @@ class ConsensusBuilder:
         
         # Other existing fields
         combined_strengths = self.aggregate_strengths(responses)
-        consensus_reasoning = self.generate_consensus_reasoning(responses, best_response, combined_strengths)
+        consensus_reasoning = self.generate_consensus_reasoning(responses)
         contributors = self.extract_contributors(responses)
+        conflicting_concepts = self.extract_conflicting_concepts(responses)
+        
+        num_successful = len(contributors)
+        total_providers_attempted = num_successful + len(failed_providers) if failed_providers else num_successful
+        
+        confidence_score = self.calculate_confidence_score(
+            prompt_score=winner_scores["prompt_score"],
+            agreement=overall_agreement,
+            completeness=winner_scores["completeness_score"] / 100.0,
+            num_successful=num_successful,
+            total_providers=total_providers_attempted
+        )
 
-        logger.info(f"Selected winner: {winner_provider} with weighted score {best_weighted_score:.2f}")
+        logger.info(f"Selected winner: {winner_provider} with weighted score {best_weighted_score:.2f}, Confidence: {confidence_score:.2f}")
 
         # 7. Return ConsensusResult
         return ConsensusResult(
             request_id=request_id,
-            final_prompt=synthesized_prompt,
-            consensus_reasoning=consensus_reasoning,
-            combined_strengths=combined_strengths,
+            final_prompt=synthesized_prompt, # Keep for backward compatibility
+            consensus_reasoning=consensus_reasoning, # Keep for backward compatibility
+            combined_strengths=combined_strengths, # Keep for backward compatibility
             quality_score=best_weighted_score,  # Using weighted score as quality_score for backward compatibility
             contributors=contributors,
             response_count=len(responses),
@@ -165,7 +177,16 @@ class ConsensusBuilder:
                 "best_role": best_response.role,
                 "contributors_count": len(contributors),
                 "overall_agreement": overall_agreement
-            }
+            },
+            # Phase 2 Fields
+            confidence_score=confidence_score,
+            educational_structure_score=winner_scores["completeness_score"], # Reusing completeness for structure score
+            synthesized_prompt=synthesized_prompt,
+            synthesized_reasoning=consensus_reasoning,
+            merged_strengths=combined_strengths,
+            unique_concepts=list(unique_contributions.keys()), # simplistic, we can store keys
+            conflicting_concepts=conflicting_concepts,
+            provider_contributions=unique_contributions
         )
 
     def extract_common_concepts(self, responses: list[CouncilResponse]) -> list[str]:
@@ -260,52 +281,67 @@ class ConsensusBuilder:
         keywords = []
         
         if "visual" in style:
-            keywords = ["diagram", "chart", "visualize", "picture", "imagine", "see", "flowchart", "table", "map"]
-        elif "hand" in style or "kinesthetic" in style:
-            keywords = ["practice", "exercise", "build", "create", "activity", "project", "hands-on", "try", "do"]
-        elif "read" in style or "write" in style:
-            keywords = ["read", "write", "summarize", "definition", "structure", "list", "explain", "text", "notes"]
-        elif "audit" in style or "listen" in style:
-            keywords = ["discuss", "listen", "explain aloud", "tell", "story", "podcast", "debate", "verbal"]
+            keywords = ["diagram", "chart", "visualize", "picture", "imagine", "see", "flowchart", "table", "map", "graph"]
+        elif "hand" in style or "kinesthetic" in style or "step" in style:
+            keywords = ["practice", "exercise", "build", "create", "activity", "project", "hands-on", "try", "do", "step", "experiment"]
+        elif "read" in style or "write" in style or "theoretical" in style or "research" in style:
+            keywords = ["read", "write", "summarize", "definition", "structure", "list", "explain", "text", "notes", "theory", "concept"]
+        elif "audit" in style or "listen" in style or "story" in style or "conversational" in style:
+            keywords = ["discuss", "listen", "explain aloud", "tell", "story", "podcast", "debate", "verbal", "analogy", "imagine if"]
             
         # Count hits
         hits = sum(1 for kw in keywords if kw in prompt_lower)
         
-        if hits >= 3:
+        if hits >= 4:
             score = 100.0
+        elif hits == 3:
+            score = 90.0
         elif hits == 2:
-            score = 85.0
+            score = 75.0
         elif hits == 1:
-            score = 70.0
+            score = 60.0
             
         return score
 
     def compute_completeness(self, prompt: str) -> float:
         """Evaluate whether the response contains standard educational components. Returns 0-100."""
+        return self.compute_structure_score(prompt)
+
+    def compute_structure_score(self, prompt: str) -> float:
+        """Evaluate for: intro, explanation, examples, exercises, summary, learning objs, real-world apps. Returns 0-100."""
         prompt_lower = prompt.lower()
         components_found = 0
+        total_components = 7
         
-        # Basic heuristic checks
-        if "introduction" in prompt_lower or "overview" in prompt_lower or "welcome" in prompt_lower:
+        # 1. Intro / Welcome
+        if any(kw in prompt_lower for kw in ["introduction", "overview", "welcome", "in this lesson"]):
             components_found += 1
             
-        # Explanation usually has paragraphs or steps
-        if len(prompt.split("\n\n")) > 3:
+        # 2. Explanation / Core Concept
+        if len(prompt.split("\n\n")) > 3 or "concept" in prompt_lower or "definition" in prompt_lower:
             components_found += 1
             
-        if "example" in prompt_lower or "for instance" in prompt_lower:
+        # 3. Examples
+        if any(kw in prompt_lower for kw in ["example", "for instance", "e.g.", "such as"]):
             components_found += 1
             
-        if "summary" in prompt_lower or "in conclusion" in prompt_lower or "recap" in prompt_lower:
+        # 4. Exercises / Practice
+        if any(kw in prompt_lower for kw in ["practice", "exercise", "activity", "quiz", "try it"]):
             components_found += 1
             
-        if "practice" in prompt_lower or "exercise" in prompt_lower or "activity" in prompt_lower or "quiz" in prompt_lower:
+        # 5. Summary / Wrap-up
+        if any(kw in prompt_lower for kw in ["summary", "in conclusion", "recap", "wrap-up"]):
             components_found += 1
             
-        if "conclusion" in prompt_lower or "wrap-up" in prompt_lower or "next steps" in prompt_lower:
+        # 6. Learning Objectives
+        if any(kw in prompt_lower for kw in ["objective", "goal", "by the end of", "you will learn"]):
             components_found += 1
             
-        score = (components_found / 6.0) * 100
+        # 7. Real-world applications
+        if any(kw in prompt_lower for kw in ["real-world", "real world", "application", "use case", "in practice"]):
+            components_found += 1
+            
+        score = (components_found / float(total_components)) * 100
         return min(100.0, max(0.0, score))
 
     def synthesize_final_prompt(self, winner: CouncilResponse, unique_contributions: Dict[str, list[str]]) -> str:
@@ -374,74 +410,96 @@ class ConsensusBuilder:
         return best_response
 
     def aggregate_strengths(self, responses: list[CouncilResponse]) -> list[str]:
-        """Collect and deduplicate strengths from all responses."""
+        """Collect and deduplicate strengths from all responses, normalizing capitalization."""
         seen = set()
         combined_strengths = []
         for r in responses:
             for strength in r.strengths:
                 if strength and isinstance(strength, str):
                     stripped = strength.strip()
-                    if stripped and stripped not in seen:
-                        seen.add(stripped)
-                        combined_strengths.append(stripped)
-        return combined_strengths
+                    if not stripped:
+                        continue
+                    # Normalize capitalization (capitalize first letter)
+                    normalized = stripped[0].upper() + stripped[1:]
+                    lower_check = normalized.lower()
+                    if lower_check not in seen:
+                        seen.add(lower_check)
+                        combined_strengths.append(normalized)
+        
+        # Keep most meaningful (longest/most detailed first) up to 10
+        combined_strengths.sort(key=len, reverse=True)
+        return combined_strengths[:10]
 
     def generate_consensus_reasoning(
         self,
-        responses: list[CouncilResponse],
-        best_response: CouncilResponse,
-        combined_strengths: list[str]
+        responses: list[CouncilResponse]
     ) -> str:
-        """Generate a text summary explaining consensus contributions."""
-        has_gpt = False
-        has_claude = False
-        has_gemini = False
-        has_deepseek = False
-
+        """Group similar reasoning from all responses, preserving unique insights."""
+        all_sentences = []
         for r in responses:
-            model_lower = r.model.lower()
-            provider_name = getattr(r, "provider_name", None) or ""
-            provider_lower = provider_name.lower()
+            if r.reasoning:
+                sentences = [s.strip() for s in re.split(r'(?<=[.!?]) +', r.reasoning) if s.strip()]
+                all_sentences.extend(sentences)
+                
+        seen = set()
+        unique_reasoning = []
+        for s in all_sentences:
+            s_lower = s.lower()
+            # Simple deduplication
+            if not any(difflib.SequenceMatcher(None, s_lower, seen_s).ratio() > 0.8 for seen_s in seen):
+                seen.add(s_lower)
+                unique_reasoning.append(s)
+                
+        if not unique_reasoning:
+            return "Participating council providers contributed to the prompt construction."
             
-            if "gpt" in model_lower or "groq" in model_lower or "llama" in model_lower or "openai" in provider_lower or "groq" in provider_lower or "openrouter" in provider_lower or "cerebras" in provider_lower or "sambanova" in provider_lower:
-                has_gpt = True
-            elif "claude" in model_lower or "claude" in provider_lower:
-                has_claude = True
-            elif "gemini" in model_lower or "gemini" in provider_lower:
-                has_gemini = True
-            elif "deepseek" in model_lower or "deepseek" in provider_lower:
-                has_deepseek = True
+        return " ".join(unique_reasoning[:5]) # Limit to top 5 sentences for clarity
 
-        first_part = ""
-        if has_gpt and has_claude:
-            first_part = "GPT provided strong educational structure while Claude contributed deeper reasoning"
-        elif has_gpt:
-            first_part = "GPT provided strong educational structure"
-        elif has_claude:
-            first_part = "Claude contributed deeper reasoning"
+    def calculate_confidence_score(
+        self,
+        prompt_score: float,
+        agreement: float,
+        completeness: float,
+        num_successful: int,
+        total_providers: int
+    ) -> float:
+        """Calculate a 0-100 confidence score based on multiple metrics."""
+        # Weighted combination
+        # Prompt Quality: 40%
+        # Agreement: 30%
+        # Completeness: 20%
+        # Provider Success Ratio: 10%
+        
+        success_ratio = (num_successful / total_providers) if total_providers > 0 else 0.0
+        
+        confidence = (
+            (prompt_score * 0.40) +
+            (agreement * 100 * 0.30) +
+            (completeness * 0.20) +
+            (success_ratio * 100 * 0.10)
+        )
+        return min(100.0, max(0.0, confidence))
 
-        second_part = ""
-        if has_gemini and has_deepseek:
-            second_part = "Gemini improved visualization and DeepSeek strengthened logical flow"
-        elif has_gemini:
-            second_part = "Gemini improved visualization"
-        elif has_deepseek:
-            second_part = "DeepSeek strengthened logical flow"
-
-        summary_parts = []
-        if first_part:
-            summary_parts.append(first_part)
-        if second_part:
-            summary_parts.append(second_part)
-
-        summary = ". ".join(summary_parts)
-        if summary:
-            summary += "."
-        else:
-            summary = "Participating council providers contributed to the prompt construction."
-
-        reasoning_end = " The final prompt was selected based on the highest quality score."
-        return summary + reasoning_end
+    def extract_conflicting_concepts(self, responses: list[CouncilResponse]) -> list[str]:
+        """Detect conflicting recommendations between providers (e.g. negations)."""
+        conflicts = []
+        # Basic heuristic: look for "avoid", "don't", "not" near keywords in one, and the keyword in another
+        keywords = ["visuals", "code", "theory", "examples", "exercises", "math", "story"]
+        
+        for kw in keywords:
+            supported = False
+            opposed = False
+            for r in responses:
+                text = (r.prompt + " " + r.reasoning).lower()
+                if f"no {kw}" in text or f"avoid {kw}" in text or f"don't use {kw}" in text:
+                    opposed = True
+                elif kw in text:
+                    supported = True
+                    
+            if supported and opposed:
+                conflicts.append(kw)
+                
+        return conflicts
 
     def calculate_consensus_score(self, responses: list[CouncilResponse]) -> float:
         """Legacy fallback: Average all overall scores and round to 2 decimal places."""

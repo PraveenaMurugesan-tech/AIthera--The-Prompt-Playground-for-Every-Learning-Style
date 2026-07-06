@@ -43,6 +43,16 @@ class ConsensusResult(Base):
     providers_used: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
     failed_providers: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
 
+    # Phase 2 Synthesis Fields
+    confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    educational_structure_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    synthesized_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    synthesized_reasoning: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    merged_strengths: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
+    unique_concepts: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
+    conflicting_concepts: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
+    provider_contributions: Mapped[Optional[Dict[str, list[str]]]] = mapped_column(JSON, nullable=True)
+
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # One-to-one back to the request
@@ -74,5 +84,13 @@ class ConsensusResult(Base):
             "providers_used": self.providers_used,
             "failed_providers": self.failed_providers,
             "response_metadata": self.response_metadata,
+            "confidence_score": self.confidence_score,
+            "educational_structure_score": self.educational_structure_score,
+            "synthesized_prompt": self.synthesized_prompt,
+            "synthesized_reasoning": self.synthesized_reasoning,
+            "merged_strengths": self.merged_strengths,
+            "unique_concepts": self.unique_concepts,
+            "conflicting_concepts": self.conflicting_concepts,
+            "provider_contributions": self.provider_contributions,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
