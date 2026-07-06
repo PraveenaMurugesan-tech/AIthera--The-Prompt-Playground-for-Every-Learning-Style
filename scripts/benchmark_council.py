@@ -181,6 +181,12 @@ class BenchmarkRunner:
                 
             successful_providers = [p for p in provider_stats if p["success"]]
             
+            confidence_score = consensus.confidence_score if consensus.confidence_score is not None else 0.0
+            agreement_score = consensus.agreement_score if consensus.agreement_score is not None else 0.0
+            completeness_score = consensus.completeness_score if consensus.completeness_score is not None else 0.0
+            learning_style_score = consensus.learning_style_score if consensus.learning_style_score is not None else 0.0
+            provider_contributions = consensus.provider_contributions if consensus.provider_contributions else {}
+            
             run_result = {
                 "topic": prompt_data["topic"],
                 "learning_style": prompt_data["learning_style"],
@@ -189,6 +195,11 @@ class BenchmarkRunner:
                 "contributors": contributors,
                 "prompt_score": prompt_score,
                 "consensus_score": consensus_score,
+                "confidence_score": confidence_score,
+                "agreement_score": agreement_score,
+                "completeness_score": completeness_score,
+                "learning_style_score": learning_style_score,
+                "provider_contributions": provider_contributions,
                 "classification": classification,
                 "provider_stats": provider_stats,
                 "num_successful_providers": len(successful_providers),
@@ -267,6 +278,11 @@ class BenchmarkRunner:
                 "contributors": [],
                 "prompt_score": 0.0,
                 "consensus_score": 0.0,
+                "confidence_score": 0.0,
+                "agreement_score": 0.0,
+                "completeness_score": 0.0,
+                "learning_style_score": 0.0,
+                "provider_contributions": {},
                 "classification": "error",
                 "provider_stats": provider_stats,
                 "num_successful_providers": 0,
@@ -341,9 +357,13 @@ class BenchmarkRunner:
             "highest_prompt_score": max(prompt_scores) if prompt_scores else 0,
             "lowest_prompt_score": min(prompt_scores) if prompt_scores else 0,
             "avg_consensus_score": sum(r["consensus_score"] for r in successful_runs) / num_successful,
+            "avg_confidence_score": sum(r.get("confidence_score", 0) for r in successful_runs) / num_successful,
+            "avg_agreement_score": sum(r.get("agreement_score", 0) for r in successful_runs) / num_successful,
+            "avg_completeness_score": sum(r.get("completeness_score", 0) for r in successful_runs) / num_successful,
+            "avg_learning_style_score": sum(r.get("learning_style_score", 0) for r in successful_runs) / num_successful,
             "provider_success_rates": provider_success_rates,
             "provider_failure_rates": {p: 100 - r for p, r in provider_success_rates.items()},
-            "avg_contributors": sum(r["num_successful_providers"] for r in successful_runs) / num_successful,
+            "avg_successful_providers": sum(r["num_successful_providers"] for r in successful_runs) / num_successful,
             "most_frequent_winner": winning_providers.most_common(1)[0][0] if winning_providers else "none",
             "winning_frequencies": dict(winning_providers),
             "avg_provider_latencies": avg_provider_latencies,
@@ -414,6 +434,11 @@ class BenchmarkRunner:
             f.write(f"- **Number of benchmark runs:** {stats['total_runs']}\n")
             f.write(f"- **Average prompt score:** {stats['avg_prompt_score']:.2f}\n")
             f.write(f"- **Average consensus score:** {stats['avg_consensus_score']:.2f}\n")
+            f.write(f"- **Average confidence score:** {stats['avg_confidence_score']:.2f}\n")
+            f.write(f"- **Average agreement score:** {stats['avg_agreement_score']:.2f}\n")
+            f.write(f"- **Average completeness score:** {stats['avg_completeness_score']:.2f}\n")
+            f.write(f"- **Average learning style score:** {stats['avg_learning_style_score']:.2f}\n")
+            f.write(f"- **Average successful providers:** {stats['avg_successful_providers']:.2f}\n")
             f.write(f"- **Average execution time:** {stats['avg_execution_time']:.2f}s\n")
             f.write(f"- **Fastest provider:** {stats['fastest_provider']}\n")
             f.write(f"- **Slowest provider:** {stats['slowest_provider']}\n\n")
@@ -486,6 +511,11 @@ class BenchmarkRunner:
         print("\n========== AI Council Benchmark Summary ==========")
         print(f"Average Prompt Score: {stats['avg_prompt_score']:.2f}")
         print(f"Average Consensus Score: {stats['avg_consensus_score']:.2f}")
+        print(f"Average Confidence Score: {stats['avg_confidence_score']:.2f}")
+        print(f"Average Agreement Score: {stats['avg_agreement_score']:.2f}")
+        print(f"Average Completeness Score: {stats['avg_completeness_score']:.2f}")
+        print(f"Average Learning Style Score: {stats['avg_learning_style_score']:.2f}")
+        print(f"Average Successful Providers: {stats['avg_successful_providers']:.2f}")
         print(f"Average Execution Time: {stats['avg_execution_time']:.2f}s")
         print(f"Fastest Provider: {stats['fastest_provider']}")
         print(f"Slowest Provider: {stats['slowest_provider']}")
@@ -497,6 +527,19 @@ class BenchmarkRunner:
         print("\nWinner Frequency:")
         for p, w in stats['winning_frequencies'].items():
             print(f"- {p}: {w}")
+            
+        print("\nProvider Contribution Summary:")
+        # aggregate contributions
+        provider_contrib = {}
+        for r in self.results:
+            for p, contribs in r.get("provider_contributions", {}).items():
+                if p not in provider_contrib:
+                    provider_contrib[p] = []
+                provider_contrib[p].extend(contribs)
+                
+        for p, contribs in provider_contrib.items():
+            unique_c = list(set(contribs))
+            print(f"- {p}: {len(unique_c)} unique concepts/strengths contributed")
             
         print("\nBenchmark completed successfully.")
         print("Reports saved to /reports")

@@ -46,12 +46,21 @@ def test_benchmark_runner_execution(temp_benchmark_dir):
     runner = BenchmarkRunner(data_path, reports_dir)
     
     # Mock the LiveCouncil execute method
+    consensus_mock = MagicMock()
+    consensus_mock.contributors = ["Groq", "Gemini"]
+    consensus_mock.quality_score = 0.9
+    consensus_mock.confidence_score = 95.0
+    consensus_mock.agreement_score = 0.8
+    consensus_mock.completeness_score = 90.0
+    consensus_mock.learning_style_score = 100.0
+    consensus_mock.provider_contributions = {"Groq": ["examples"], "Gemini": ["visuals"]}
+    
     mock_result = {
         "responses": [
             MagicMock(provider_name="Gemini", model="Gemini", prompt="Good", metadata=MagicMock(response_time=0.5)),
             MagicMock(provider_name="Groq", model="Groq", prompt="Fast", metadata=MagicMock(response_time=0.2))
         ],
-        "consensus": MagicMock(contributors=["Groq", "Gemini"], quality_score=0.9),
+        "consensus": consensus_mock,
         "score": MagicMock(overall_score=85, classification="GOOD"),
         "contributors": ["Gemini", "Groq"]
     }
@@ -90,15 +99,24 @@ def test_benchmark_runner_provider_identity(temp_benchmark_dir):
     runner = BenchmarkRunner(data_path, reports_dir)
     
     # Mock the LiveCouncil execute method with two providers sharing the same model
+    consensus_mock = MagicMock()
+    consensus_mock.contributors = ["Cerebras", "OpenRouter"]
+    consensus_mock.quality_score = 0.9
+    consensus_mock.confidence_score = 90.0
+    consensus_mock.agreement_score = 0.8
+    consensus_mock.completeness_score = 90.0
+    consensus_mock.learning_style_score = 100.0
+    consensus_mock.provider_contributions = {"Cerebras": ["structure"]}
+    
     mock_result = {
         "responses": [
             MagicMock(provider_name="Cerebras", model="gpt-oss-120b", prompt="Good", metadata=MagicMock(response_time=0.5)),
             MagicMock(provider_name="OpenRouter", model="gpt-oss-120b", prompt="Fast", metadata=MagicMock(response_time=0.2))
         ],
-        "consensus": MagicMock(contributors=["Cerebras", "OpenRouter"], quality_score=0.9),
+        "consensus": consensus_mock,
         "score": MagicMock(overall_score=85, classification="GOOD"),
         "contributors": ["Cerebras", "OpenRouter"],
-        "failed_providers": [],
+        "failed_providers": ["Groq"],
         "error_details": {}
     }
     
@@ -112,7 +130,8 @@ def test_benchmark_runner_provider_identity(temp_benchmark_dir):
     res = runner.results[0]
     
     # Ensure they are separate in provider_stats
-    assert len(res["provider_stats"]) == 2
+    assert len(res["provider_stats"]) == 3
+    assert res["num_successful_providers"] == 2
     
     cerebras_stat = next(p for p in res["provider_stats"] if p["provider_name"] == "Cerebras")
     assert cerebras_stat["model_name"] == "gpt-oss-120b"

@@ -364,8 +364,8 @@ async def test_execute_partial_failures(
     assert "Claude" in result.failed_providers
     assert "DeepSeek" in result.failed_providers
     
-    assert "Claude API offline" in result.error_details["Claude"]
-    assert "Provider returned None" in result.error_details["DeepSeek"]
+    assert "Claude API offline" in result.error_details["Claude"]["message"]
+    assert "Provider returned None" in result.error_details["DeepSeek"]["message"]
 
 
 @patch("src.council.council_executor.SambaNovaClient")
@@ -424,7 +424,7 @@ async def test_execute_normalization_failure(
     assert isinstance(result, CouncilExecutionResult)
     assert len(result.responses) == 6  # Groq, Gemini, DeepSeek, OpenRouter, Cerebras, SambaNova
     assert "Claude" in result.failed_providers
-    assert "Normalization failed" in result.error_details["Claude"]
+    assert "Normalization failed" in result.error_details["Claude"]["message"]
 
 
 @patch("src.council.council_executor.SambaNovaClient")

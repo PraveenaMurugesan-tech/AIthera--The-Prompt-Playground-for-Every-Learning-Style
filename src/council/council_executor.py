@@ -635,6 +635,8 @@ class CouncilExecutor:
                         elif isinstance(response, CouncilResponse):
                             # Already normalized CouncilResponse
                             normalized = response
+                            if not getattr(normalized, "provider_name", None):
+                                normalized.provider_name = provider_name
                         else:
                             raise ValueError(f"Unexpected response type: {type(response)}")
 
@@ -782,6 +784,8 @@ class CouncilExecutor:
                         )
                     elif isinstance(response, CouncilResponse):
                         normalized = response
+                        if not getattr(normalized, "provider_name", None):
+                            normalized.provider_name = provider_display_name
                     else:
                         raise ValueError(f"Unexpected response type: {type(response)}")
 

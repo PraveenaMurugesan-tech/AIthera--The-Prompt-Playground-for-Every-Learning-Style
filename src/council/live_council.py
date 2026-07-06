@@ -92,7 +92,9 @@ class LiveCouncil:
         try:
             consensus_result = self.consensus_builder.build_consensus(
                 responses=responses,
-                request_id=request_id
+                request_id=request_id,
+                learning_style=request.learning_style,
+                failed_providers=getattr(self.council_executor, "failed_providers", [])
             )
         except ConsensusBuilderError as e:
             logger.error("Consensus building failed: %s", e)

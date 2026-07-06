@@ -1,5 +1,6 @@
-from __future__ import annotations
+import difflib
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 from src.models.council_response import CouncilResponse
@@ -15,17 +16,23 @@ class ConsensusBuilder:
     """Consensus Builder for the AI Council.
 
     Analyzes multiple normalized CouncilResponse objects and generates a
-    single high-quality consensus result.
+    single high-quality consensus result using multi-factor evaluation.
     """
 
     def build_consensus(
-        self, responses: list[CouncilResponse], request_id: int = 0
+        self, 
+        responses: list[CouncilResponse], 
+        request_id: int = 0,
+        learning_style: str = "visual",
+        failed_providers: Optional[list[str]] = None
     ) -> ConsensusResult:
         """Validate, analyze, and build a ConsensusResult from provider responses.
 
         Args:
             responses: List of normalized CouncilResponse objects.
             request_id: Optional ID of the prompt request.
+            learning_style: The target learning style for evaluation.
+            failed_providers: List of providers that failed during execution.
 
         Returns:
             ConsensusResult: The generated consensus outcome.
@@ -33,6 +40,9 @@ class ConsensusBuilder:
         Raises:
             ConsensusBuilderError: If validation or consensus process fails.
         """
+        if failed_providers is None:
+            failed_providers = []
+            
         # 1. Validate responses list
         if responses is None:
             raise ConsensusBuilderError("Responses list cannot be None.")
@@ -47,7 +57,6 @@ class ConsensusBuilder:
                     f"Invalid response object at index {idx}. All elements must be CouncilResponse instances."
                 )
 
-            # Ensure all required properties are present
             if not hasattr(r, "prompt") or r.prompt is None:
                 raise ConsensusBuilderError(f"Response at index {idx} has missing or empty prompt.")
             if not hasattr(r, "reasoning") or r.reasoning is None:
@@ -57,41 +66,305 @@ class ConsensusBuilder:
             if not hasattr(r, "score") or r.score is None:
                 raise ConsensusBuilderError(f"Response at index {idx} has missing or empty score.")
 
-        # 2. Analyze responses and compute attributes
-        best_response = self.select_best_response(responses)
-        combined_strengths = self.aggregate_strengths(responses)
-        consensus_reasoning = self.generate_consensus_reasoning(
-            responses, best_response, combined_strengths
-        )
-        quality_score = self.calculate_consensus_score(responses)
-        contributors = self.extract_contributors(responses)
-
         logger = logging.getLogger(__name__)
-        logger.debug("Provider scores averaged to calculate consensus score: %f", quality_score)
-        logger.debug("Selected winner: %s", getattr(best_response, "provider_name", None) or best_response.model)
-        logger.debug("Consensus score value before result creation: %f", quality_score)
 
-        # 3. Return ConsensusResult
+        # 2. Extract Common Concepts
+        common_concepts = self.extract_common_concepts(responses)
+        
+        # 3. Extract Unique Contributions
+        unique_contributions = self.extract_unique_contributions(responses, common_concepts)
+
+        # 4. Compute Agreement Scores
+        agreement_scores, overall_agreement = self.compute_agreement(responses)
+
+        # 5. Evaluate Multi-factor Scores and Select Winner
+        best_response = None
+        best_weighted_score = -1.0
+        
+        provider_scores = {}
+        
+        for idx, r in enumerate(responses):
+            provider_name = getattr(r, "provider_name", None) or r.model
+            
+            # 5a. Prompt Score
+            prompt_score = 0.0
+            if r.score:
+                if r.score.overall_score is not None:
+                    prompt_score = r.score.overall_score
+                else:
+                    try:
+                        prompt_score = r.calculate_overall_score()
+                    except Exception:
+                        prompt_score = 0.0
+            
+            # 5b. Agreement Score
+            agreement = agreement_scores.get(idx, 0.0)
+            
+            # 5c. Learning Style Score (0-100) -> Normalized to 0-1
+            learning_style_score = self.compute_learning_style_alignment(r.prompt, learning_style) / 100.0
+            
+            # 5d. Completeness Score (0-100) -> Normalized to 0-1
+            completeness_score = self.compute_completeness(r.prompt) / 100.0
+            
+            # 5e. Weighted Final Score
+            weighted_score = (0.4 * prompt_score) + (0.3 * agreement) + (0.2 * learning_style_score) + (0.1 * completeness_score)
+            
+            provider_scores[provider_name] = {
+                "prompt_score": prompt_score,
+                "agreement_score": agreement,
+                "learning_style_score": learning_style_score * 100,
+                "completeness_score": completeness_score * 100,
+                "weighted_score": weighted_score
+            }
+            
+            logger.debug(f"Provider {provider_name} scores -> Prompt: {prompt_score:.2f}, Agreement: {agreement:.2f}, Learning: {learning_style_score:.2f}, Completeness: {completeness_score:.2f}, Weighted: {weighted_score:.2f}")
+
+            # Select best
+            if weighted_score > best_weighted_score:
+                best_weighted_score = weighted_score
+                best_response = r
+                
+        if not best_response:
+            raise ConsensusBuilderError("Could not determine best response from the list.")
+
+        winner_provider = getattr(best_response, "provider_name", None) or best_response.model
+        winner_scores = provider_scores[winner_provider]
+        
+        # 6. Consensus Synthesis
+        synthesized_prompt = self.synthesize_final_prompt(best_response, unique_contributions)
+        
+        # Other existing fields
+        combined_strengths = self.aggregate_strengths(responses)
+        consensus_reasoning = self.generate_consensus_reasoning(responses)
+        contributors = self.extract_contributors(responses)
+        conflicting_concepts = self.extract_conflicting_concepts(responses)
+        
+        num_successful = len(contributors)
+        total_providers_attempted = num_successful + len(failed_providers) if failed_providers else num_successful
+        
+        confidence_score = self.calculate_confidence_score(
+            prompt_score=winner_scores["prompt_score"],
+            agreement=overall_agreement,
+            completeness=winner_scores["completeness_score"] / 100.0,
+            num_successful=num_successful,
+            total_providers=total_providers_attempted
+        )
+
+        logger.info(f"Selected winner: {winner_provider} with weighted score {best_weighted_score:.2f}, Confidence: {confidence_score:.2f}")
+
+        # 7. Return ConsensusResult
         return ConsensusResult(
             request_id=request_id,
-            final_prompt=best_response.prompt,
-            consensus_reasoning=consensus_reasoning,
-            combined_strengths=combined_strengths,
-            quality_score=quality_score,
+            final_prompt=synthesized_prompt, # Keep for backward compatibility
+            consensus_reasoning=consensus_reasoning, # Keep for backward compatibility
+            combined_strengths=combined_strengths, # Keep for backward compatibility
+            quality_score=best_weighted_score,  # Using weighted score as quality_score for backward compatibility
             contributors=contributors,
             response_count=len(responses),
+            winner_provider=winner_provider,
+            winner_model=best_response.model,
+            prompt_score=winner_scores["prompt_score"],
+            agreement_score=winner_scores["agreement_score"],
+            learning_style_score=winner_scores["learning_style_score"],
+            completeness_score=winner_scores["completeness_score"],
+            overall_consensus_score=best_weighted_score,
+            common_concepts=common_concepts,
+            unique_contributions=unique_contributions,
+            providers_used=contributors,
+            failed_providers=failed_providers,
             response_metadata={
-                "best_model": getattr(best_response, "provider_name", None) or best_response.model,
+                "best_model": winner_provider,
                 "best_role": best_response.role,
                 "contributors_count": len(contributors),
-            }
+                "overall_agreement": overall_agreement
+            },
+            # Phase 2 Fields
+            confidence_score=confidence_score,
+            educational_structure_score=winner_scores["completeness_score"], # Reusing completeness for structure score
+            synthesized_prompt=synthesized_prompt,
+            synthesized_reasoning=consensus_reasoning,
+            merged_strengths=combined_strengths,
+            unique_concepts=list(unique_contributions.keys()), # simplistic, we can store keys
+            conflicting_concepts=conflicting_concepts,
+            provider_contributions=unique_contributions
         )
 
-    def select_best_response(self, responses: list[CouncilResponse]) -> CouncilResponse:
-        """Select the best response based on overall score and provider priority tiebreaker.
+    def extract_common_concepts(self, responses: list[CouncilResponse]) -> list[str]:
+        """Identify concepts that appear in multiple responses based on reasoning and strengths."""
+        if len(responses) < 2:
+            return []
+            
+        all_words = []
+        for r in responses:
+            text = (r.reasoning + " " + " ".join(r.strengths)).lower()
+            # Simple word extraction
+            words = set(re.findall(r'\b[a-z]{5,}\b', text)) # Only consider words > 4 chars
+            all_words.append(words)
+            
+        # Find words that appear in at least 2 responses
+        word_counts = {}
+        for word_set in all_words:
+            for word in word_set:
+                word_counts[word] = word_counts.get(word, 0) + 1
+                
+        common = [word for word, count in word_counts.items() if count >= 2]
+        
+        # Filter out common stop words if any (basic list)
+        stop_words = {"which", "their", "there", "about", "would", "these", "other", "using"}
+        common = [w for w in common if w not in stop_words]
+        
+        return sorted(common)[:10] # Return top 10 common concepts
 
-        Priority order: GPT (highest) > Claude > Gemini > DeepSeek (lowest)
-        """
+    def extract_unique_contributions(self, responses: list[CouncilResponse], common_concepts: list[str]) -> Dict[str, list[str]]:
+        """Identify unique educational contributions for every provider."""
+        unique_contributions = {}
+        
+        # We can look at strengths for unique contributions
+        for r in responses:
+            provider = getattr(r, "provider_name", None) or r.model
+            unique_strengths = []
+            
+            for strength in r.strengths:
+                strength_lower = strength.lower()
+                # If the strength doesn't contain a lot of common concept words, it's more unique
+                overlap = sum(1 for concept in common_concepts if concept in strength_lower)
+                if overlap < 2:
+                    unique_strengths.append(strength)
+            
+            # If all were somehow common, just take the first one
+            if not unique_strengths and r.strengths:
+                unique_strengths.append(r.strengths[0])
+                
+            unique_contributions[provider] = unique_strengths[:3] # Limit to top 3
+            
+        return unique_contributions
+
+    def compute_agreement(self, responses: list[CouncilResponse]) -> tuple[Dict[int, float], float]:
+        """Compute pairwise agreement scores based on prompt text similarity."""
+        n = len(responses)
+        if n == 0:
+            return {}, 0.0
+        if n == 1:
+            return {0: 1.0}, 1.0
+            
+        scores = {i: 0.0 for i in range(n)}
+        total_similarity = 0.0
+        pairs = 0
+        
+        for i in range(n):
+            for j in range(i + 1, n):
+                text_i = responses[i].prompt[:2000] # Limit length for performance
+                text_j = responses[j].prompt[:2000]
+                
+                # Use difflib for local text similarity
+                similarity = difflib.SequenceMatcher(None, text_i, text_j).ratio()
+                
+                scores[i] += similarity
+                scores[j] += similarity
+                total_similarity += similarity
+                pairs += 1
+                
+        # Average per response
+        for i in range(n):
+            scores[i] = scores[i] / (n - 1)
+            
+        overall_agreement = total_similarity / pairs if pairs > 0 else 0.0
+        
+        return scores, overall_agreement
+
+    def compute_learning_style_alignment(self, prompt: str, learning_style: str) -> float:
+        """Evaluate how well the response satisfies the requested learning style. Returns 0-100."""
+        prompt_lower = prompt.lower()
+        score = 50.0 # Base score
+        
+        style = learning_style.lower()
+        keywords = []
+        
+        if "visual" in style:
+            keywords = ["diagram", "chart", "visualize", "picture", "imagine", "see", "flowchart", "table", "map", "graph"]
+        elif "hand" in style or "kinesthetic" in style or "step" in style:
+            keywords = ["practice", "exercise", "build", "create", "activity", "project", "hands-on", "try", "do", "step", "experiment"]
+        elif "read" in style or "write" in style or "theoretical" in style or "research" in style:
+            keywords = ["read", "write", "summarize", "definition", "structure", "list", "explain", "text", "notes", "theory", "concept"]
+        elif "audit" in style or "listen" in style or "story" in style or "conversational" in style:
+            keywords = ["discuss", "listen", "explain aloud", "tell", "story", "podcast", "debate", "verbal", "analogy", "imagine if"]
+            
+        # Count hits
+        hits = sum(1 for kw in keywords if kw in prompt_lower)
+        
+        if hits >= 4:
+            score = 100.0
+        elif hits == 3:
+            score = 90.0
+        elif hits == 2:
+            score = 75.0
+        elif hits == 1:
+            score = 60.0
+            
+        return score
+
+    def compute_completeness(self, prompt: str) -> float:
+        """Evaluate whether the response contains standard educational components. Returns 0-100."""
+        return self.compute_structure_score(prompt)
+
+    def compute_structure_score(self, prompt: str) -> float:
+        """Evaluate for: intro, explanation, examples, exercises, summary, learning objs, real-world apps. Returns 0-100."""
+        prompt_lower = prompt.lower()
+        components_found = 0
+        total_components = 7
+        
+        # 1. Intro / Welcome
+        if any(kw in prompt_lower for kw in ["introduction", "overview", "welcome", "in this lesson"]):
+            components_found += 1
+            
+        # 2. Explanation / Core Concept
+        if len(prompt.split("\n\n")) > 3 or "concept" in prompt_lower or "definition" in prompt_lower:
+            components_found += 1
+            
+        # 3. Examples
+        if any(kw in prompt_lower for kw in ["example", "for instance", "e.g.", "such as"]):
+            components_found += 1
+            
+        # 4. Exercises / Practice
+        if any(kw in prompt_lower for kw in ["practice", "exercise", "activity", "quiz", "try it"]):
+            components_found += 1
+            
+        # 5. Summary / Wrap-up
+        if any(kw in prompt_lower for kw in ["summary", "in conclusion", "recap", "wrap-up"]):
+            components_found += 1
+            
+        # 6. Learning Objectives
+        if any(kw in prompt_lower for kw in ["objective", "goal", "by the end of", "you will learn"]):
+            components_found += 1
+            
+        # 7. Real-world applications
+        if any(kw in prompt_lower for kw in ["real-world", "real world", "application", "use case", "in practice"]):
+            components_found += 1
+            
+        score = (components_found / float(total_components)) * 100
+        return min(100.0, max(0.0, score))
+
+    def synthesize_final_prompt(self, winner: CouncilResponse, unique_contributions: Dict[str, list[str]]) -> str:
+        """Merge strongest explanations and ideas into the winner's prompt."""
+        final_prompt = winner.prompt
+        
+        winner_provider = getattr(winner, "provider_name", None) or winner.model
+        
+        # Check if other providers had unique contributions
+        additions = []
+        for provider, contributions in unique_contributions.items():
+            if provider != winner_provider and contributions:
+                additions.append(f"- From {provider}: {', '.join(contributions)}")
+                
+        if additions:
+            final_prompt += "\n\n---\n### Consensus Additions\n*The AI Council also recommends incorporating the following ideas:*\n"
+            final_prompt += "\n".join(additions)
+            
+        return final_prompt
+
+    def select_best_response(self, responses: list[CouncilResponse]) -> CouncilResponse:
+        """Legacy fallback: Select the best response based on overall score and provider priority tiebreaker."""
+        # Kept for backward compatibility if called directly
         def get_provider_priority(model_name: str, provider_name: str = "") -> int:
             model_lower = model_name.lower()
             provider_lower = (provider_name or "").lower()
@@ -123,7 +396,6 @@ class ConsensusBuilder:
             p_name = getattr(r, "provider_name", None) or ""
             priority = get_provider_priority(r.model, p_name)
 
-            # High score wins, tie-breaks on provider priority
             if score > best_score:
                 best_score = score
                 best_priority = priority
@@ -133,85 +405,104 @@ class ConsensusBuilder:
                     best_priority = priority
                     best_response = r
             
-            logger = logging.getLogger(__name__)
-            logger.debug("Evaluated provider: %s, score: %f", p_name or r.model, score)
-
         if not best_response:
             raise ConsensusBuilderError("Could not determine best response from the list.")
         return best_response
 
     def aggregate_strengths(self, responses: list[CouncilResponse]) -> list[str]:
-        """Collect and deduplicate strengths from all responses while preserving order and ignoring empty values."""
+        """Collect and deduplicate strengths from all responses, normalizing capitalization."""
         seen = set()
         combined_strengths = []
         for r in responses:
             for strength in r.strengths:
                 if strength and isinstance(strength, str):
                     stripped = strength.strip()
-                    if stripped and stripped not in seen:
-                        seen.add(stripped)
-                        combined_strengths.append(stripped)
-        return combined_strengths
+                    if not stripped:
+                        continue
+                    # Normalize capitalization (capitalize first letter)
+                    normalized = stripped[0].upper() + stripped[1:]
+                    lower_check = normalized.lower()
+                    if lower_check not in seen:
+                        seen.add(lower_check)
+                        combined_strengths.append(normalized)
+        
+        # Keep most meaningful (longest/most detailed first) up to 10
+        combined_strengths.sort(key=len, reverse=True)
+        return combined_strengths[:10]
 
     def generate_consensus_reasoning(
         self,
-        responses: list[CouncilResponse],
-        best_response: CouncilResponse,
-        combined_strengths: list[str]
+        responses: list[CouncilResponse]
     ) -> str:
-        """Generate a text summary explaining consensus contributions, selection, and strengths."""
-        has_gpt = False
-        has_claude = False
-        has_gemini = False
-        has_deepseek = False
-
+        """Group similar reasoning from all responses, preserving unique insights."""
+        all_sentences = []
         for r in responses:
-            model_lower = r.model.lower()
-            provider_name = getattr(r, "provider_name", None) or ""
-            provider_lower = provider_name.lower()
+            if r.reasoning:
+                sentences = [s.strip() for s in re.split(r'(?<=[.!?]) +', r.reasoning) if s.strip()]
+                all_sentences.extend(sentences)
+                
+        seen = set()
+        unique_reasoning = []
+        for s in all_sentences:
+            s_lower = s.lower()
+            # Simple deduplication
+            if not any(difflib.SequenceMatcher(None, s_lower, seen_s).ratio() > 0.8 for seen_s in seen):
+                seen.add(s_lower)
+                unique_reasoning.append(s)
+                
+        if not unique_reasoning:
+            return "Participating council providers contributed to the prompt construction."
             
-            if "gpt" in model_lower or "groq" in model_lower or "llama" in model_lower or "openai" in provider_lower or "groq" in provider_lower or "openrouter" in provider_lower or "cerebras" in provider_lower or "sambanova" in provider_lower:
-                has_gpt = True
-            elif "claude" in model_lower or "claude" in provider_lower:
-                has_claude = True
-            elif "gemini" in model_lower or "gemini" in provider_lower:
-                has_gemini = True
-            elif "deepseek" in model_lower or "deepseek" in provider_lower:
-                has_deepseek = True
+        return " ".join(unique_reasoning[:5]) # Limit to top 5 sentences for clarity
 
-        first_part = ""
-        if has_gpt and has_claude:
-            first_part = "GPT provided strong educational structure while Claude contributed deeper reasoning"
-        elif has_gpt:
-            first_part = "GPT provided strong educational structure"
-        elif has_claude:
-            first_part = "Claude contributed deeper reasoning"
+    def calculate_confidence_score(
+        self,
+        prompt_score: float,
+        agreement: float,
+        completeness: float,
+        num_successful: int,
+        total_providers: int
+    ) -> float:
+        """Calculate a 0-100 confidence score based on multiple metrics."""
+        # Weighted combination
+        # Prompt Quality: 40%
+        # Agreement: 30%
+        # Completeness: 20%
+        # Provider Success Ratio: 10%
+        
+        success_ratio = (num_successful / total_providers) if total_providers > 0 else 0.0
+        
+        confidence = (
+            (prompt_score * 0.40) +
+            (agreement * 100 * 0.30) +
+            (completeness * 0.20) +
+            (success_ratio * 100 * 0.10)
+        )
+        return min(100.0, max(0.0, confidence))
 
-        second_part = ""
-        if has_gemini and has_deepseek:
-            second_part = "Gemini improved visualization and DeepSeek strengthened logical flow"
-        elif has_gemini:
-            second_part = "Gemini improved visualization"
-        elif has_deepseek:
-            second_part = "DeepSeek strengthened logical flow"
-
-        summary_parts = []
-        if first_part:
-            summary_parts.append(first_part)
-        if second_part:
-            summary_parts.append(second_part)
-
-        summary = ". ".join(summary_parts)
-        if summary:
-            summary += "."
-        else:
-            summary = "Participating council providers contributed to the prompt construction."
-
-        reasoning_end = " The final prompt was selected based on the highest quality score."
-        return summary + reasoning_end
+    def extract_conflicting_concepts(self, responses: list[CouncilResponse]) -> list[str]:
+        """Detect conflicting recommendations between providers (e.g. negations)."""
+        conflicts = []
+        # Basic heuristic: look for "avoid", "don't", "not" near keywords in one, and the keyword in another
+        keywords = ["visuals", "code", "theory", "examples", "exercises", "math", "story"]
+        
+        for kw in keywords:
+            supported = False
+            opposed = False
+            for r in responses:
+                text = (r.prompt + " " + r.reasoning).lower()
+                if f"no {kw}" in text or f"avoid {kw}" in text or f"don't use {kw}" in text:
+                    opposed = True
+                elif kw in text:
+                    supported = True
+                    
+            if supported and opposed:
+                conflicts.append(kw)
+                
+        return conflicts
 
     def calculate_consensus_score(self, responses: list[CouncilResponse]) -> float:
-        """Average all overall scores and round to 2 decimal places."""
+        """Legacy fallback: Average all overall scores and round to 2 decimal places."""
         scores = []
         for r in responses:
             score = 0.0
@@ -237,6 +528,8 @@ class ConsensusBuilder:
             if not name_to_use:
                 name_to_use = r.model
                 
-            if name_to_use and name_to_use not in contributors:
-                contributors.append(name_to_use)
+            if name_to_use:
+                name_to_use = name_to_use.lower()
+                if name_to_use not in contributors:
+                    contributors.append(name_to_use)
         return contributors
