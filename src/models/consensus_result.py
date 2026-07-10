@@ -53,6 +53,16 @@ class ConsensusResult(Base):
     conflicting_concepts: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
     provider_contributions: Mapped[Optional[Dict[str, list[str]]]] = mapped_column(JSON, nullable=True)
 
+    # Phase 3 Fields
+    explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    diversity_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    diversity_level: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    coverage_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    educational_sections: Mapped[Optional[Dict[str, bool]]] = mapped_column(JSON, nullable=True)
+    learning_style_verification: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    confidence_level: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    evaluation_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # One-to-one back to the request
@@ -92,5 +102,13 @@ class ConsensusResult(Base):
             "unique_concepts": self.unique_concepts,
             "conflicting_concepts": self.conflicting_concepts,
             "provider_contributions": self.provider_contributions,
+            "explanation": self.explanation,
+            "diversity_score": self.diversity_score,
+            "diversity_level": self.diversity_level,
+            "coverage_score": self.coverage_score,
+            "educational_sections": self.educational_sections,
+            "learning_style_verification": self.learning_style_verification,
+            "confidence_level": self.confidence_level,
+            "evaluation_summary": self.evaluation_summary,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
