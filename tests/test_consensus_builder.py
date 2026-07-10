@@ -204,3 +204,29 @@ def test_learning_style_and_completeness():
     hands_on_prompt = "Now you try to build a project with this hands-on activity."
     hands_on_score = builder.compute_learning_style_alignment(hands_on_prompt, "hands-on")
     assert hands_on_score == 100.0  # 3+ hits: try, build, project, hands-on, activity
+
+
+def test_phase3_metrics():
+    """Verify Phase 3 explainability and evaluation metrics."""
+    builder = ConsensusBuilder()
+    
+    r1 = make_mock_response("gpt-4o", prompt="Introduction\n\nExample", reasoning="I chose to focus on examples.")
+    r2 = make_mock_response("claude", prompt="Theory\n\nAvoid visuals", reasoning="Theory is better.")
+    r3 = make_mock_response("gemini", prompt="Introduction\n\nHere are some visuals", reasoning="Visuals are important.")
+    
+    result = builder.build_consensus([r1, r2, r3], request_id=1, learning_style="visual")
+    
+    assert result.explanation is not None
+    assert "diversity_score" in result.to_dict()
+    assert result.diversity_level in ["High", "Medium", "Low"]
+    assert "visuals" in result.conflicting_concepts
+    
+    assert "Introduction" in result.educational_sections
+    assert isinstance(result.coverage_score, float)
+    
+    assert "requested" in result.learning_style_verification
+    assert result.learning_style_verification["requested"] == "Visual"
+    
+    assert result.confidence_level in ["High", "Medium", "Low"]
+    assert "consensus" in result.evaluation_summary
+
