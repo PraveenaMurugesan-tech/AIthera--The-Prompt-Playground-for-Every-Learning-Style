@@ -187,6 +187,15 @@ class BenchmarkRunner:
             learning_style_score = consensus.learning_style_score if consensus.learning_style_score is not None else 0.0
             provider_contributions = consensus.provider_contributions if consensus.provider_contributions else {}
             
+            # Phase 3 extraction
+            diversity_score = consensus.diversity_score if consensus.diversity_score is not None else 0.0
+            coverage_score = consensus.coverage_score if consensus.coverage_score is not None else 0.0
+            learning_style_verification = consensus.learning_style_verification if consensus.learning_style_verification else {}
+            explanation = consensus.explanation if consensus.explanation else ""
+            evaluation_summary = consensus.evaluation_summary if consensus.evaluation_summary else ""
+            confidence_level = consensus.confidence_level if consensus.confidence_level else "Unknown"
+            conflicting_concepts = consensus.conflicting_concepts if consensus.conflicting_concepts else []
+            
             run_result = {
                 "topic": prompt_data["topic"],
                 "learning_style": prompt_data["learning_style"],
@@ -203,6 +212,14 @@ class BenchmarkRunner:
                 "classification": classification,
                 "provider_stats": provider_stats,
                 "num_successful_providers": len(successful_providers),
+                # Phase 3
+                "diversity_score": diversity_score,
+                "coverage_score": coverage_score,
+                "learning_style_verification": learning_style_verification,
+                "explanation": explanation,
+                "evaluation_summary": evaluation_summary,
+                "confidence_level": confidence_level,
+                "conflicting_concepts": conflicting_concepts,
                 "error": None
             }
             
@@ -210,7 +227,12 @@ class BenchmarkRunner:
             print(f"Winner: {winning_provider}")
             print(f"Prompt Score: {prompt_score}/100")
             print(f"Consensus Score: {consensus_score:.2f}")
+            print(f"Agreement Score: {agreement_score:.2f}")
+            print(f"Diversity Score: {diversity_score:.2f}")
+            print(f"Coverage Score: {coverage_score:.2f}")
             print(f"Classification: {classification}")
+            print(f"Evaluation Summary: {evaluation_summary}")
+            print(f"Explanation: {explanation}")
             print(f"Providers Participated: {len(successful_providers)}\n")
             print("--------------------------------------------------")
             print("Providers Attempted:")
@@ -286,6 +308,13 @@ class BenchmarkRunner:
                 "classification": "error",
                 "provider_stats": provider_stats,
                 "num_successful_providers": 0,
+                "diversity_score": 0.0,
+                "coverage_score": 0.0,
+                "learning_style_verification": {},
+                "explanation": "",
+                "evaluation_summary": "",
+                "confidence_level": "Unknown",
+                "conflicting_concepts": [],
                 "error": str(e)
             }
             self.results.append(run_result)
@@ -347,6 +376,13 @@ class BenchmarkRunner:
         
         prompt_scores = [r["prompt_score"] for r in successful_runs]
         
+        # New Phase 3 aggregations
+        conflicts_all = [c for r in successful_runs for c in r.get("conflicting_concepts", [])]
+        most_common_conflict = Counter(conflicts_all).most_common(1)[0][0] if conflicts_all else "None"
+        
+        ls_verifications = [r.get("learning_style_verification", {}).get("confidence", 0) for r in successful_runs]
+        avg_ls_accuracy = sum(ls_verifications) / num_successful if ls_verifications else 0.0
+
         stats = {
             "total_runs": total_runs,
             "successful_runs": num_successful,
@@ -359,8 +395,12 @@ class BenchmarkRunner:
             "avg_consensus_score": sum(r["consensus_score"] for r in successful_runs) / num_successful,
             "avg_confidence_score": sum(r.get("confidence_score", 0) for r in successful_runs) / num_successful,
             "avg_agreement_score": sum(r.get("agreement_score", 0) for r in successful_runs) / num_successful,
+            "avg_diversity_score": sum(r.get("diversity_score", 0) for r in successful_runs) / num_successful,
+            "avg_coverage_score": sum(r.get("coverage_score", 0) for r in successful_runs) / num_successful,
             "avg_completeness_score": sum(r.get("completeness_score", 0) for r in successful_runs) / num_successful,
             "avg_learning_style_score": sum(r.get("learning_style_score", 0) for r in successful_runs) / num_successful,
+            "avg_learning_style_accuracy": avg_ls_accuracy,
+            "most_common_conflict": most_common_conflict,
             "provider_success_rates": provider_success_rates,
             "provider_failure_rates": {p: 100 - r for p, r in provider_success_rates.items()},
             "avg_successful_providers": sum(r["num_successful_providers"] for r in successful_runs) / num_successful,
@@ -394,7 +434,7 @@ class BenchmarkRunner:
             writer.writerow([
                 "Topic", "Learning Style", "Execution Time (s)", 
                 "Winning Provider", "Contributors", "Failed Providers", "Prompt Score", 
-                "Consensus Score", "Classification", "Error"
+                "Consensus Score", "Agreement Score", "Diversity Score", "Coverage Score", "Classification", "Error"
             ])
             for r in self.results:
                 failed_p = [f"{s['provider_name']}" for s in r.get("provider_stats", []) if not s["success"]]
@@ -404,6 +444,9 @@ class BenchmarkRunner:
                     r["winning_provider"], ", ".join(r["contributors"]),
                     ", ".join(failed_p),
                     r["prompt_score"], f"{r['consensus_score']:.2f}",
+                    f"{r.get('agreement_score', 0):.2f}",
+                    f"{r.get('diversity_score', 0):.2f}",
+                    f"{r.get('coverage_score', 0):.2f}",
                     r["classification"], r["error"] or ""
                 ])
                 
@@ -436,8 +479,12 @@ class BenchmarkRunner:
             f.write(f"- **Average consensus score:** {stats['avg_consensus_score']:.2f}\n")
             f.write(f"- **Average confidence score:** {stats['avg_confidence_score']:.2f}\n")
             f.write(f"- **Average agreement score:** {stats['avg_agreement_score']:.2f}\n")
+            f.write(f"- **Average diversity score:** {stats.get('avg_diversity_score', 0):.2f}\n")
+            f.write(f"- **Average coverage score:** {stats.get('avg_coverage_score', 0):.2f}\n")
             f.write(f"- **Average completeness score:** {stats['avg_completeness_score']:.2f}\n")
             f.write(f"- **Average learning style score:** {stats['avg_learning_style_score']:.2f}\n")
+            f.write(f"- **Average learning style accuracy:** {stats.get('avg_learning_style_accuracy', 0):.2f}\n")
+            f.write(f"- **Most common conflict:** {stats.get('most_common_conflict', 'None')}\n")
             f.write(f"- **Average successful providers:** {stats['avg_successful_providers']:.2f}\n")
             f.write(f"- **Average execution time:** {stats['avg_execution_time']:.2f}s\n")
             f.write(f"- **Fastest provider:** {stats['fastest_provider']}\n")
@@ -513,8 +560,12 @@ class BenchmarkRunner:
         print(f"Average Consensus Score: {stats['avg_consensus_score']:.2f}")
         print(f"Average Confidence Score: {stats['avg_confidence_score']:.2f}")
         print(f"Average Agreement Score: {stats['avg_agreement_score']:.2f}")
+        print(f"Average Diversity Score: {stats.get('avg_diversity_score', 0):.2f}")
+        print(f"Average Coverage Score: {stats.get('avg_coverage_score', 0):.2f}")
         print(f"Average Completeness Score: {stats['avg_completeness_score']:.2f}")
         print(f"Average Learning Style Score: {stats['avg_learning_style_score']:.2f}")
+        print(f"Average Learning Style Accuracy: {stats.get('avg_learning_style_accuracy', 0):.2f}")
+        print(f"Most Common Conflict: {stats.get('most_common_conflict', 'None')}")
         print(f"Average Successful Providers: {stats['avg_successful_providers']:.2f}")
         print(f"Average Execution Time: {stats['avg_execution_time']:.2f}s")
         print(f"Fastest Provider: {stats['fastest_provider']}")
