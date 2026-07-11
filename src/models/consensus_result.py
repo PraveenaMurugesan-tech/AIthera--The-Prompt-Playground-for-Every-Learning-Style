@@ -63,6 +63,13 @@ class ConsensusResult(Base):
     confidence_level: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     evaluation_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # Phase 4 Production Metrics
+    execution_time: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    provider_execution_times: Mapped[Optional[Dict[str, float]]] = mapped_column(JSON, nullable=True)
+    parallel_efficiency: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    cache_hit: Mapped[Optional[bool]] = mapped_column(JSON, nullable=True) # JSON allows True/False neatly or Boolean
+    retry_stats: Mapped[Optional[Dict[str, int]]] = mapped_column(JSON, nullable=True)
+
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # One-to-one back to the request
@@ -110,5 +117,10 @@ class ConsensusResult(Base):
             "learning_style_verification": self.learning_style_verification,
             "confidence_level": self.confidence_level,
             "evaluation_summary": self.evaluation_summary,
+            "execution_time": self.execution_time,
+            "provider_execution_times": self.provider_execution_times,
+            "parallel_efficiency": self.parallel_efficiency,
+            "cache_hit": self.cache_hit,
+            "retry_stats": self.retry_stats,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
