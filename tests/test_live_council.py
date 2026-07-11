@@ -1,4 +1,5 @@
 import pytest
+from src.council.council_cache import council_cache
 from unittest.mock import MagicMock, AsyncMock
 from src.council.live_council import LiveCouncil, LiveCouncilError
 from src.council.council_executor import CouncilExecutor, CouncilExecutionError
@@ -116,6 +117,7 @@ async def test_live_council_success(mock_registry):
 
 
 async def test_live_council_failover(mock_registry):
+    council_cache.clear()
     """Verify that if one provider fails, the Live Council still succeeds using failover."""
     config1 = ProviderConfig(provider_name="Groq", role="creator", model_name="llama-3.3-70b-versatile", enabled=True)
     config2 = ProviderConfig(provider_name="Gemini", role="refiner", model_name="gemini-1.5-pro", enabled=True)
@@ -168,6 +170,7 @@ async def test_live_council_failover(mock_registry):
 
 
 async def test_live_council_all_fail(mock_registry):
+    council_cache.clear()
     """Verify that LiveCouncilError is raised if all providers fail."""
     config1 = ProviderConfig(provider_name="Groq", role="creator", model_name="llama-3.3-70b-versatile", enabled=True)
     
