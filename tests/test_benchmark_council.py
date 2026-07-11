@@ -54,6 +54,14 @@ def test_benchmark_runner_execution(temp_benchmark_dir):
     consensus_mock.completeness_score = 90.0
     consensus_mock.learning_style_score = 100.0
     consensus_mock.provider_contributions = {"Groq": ["examples"], "Gemini": ["visuals"]}
+    consensus_mock.diversity_score = 42.0
+    consensus_mock.diversity_level = "Medium"
+    consensus_mock.coverage_score = 80.0
+    consensus_mock.learning_style_verification = {"requested": "Visual", "detected": "Visual", "confidence": 100}
+    consensus_mock.explanation = "Groq won because X."
+    consensus_mock.evaluation_summary = "High confidence consensus."
+    consensus_mock.confidence_level = "High"
+    consensus_mock.conflicting_concepts = []
     
     mock_result = {
         "responses": [
@@ -107,6 +115,14 @@ def test_benchmark_runner_provider_identity(temp_benchmark_dir):
     consensus_mock.completeness_score = 90.0
     consensus_mock.learning_style_score = 100.0
     consensus_mock.provider_contributions = {"Cerebras": ["structure"]}
+    consensus_mock.diversity_score = 42.0
+    consensus_mock.diversity_level = "Medium"
+    consensus_mock.coverage_score = 80.0
+    consensus_mock.learning_style_verification = {"requested": "Visual", "detected": "Visual", "confidence": 100}
+    consensus_mock.explanation = "Groq won because X."
+    consensus_mock.evaluation_summary = "High confidence consensus."
+    consensus_mock.confidence_level = "High"
+    consensus_mock.conflicting_concepts = []
     
     mock_result = {
         "responses": [
@@ -167,11 +183,27 @@ def test_benchmark_runner_handles_provider_errors(temp_benchmark_dir):
     data_path, reports_dir = temp_benchmark_dir
     runner = BenchmarkRunner(data_path, reports_dir)
     
+    consensus_mock = MagicMock()
+    consensus_mock.contributors = ["Gemini"]
+    consensus_mock.quality_score = 0.9
+    consensus_mock.agreement_score = 0.8
+    consensus_mock.diversity_score = 42.0
+    consensus_mock.diversity_level = "Medium"
+    consensus_mock.coverage_score = 80.0
+    consensus_mock.learning_style_verification = {"requested": "Visual", "detected": "Visual", "confidence": 100}
+    consensus_mock.explanation = "Groq won because X."
+    consensus_mock.evaluation_summary = "High confidence consensus."
+    consensus_mock.confidence_level = "High"
+    consensus_mock.conflicting_concepts = []
+    consensus_mock.provider_contributions = {}
+    consensus_mock.learning_style_score = 100.0
+    consensus_mock.completeness_score = 90.0
+
     mock_result = {
         "responses": [
             MagicMock(provider_name="Gemini", model="Gemini", prompt="Good", metadata=MagicMock(response_time=0.5)),
         ],
-        "consensus": MagicMock(contributors=["Gemini"], quality_score=0.9),
+        "consensus": consensus_mock,
         "score": MagicMock(overall_score=85, classification="GOOD"),
         "contributors": ["Gemini"],
         "failed_providers": ["Claude", "DeepSeek", "SambaNova", "Cerebras"],
@@ -215,12 +247,28 @@ def test_benchmark_runner_handles_provider_timeout(temp_benchmark_dir):
     data_path, reports_dir = temp_benchmark_dir
     runner = BenchmarkRunner(data_path, reports_dir)
     
+    consensus_mock = MagicMock()
+    consensus_mock.contributors = ["Groq", "Gemini"]
+    consensus_mock.quality_score = 0.9
+    consensus_mock.agreement_score = 0.8
+    consensus_mock.diversity_score = 42.0
+    consensus_mock.diversity_level = "Medium"
+    consensus_mock.coverage_score = 80.0
+    consensus_mock.learning_style_verification = {"requested": "Visual", "detected": "Visual", "confidence": 100}
+    consensus_mock.explanation = "Groq won because X."
+    consensus_mock.evaluation_summary = "High confidence consensus."
+    consensus_mock.confidence_level = "High"
+    consensus_mock.conflicting_concepts = []
+    consensus_mock.provider_contributions = {}
+    consensus_mock.learning_style_score = 100.0
+    consensus_mock.completeness_score = 90.0
+
     mock_result = {
         "responses": [
             MagicMock(provider_name="Groq", model="Groq", prompt="Good", metadata=MagicMock(response_time=0.5)),
             MagicMock(provider_name="Gemini", model="Gemini", prompt="Okay", metadata=MagicMock(response_time=0.6))
         ],
-        "consensus": MagicMock(contributors=["Groq", "Gemini"], quality_score=0.9),
+        "consensus": consensus_mock,
         "score": MagicMock(overall_score=85, classification="GOOD"),
         "contributors": ["Groq", "Gemini"],
         "failed_providers": ["OpenRouter"],

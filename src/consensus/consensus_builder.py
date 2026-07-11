@@ -137,7 +137,14 @@ class ConsensusBuilder:
         combined_strengths = self.aggregate_strengths(responses)
         consensus_reasoning = self.generate_consensus_reasoning(responses)
         contributors = self.extract_contributors(responses)
+        
+        # Phase 3 Fields
+        scaled_agreement = overall_agreement * 100.0
+        diversity_score, diversity_level = self.compute_diversity_score(scaled_agreement)
         conflicting_concepts = self.extract_conflicting_concepts(responses)
+        provider_categories = self.extract_provider_contributions_categories(responses)
+        coverage_score, educational_sections = self.analyze_coverage(synthesized_prompt)
+        learning_style_verification = self.verify_learning_style(synthesized_prompt, learning_style)
         
         num_successful = len(contributors)
         total_providers_attempted = num_successful + len(failed_providers) if failed_providers else num_successful
@@ -148,6 +155,14 @@ class ConsensusBuilder:
             completeness=winner_scores["completeness_score"] / 100.0,
             num_successful=num_successful,
             total_providers=total_providers_attempted
+        )
+        
+        confidence_level = self.determine_confidence_level(confidence_score)
+        explanation = self.generate_explanation(
+            winner_provider, provider_categories, conflicting_concepts, scaled_agreement, num_successful
+        )
+        evaluation_summary = self.generate_evaluation_summary(
+            confidence_level, coverage_score, scaled_agreement, conflicting_concepts
         )
 
         logger.info(f"Selected winner: {winner_provider} with weighted score {best_weighted_score:.2f}, Confidence: {confidence_score:.2f}")
@@ -186,7 +201,16 @@ class ConsensusBuilder:
             merged_strengths=combined_strengths,
             unique_concepts=list(unique_contributions.keys()), # simplistic, we can store keys
             conflicting_concepts=conflicting_concepts,
-            provider_contributions=unique_contributions
+            provider_contributions=provider_categories,
+            # Phase 3 Fields
+            explanation=explanation,
+            diversity_score=diversity_score,
+            diversity_level=diversity_level,
+            coverage_score=coverage_score,
+            educational_sections=educational_sections,
+            learning_style_verification=learning_style_verification,
+            confidence_level=confidence_level,
+            evaluation_summary=evaluation_summary
         )
 
     def extract_common_concepts(self, responses: list[CouncilResponse]) -> list[str]:
@@ -484,7 +508,7 @@ class ConsensusBuilder:
         """Detect conflicting recommendations between providers (e.g. negations)."""
         conflicts = []
         # Basic heuristic: look for "avoid", "don't", "not" near keywords in one, and the keyword in another
-        keywords = ["visuals", "code", "theory", "examples", "exercises", "math", "story"]
+        keywords = ["visuals", "code", "theory", "examples", "exercises", "math", "story", "recursion", "iteration"]
         
         for kw in keywords:
             supported = False
@@ -533,3 +557,144 @@ class ConsensusBuilder:
                 if name_to_use not in contributors:
                     contributors.append(name_to_use)
         return contributors
+
+    # Phase 3 Enhancements
+    def compute_diversity_score(self, agreement_score: float) -> tuple[float, str]:
+        """Compute diversity score (0-100) and level based on overall agreement."""
+        diversity_score = max(0.0, 100.0 - agreement_score)
+        if diversity_score >= 66:
+            level = "High"
+        elif diversity_score >= 33:
+            level = "Medium"
+        else:
+            level = "Low"
+        return round(diversity_score, 2), level
+
+    def extract_provider_contributions_categories(self, responses: list[CouncilResponse]) -> Dict[str, list[str]]:
+        contributions = {}
+        categories = {
+            "Introduction": ["introduction", "overview", "welcome", "begin"],
+            "Explanation": ["concept", "definition", "explain", "theory", "core"],
+            "Examples": ["example", "for instance", "such as", "demonstrate"],
+            "Practice": ["practice", "try it", "hands-on"],
+            "Exercises": ["exercise", "quiz", "test", "question"],
+            "Summary": ["summary", "conclusion", "recap", "wrap-up"],
+            "Tips": ["tip", "hint", "remember", "note", "best practice"],
+            "Visual aids": ["diagram", "chart", "visualize", "picture", "graph"],
+            "Analogies": ["analogy", "like a", "imagine", "similar to"],
+            "Real-world applications": ["real-world", "application", "in practice", "use case"]
+        }
+        for r in responses:
+            provider = getattr(r, "provider_name", None) or r.model
+            text = (r.prompt + " " + r.reasoning).lower()
+            provider_cats = []
+            for cat, keywords in categories.items():
+                if any(kw in text for kw in keywords):
+                    provider_cats.append(cat)
+            contributions[provider] = provider_cats
+        return contributions
+
+    def analyze_coverage(self, prompt: str) -> tuple[float, Dict[str, bool]]:
+        prompt_lower = prompt.lower()
+        sections = {
+            "Introduction": any(kw in prompt_lower for kw in ["introduction", "overview", "welcome", "in this lesson"]),
+            "Explanation": len(prompt.split("\n\n")) > 3 or "concept" in prompt_lower or "definition" in prompt_lower,
+            "Examples": any(kw in prompt_lower for kw in ["example", "for instance", "e.g.", "such as"]),
+            "Practice": any(kw in prompt_lower for kw in ["practice", "activity", "try it"]),
+            "Exercises": any(kw in prompt_lower for kw in ["exercise", "quiz", "test"]),
+            "Summary": any(kw in prompt_lower for kw in ["summary", "in conclusion", "recap", "wrap-up"]),
+            "Tips": any(kw in prompt_lower for kw in ["tip", "hint", "best practice"])
+        }
+        components_found = sum(sections.values())
+        total_components = len(sections)
+        coverage_score = (components_found / float(total_components)) * 100.0 if total_components > 0 else 0.0
+        return round(coverage_score, 2), sections
+
+    def verify_learning_style(self, prompt: str, requested_style: str) -> Dict[str, Any]:
+        prompt_lower = prompt.lower()
+        score = self.compute_learning_style_alignment(prompt, requested_style)
+        
+        styles = {
+            "visual": ["diagram", "chart", "visualize", "picture", "imagine", "see", "flowchart", "table", "map", "graph"],
+            "kinesthetic": ["practice", "exercise", "build", "create", "activity", "project", "hands-on", "try", "do", "step", "experiment"],
+            "reading": ["read", "write", "summarize", "definition", "structure", "list", "explain", "text", "notes", "theory", "concept"],
+            "auditory": ["discuss", "listen", "explain aloud", "tell", "story", "podcast", "debate", "verbal", "analogy", "imagine if"]
+        }
+        
+        max_hits = -1
+        detected_style = "unknown"
+        for style, keywords in styles.items():
+            hits = sum(1 for kw in keywords if kw in prompt_lower)
+            if hits > max_hits:
+                max_hits = hits
+                detected_style = style
+                
+        return {
+            "requested": requested_style.capitalize(),
+            "detected": detected_style.capitalize(),
+            "confidence": score
+        }
+
+    def determine_confidence_level(self, confidence_score: float) -> str:
+        if confidence_score >= 80:
+            return "High"
+        elif confidence_score >= 50:
+            return "Medium"
+        return "Low"
+
+    def generate_explanation(
+        self, 
+        winner_provider: str, 
+        provider_contributions: Dict[str, list[str]], 
+        conflicting_concepts: list[str], 
+        agreement_score: float,
+        num_successful: int
+    ) -> str:
+        if num_successful == 1:
+            return f"The council selected {winner_provider}'s response as it was the only successful provider."
+            
+        explanation = f"The council selected {winner_provider}'s educational structure because multiple providers agreed on the learning sequence."
+        
+        if agreement_score < 40 or conflicting_concepts:
+            explanation = f"While providers disagreed on some concepts like {', '.join(conflicting_concepts) if conflicting_concepts else 'general structure'}, the council ultimately selected {winner_provider}'s approach as the most balanced."
+            
+        contrib_texts = []
+        for p, contribs in provider_contributions.items():
+            if p != winner_provider and contribs:
+                contrib_texts.append(f"{p} contributed {', '.join(contribs).lower()}.")
+                
+        if contrib_texts:
+            explanation += " " + " ".join(contrib_texts)
+            
+        return explanation
+
+    def generate_evaluation_summary(
+        self, 
+        confidence_level: str, 
+        coverage_score: float, 
+        agreement_score: float, 
+        conflicting_concepts: list[str]
+    ) -> str:
+        summary = f"{confidence_level} confidence consensus."
+        
+        if coverage_score >= 80:
+            summary += " Excellent educational coverage."
+        elif coverage_score >= 50:
+            summary += " Adequate educational coverage."
+        else:
+            summary += " Poor educational coverage."
+            
+        if agreement_score >= 70:
+            summary += " Providers strongly agreed."
+        elif agreement_score >= 40:
+            summary += " Providers partially agreed."
+        else:
+            summary += " Providers disagreed."
+            
+        if conflicting_concepts:
+            summary += " Major conflicts detected."
+        else:
+            summary += " No major conflicts detected."
+            
+        return summary
+
