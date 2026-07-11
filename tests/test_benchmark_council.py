@@ -52,6 +52,8 @@ def test_benchmark_runner_execution(temp_benchmark_dir):
     consensus_mock.confidence_score = 95.0
     consensus_mock.agreement_score = 0.8
     consensus_mock.completeness_score = 90.0
+    consensus_mock.parallel_efficiency = 1.0
+    consensus_mock.cache_hit = False
     consensus_mock.learning_style_score = 100.0
     consensus_mock.provider_contributions = {"Groq": ["examples"], "Gemini": ["visuals"]}
     consensus_mock.diversity_score = 42.0
@@ -113,6 +115,8 @@ def test_benchmark_runner_provider_identity(temp_benchmark_dir):
     consensus_mock.confidence_score = 90.0
     consensus_mock.agreement_score = 0.8
     consensus_mock.completeness_score = 90.0
+    consensus_mock.parallel_efficiency = 1.0
+    consensus_mock.cache_hit = False
     consensus_mock.learning_style_score = 100.0
     consensus_mock.provider_contributions = {"Cerebras": ["structure"]}
     consensus_mock.diversity_score = 42.0
@@ -198,6 +202,8 @@ def test_benchmark_runner_handles_provider_errors(temp_benchmark_dir):
     consensus_mock.provider_contributions = {}
     consensus_mock.learning_style_score = 100.0
     consensus_mock.completeness_score = 90.0
+    consensus_mock.parallel_efficiency = 1.0
+    consensus_mock.cache_hit = False
 
     mock_result = {
         "responses": [
@@ -262,6 +268,8 @@ def test_benchmark_runner_handles_provider_timeout(temp_benchmark_dir):
     consensus_mock.provider_contributions = {}
     consensus_mock.learning_style_score = 100.0
     consensus_mock.completeness_score = 90.0
+    consensus_mock.parallel_efficiency = 1.0
+    consensus_mock.cache_hit = False
 
     mock_result = {
         "responses": [

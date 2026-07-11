@@ -195,6 +195,9 @@ class BenchmarkRunner:
             evaluation_summary = consensus.evaluation_summary if consensus.evaluation_summary else ""
             confidence_level = consensus.confidence_level if consensus.confidence_level else "Unknown"
             conflicting_concepts = consensus.conflicting_concepts if consensus.conflicting_concepts else []
+            # Phase 4 Production Metrics
+            cache_hit = consensus.cache_hit if consensus.cache_hit is not None else False
+            parallel_efficiency = consensus.parallel_efficiency if consensus.parallel_efficiency is not None else 1.0
             
             run_result = {
                 "topic": prompt_data["topic"],
@@ -220,10 +223,15 @@ class BenchmarkRunner:
                 "evaluation_summary": evaluation_summary,
                 "confidence_level": confidence_level,
                 "conflicting_concepts": conflicting_concepts,
+                # Phase 4
+                "cache_hit": cache_hit,
+                "parallel_efficiency": parallel_efficiency,
                 "error": None
             }
             
             print(f"Execution time: {execution_time:.2f}s")
+            print(f"Cache Hit: {cache_hit}")
+            print(f"Parallel Efficiency: {parallel_efficiency:.2f}")
             print(f"Winner: {winning_provider}")
             print(f"Prompt Score: {prompt_score}/100")
             print(f"Consensus Score: {consensus_score:.2f}")
@@ -315,6 +323,8 @@ class BenchmarkRunner:
                 "evaluation_summary": "",
                 "confidence_level": "Unknown",
                 "conflicting_concepts": [],
+                "cache_hit": False,
+                "parallel_efficiency": 0.0,
                 "error": str(e)
             }
             self.results.append(run_result)
@@ -332,6 +342,16 @@ class BenchmarkRunner:
             return {"total_runs": total_runs, "error": "All runs failed"}
             
         avg_exec_time = sum(r["execution_time"] for r in successful_runs) / num_successful
+        
+        # Phase 4 Stats
+        cache_hits = sum(1 for r in successful_runs if r.get("cache_hit"))
+        cache_hit_ratio = cache_hits / num_successful if num_successful > 0 else 0.0
+        avg_parallel_efficiency = sum(r.get("parallel_efficiency", 1.0) for r in successful_runs) / num_successful
+        
+        # Get Rankings
+        provider_rankings = []
+        if hasattr(self.council, "council_executor"):
+            provider_rankings = self.council.council_executor.health_tracker.get_provider_rankings()
         
         # Provider specific stats across all runs
         provider_latencies = {}
@@ -387,6 +407,10 @@ class BenchmarkRunner:
             "total_runs": total_runs,
             "successful_runs": num_successful,
             "avg_execution_time": avg_exec_time,
+            "cache_hit_ratio": cache_hit_ratio,
+            "avg_parallel_efficiency": avg_parallel_efficiency,
+            "provider_rankings": provider_rankings,
+            "provider_stats": {"provider_success_rates": provider_success_rates, "provider_errors": provider_errors},
             "fastest_provider": fastest_provider,
             "slowest_provider": slowest_provider,
             "avg_prompt_score": sum(prompt_scores) / num_successful,
@@ -487,6 +511,8 @@ class BenchmarkRunner:
             f.write(f"- **Most common conflict:** {stats.get('most_common_conflict', 'None')}\n")
             f.write(f"- **Average successful providers:** {stats['avg_successful_providers']:.2f}\n")
             f.write(f"- **Average execution time:** {stats['avg_execution_time']:.2f}s\n")
+            f.write(f"- **Cache hit ratio:** {stats['cache_hit_ratio']*100:.1f}%\n")
+            f.write(f"- **Average parallel efficiency:** {stats['avg_parallel_efficiency']*100:.1f}%\n")
             f.write(f"- **Fastest provider:** {stats['fastest_provider']}\n")
             f.write(f"- **Slowest provider:** {stats['slowest_provider']}\n\n")
             
@@ -515,6 +541,13 @@ class BenchmarkRunner:
             f.write("\n## Average provider latency\n")
             for p, l in stats['avg_provider_latencies'].items():
                 f.write(f"- {p}: {l:.1f} ms\n")
+                
+            if stats.get('provider_rankings'):
+                f.write("\n## Provider Rankings (Phase 4)\n")
+                f.write("| Rank | Provider | Score | Success Rate | Avg Latency |\n")
+                f.write("|------|----------|-------|--------------|-------------|\n")
+                for i, r in enumerate(stats['provider_rankings'], 1):
+                    f.write(f"| {i} | {r['provider_name']} | {r['score']:.1f} | {r['success_rate']*100:.1f}% | {r['average_response_time']:.1f}s |\n")
                 
             # Examples
             successful_runs = [r for r in self.results if r["error"] is None]
@@ -568,8 +601,15 @@ class BenchmarkRunner:
         print(f"Most Common Conflict: {stats.get('most_common_conflict', 'None')}")
         print(f"Average Successful Providers: {stats['avg_successful_providers']:.2f}")
         print(f"Average Execution Time: {stats['avg_execution_time']:.2f}s")
+        print(f"Cache Hit Ratio: {stats['cache_hit_ratio']*100:.1f}%")
+        print(f"Average Parallel Efficiency: {stats['avg_parallel_efficiency']*100:.1f}%")
         print(f"Fastest Provider: {stats['fastest_provider']}")
         print(f"Slowest Provider: {stats['slowest_provider']}")
+        
+        if stats.get('provider_rankings'):
+            print("\nProvider Rankings:")
+            for i, r in enumerate(stats['provider_rankings'], 1):
+                print(f"{i}. {r['provider_name']} (Score: {r['score']:.1f})")
         
         print("\nProvider Success Rates:")
         for p, r in stats['provider_success_rates'].items():

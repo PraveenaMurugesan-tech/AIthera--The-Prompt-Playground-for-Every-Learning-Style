@@ -1,4 +1,4 @@
-Topic,Learning Style,Execution Time (s),Winning Provider,Contributors,Failed Providers,Prompt Score,Consensus Score,Classification,Error
-Python Programming,Step-by-step learner,41.74,groq,"groq, gemini, openrouter, cerebras, sambanova","Claude, DeepSeek",89.6,89.60,Good,
-Java,Visual learner,77.63,groq,"groq, gemini, openrouter, cerebras, sambanova","Claude, DeepSeek",96.1,96.10,Excellent,
-Data Structures,Hands-on learner,71.54,groq,"groq, gemini, openrouter, cerebras, sambanova","Claude, DeepSeek",97.1,97.10,Excellent,
+Topic,Learning Style,Execution Time (s),Winning Provider,Contributors,Failed Providers,Prompt Score,Consensus Score,Agreement Score,Diversity Score,Coverage Score,Classification,Error
+Python Programming,Step-by-step learner,227.70,groq,"groq, gemini, openrouter, cerebras, sambanova","Claude, DeepSeek",96.0,96.00,0.14,89.16,85.71,Excellent,
+Java,Visual learner,56.97,groq,"groq, gemini, openrouter, cerebras, sambanova","Claude, DeepSeek",96.1,96.10,0.10,89.48,71.43,Excellent,
+Data Structures,Hands-on learner,60.74,groq,"groq, gemini, openrouter, cerebras, sambanova","Claude, DeepSeek",92.0,92.00,0.14,88.59,71.43,Excellent,

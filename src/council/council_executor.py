@@ -730,8 +730,12 @@ class CouncilExecutor:
             )
             tasks.append(task)
 
+        # Generate request ID if missing
+        import uuid
+        req_id = getattr(request, "id", None) or str(uuid.uuid4())[:8]
+
         # Execute simultaneously using gather with exceptions returned
-        logger.info("Gathering %d provider tasks", len(tasks))
+        logger.info("[Req:%s] Gathering %d provider tasks", req_id, len(tasks))
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         normalized_responses: List[CouncilResponse] = []
@@ -744,7 +748,7 @@ class CouncilExecutor:
             provider_display_name = provider_instance.get_provider_name()
 
             if isinstance(response, Exception):
-                logger.error("Provider %s execution failed: %s", provider_display_name, response)
+                logger.error("[Req:%s] Provider %s execution failed: %s", req_id, provider_display_name, response)
                 self.failed_providers.append(provider_display_name)
                 
                 error_type = type(response).__name__
@@ -763,16 +767,18 @@ class CouncilExecutor:
                     "status_code": status_code,
                     "message": str(response) if str(response) else error_type
                 }
-                self.health_tracker.record_failure(provider_display_name)
+                
+                is_timeout = "timeout" in error_type.lower() or "timeout" in str(response).lower()
+                self.health_tracker.record_failure(provider_display_name, is_timeout=is_timeout)
             elif response is None:
-                logger.warning("Provider %s returned None", provider_display_name)
+                logger.warning("[Req:%s] Provider %s returned None", req_id, provider_display_name)
                 self.failed_providers.append(provider_display_name)
                 self.error_details[provider_display_name] = {
                     "type": "NoneTypeError",
                     "status_code": "N/A",
                     "message": "Provider returned None"
                 }
-                self.health_tracker.record_failure(provider_display_name)
+                self.health_tracker.record_failure(provider_display_name, is_timeout=False)
             else:
                 try:
                     if isinstance(response, dict):
@@ -795,27 +801,26 @@ class CouncilExecutor:
                     # Record health metrics
                     res_time = normalized.metadata.response_time if (normalized.metadata and normalized.metadata.response_time) else 0.0
                     self.health_tracker.record_success(provider_display_name, response_time=res_time)
-                    logger.info("Successfully normalized response for %s", provider_display_name)
+                    logger.info("[Req:%s] Successfully normalized response for %s (Latency: %.2fs)", req_id, provider_display_name, res_time)
                 except Exception as ne:
-                    logger.error("Failed to normalize response for %s: %s", provider_display_name, ne)
+                    logger.error("[Req:%s] Failed to normalize response for %s: %s", req_id, provider_display_name, ne)
                     self.failed_providers.append(provider_display_name)
                     self.error_details[provider_display_name] = {
                         "type": "NormalizationError",
                         "status_code": "N/A",
                         "message": f"Normalization failed: {str(ne)}"
                     }
-                    self.health_tracker.record_failure(provider_display_name)
+                    self.health_tracker.record_failure(provider_display_name, is_timeout=False)
 
         if not normalized_responses:
-            error_msg = "All providers failed. Council cannot proceed."
+            error_msg = f"[Req:{req_id}] All providers failed. Council cannot proceed."
             logger.error(error_msg)
             raise CouncilExecutionError(error_msg)
 
         logger.info(
-            "execute_council completed. Successful: %s, Failed: %s",
-            self.successful_providers,
-            self.failed_providers,
+            "[Req:%s] execute_council completed. Successful: %s, Failed: %s",
+            req_id,
+            len(self.successful_providers),
+            len(self.failed_providers)
         )
         return normalized_responses
-
-
