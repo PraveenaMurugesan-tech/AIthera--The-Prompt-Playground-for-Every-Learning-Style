@@ -21,6 +21,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.council.live_council import LiveCouncil
+from src.services.ai_service import AIService
 from src.models.prompt_request import PromptRequest
 from src.providers.provider_registry import ProviderRegistry
 from src.council.council_executor import CouncilExecutor
@@ -75,6 +76,7 @@ class BenchmarkRunner:
             pass
             
         self.council = LiveCouncil()
+        self.ai_service = AIService(live_council=self.council)
 
     def load_prompts(self):
         print("Loading benchmark dataset...")
@@ -124,11 +126,22 @@ class BenchmarkRunner:
         
         try:
             print("Executing live council...")
-            result = await self.council.execute(request, timeout=300.0)
+            result = await self.ai_service.generate_prompt(request, timeout=300.0)
             end_time = time.time()
             execution_time = end_time - start_time
             print("Council execution completed")
             
+            # Phase 5: Optimizer Integration
+            consensus_prompt = result["consensus"].final_prompt if result.get("consensus") else ""
+            if consensus_prompt:
+                validation_score = self.ai_service.validate_prompt(consensus_prompt)
+                num_recommendations = len(self.ai_service.generate_recommendations(
+                    consensus_prompt, normalized_style, prompt_data["difficulty"], validation_score
+                ))
+            else:
+                validation_score = None
+                num_recommendations = 0
+
             # Extract data
             responses = result["responses"]
             consensus = result["consensus"]
@@ -226,6 +239,9 @@ class BenchmarkRunner:
                 # Phase 4
                 "cache_hit": cache_hit,
                 "parallel_efficiency": parallel_efficiency,
+                # Phase 5
+                "validation_score": validation_score.overall_score if validation_score else 0.0,
+                "num_recommendations": num_recommendations,
                 "error": None
             }
             
@@ -325,6 +341,8 @@ class BenchmarkRunner:
                 "conflicting_concepts": [],
                 "cache_hit": False,
                 "parallel_efficiency": 0.0,
+                "validation_score": 0.0,
+                "num_recommendations": 0,
                 "error": str(e)
             }
             self.results.append(run_result)
@@ -424,6 +442,8 @@ class BenchmarkRunner:
             "avg_completeness_score": sum(r.get("completeness_score", 0) for r in successful_runs) / num_successful,
             "avg_learning_style_score": sum(r.get("learning_style_score", 0) for r in successful_runs) / num_successful,
             "avg_learning_style_accuracy": avg_ls_accuracy,
+            "avg_validation_score": sum(r.get("validation_score", 0) for r in successful_runs) / num_successful,
+            "avg_recommendations": sum(r.get("num_recommendations", 0) for r in successful_runs) / num_successful,
             "most_common_conflict": most_common_conflict,
             "provider_success_rates": provider_success_rates,
             "provider_failure_rates": {p: 100 - r for p, r in provider_success_rates.items()},
@@ -511,6 +531,8 @@ class BenchmarkRunner:
             f.write(f"- **Most common conflict:** {stats.get('most_common_conflict', 'None')}\n")
             f.write(f"- **Average successful providers:** {stats['avg_successful_providers']:.2f}\n")
             f.write(f"- **Average execution time:** {stats['avg_execution_time']:.2f}s\n")
+            f.write(f"- **Average validation score:** {stats.get('avg_validation_score', 0):.2f}\n")
+            f.write(f"- **Average recommendations:** {stats.get('avg_recommendations', 0):.2f}\n")
             f.write(f"- **Cache hit ratio:** {stats['cache_hit_ratio']*100:.1f}%\n")
             f.write(f"- **Average parallel efficiency:** {stats['avg_parallel_efficiency']*100:.1f}%\n")
             f.write(f"- **Fastest provider:** {stats['fastest_provider']}\n")
@@ -601,6 +623,8 @@ class BenchmarkRunner:
         print(f"Most Common Conflict: {stats.get('most_common_conflict', 'None')}")
         print(f"Average Successful Providers: {stats['avg_successful_providers']:.2f}")
         print(f"Average Execution Time: {stats['avg_execution_time']:.2f}s")
+        print(f"Average Validation Score: {stats.get('avg_validation_score', 0):.2f}")
+        print(f"Average Recommendations: {stats.get('avg_recommendations', 0):.2f}")
         print(f"Cache Hit Ratio: {stats['cache_hit_ratio']*100:.1f}%")
         print(f"Average Parallel Efficiency: {stats['avg_parallel_efficiency']*100:.1f}%")
         print(f"Fastest Provider: {stats['fastest_provider']}")
