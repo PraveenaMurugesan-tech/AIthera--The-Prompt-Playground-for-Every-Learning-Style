@@ -177,7 +177,7 @@ def test_benchmark_runner_handles_failures(temp_benchmark_dir):
     assert len(runner.results) == 1
     res = runner.results[0]
     assert res["winning_provider"] == "error"
-    assert res["error"] == "API failure"
+    assert res["error"] == "Failed to generate prompt: API failure"
     assert res["prompt_score"] == 0.0
     
     stats = runner.compute_statistics()
