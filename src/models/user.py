@@ -33,4 +33,4 @@ class User(Base):
         "PromptRequest",
         back_populates="user",
         cascade="all, delete-orphan",
-
+    )

@@ -22,7 +22,7 @@ def create_test_db():
     from src.database.connection import engine
     from src.database.base import Base
 
-    # Create all tables
+    # Create all tables (initial setup)
     Base.metadata.create_all(bind=engine)
 
     yield
@@ -37,6 +37,17 @@ def create_test_db():
             db_path.unlink()
         except Exception:
             pass
+
+@pytest.fixture(autouse=True)
+def clean_db():
+    from src.database.connection import engine
+    from src.database.base import Base
+    
+    # Drop and recreate all tables for perfect test isolation
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    
+    yield
 
 
 @pytest.fixture

@@ -28,8 +28,7 @@ def mock_get_current_user():
 def mock_get_db():
     yield MagicMock()
 
-app.dependency_overrides[get_current_user] = mock_get_current_user
-app.dependency_overrides[get_db] = mock_get_db
+# Dependency overrides will be applied locally in the test or fixture
 
 @pytest.fixture
 def mock_ai_service():
@@ -75,7 +74,14 @@ def mock_ai_service():
     service.generate_recommendations.return_value = []
     
     app.dependency_overrides[get_ai_service] = lambda: service
-    return service
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    app.dependency_overrides[get_db] = mock_get_db
+    
+    yield service
+    
+    app.dependency_overrides.pop(get_ai_service, None)
+    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(get_db, None)
 
 def test_generate_prompt_endpoint(mock_ai_service):
     payload = {
