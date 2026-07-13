@@ -2,9 +2,9 @@
   "statistics": {
     "total_runs": 3,
     "successful_runs": 3,
-    "avg_execution_time": 61.004555543263756,
+    "avg_execution_time": 54.11702768007914,
     "cache_hit_ratio": 0.0,
-    "avg_parallel_efficiency": 0.931010757743903,
+    "avg_parallel_efficiency": 0.8861001633483089,
     "provider_rankings": [
       {
         "provider_name": "Cerebras",
@@ -12,15 +12,15 @@
         "successful_requests": 3,
         "failed_requests": 0,
         "success_rate": 1.0,
-        "average_response_time": 3.26146133740743,
-        "min_latency": 2.9526240825653076,
-        "max_latency": 3.8585996627807617,
+        "average_response_time": 3.7709030310312905,
+        "min_latency": 3.529123306274414,
+        "max_latency": 3.9307701587677,
         "timeout_count": 0,
         "retry_count": 0,
         "consecutive_failures": 0,
-        "last_success_timestamp": 1783779833.691825,
+        "last_success_timestamp": 1783865126.4564655,
         "last_failed_timestamp": null,
-        "score": 99.09895618756612
+        "score": 98.73506926354908
       },
       {
         "provider_name": "SambaNova",
@@ -28,15 +28,15 @@
         "successful_requests": 3,
         "failed_requests": 0,
         "success_rate": 1.0,
-        "average_response_time": 7.3603730996449785,
-        "min_latency": 6.652757406234741,
-        "max_latency": 8.142763376235962,
+        "average_response_time": 7.2570773760477705,
+        "min_latency": 7.011840343475342,
+        "max_latency": 7.518213748931885,
         "timeout_count": 0,
         "retry_count": 0,
         "consecutive_failures": 0,
-        "last_success_timestamp": 1783779833.6920407,
+        "last_success_timestamp": 1783865126.4570367,
         "last_failed_timestamp": null,
-        "score": 96.17116207168216
+        "score": 96.24494473139444
       },
       {
         "provider_name": "Groq",
@@ -44,15 +44,15 @@
         "successful_requests": 3,
         "failed_requests": 0,
         "success_rate": 1.0,
-        "average_response_time": 8.741018931070963,
-        "min_latency": 4.9926910400390625,
-        "max_latency": 11.623701095581055,
+        "average_response_time": 12.364939371744791,
+        "min_latency": 8.621965646743774,
+        "max_latency": 14.355589628219604,
         "timeout_count": 0,
         "retry_count": 0,
         "consecutive_failures": 0,
-        "last_success_timestamp": 1783779833.689662,
+        "last_success_timestamp": 1783865126.4502208,
         "last_failed_timestamp": null,
-        "score": 95.18498647780646
+        "score": 92.59647187732514
       },
       {
         "provider_name": "Gemini",
@@ -60,13 +60,13 @@
         "successful_requests": 3,
         "failed_requests": 0,
         "success_rate": 1.0,
-        "average_response_time": 39.19229404131571,
-        "min_latency": 29.961753606796265,
-        "max_latency": 43.809666872024536,
+        "average_response_time": 45.803051789601646,
+        "min_latency": 33.92469811439514,
+        "max_latency": 63.71256470680237,
         "timeout_count": 0,
         "retry_count": 0,
         "consecutive_failures": 0,
-        "last_success_timestamp": 1783779833.6904964,
+        "last_success_timestamp": 1783865126.453339,
         "last_failed_timestamp": null,
         "score": 80.0
       },
@@ -76,13 +76,13 @@
         "successful_requests": 3,
         "failed_requests": 0,
         "success_rate": 1.0,
-        "average_response_time": 56.69522452354431,
-        "min_latency": 54.50950574874878,
-        "max_latency": 58.152132987976074,
+        "average_response_time": 46.3222599029541,
+        "min_latency": 35.18819570541382,
+        "max_latency": 66.92445492744446,
         "timeout_count": 0,
         "retry_count": 0,
         "consecutive_failures": 0,
-        "last_success_timestamp": 1783779833.691299,
+        "last_success_timestamp": 1783865126.4553728,
         "last_failed_timestamp": null,
         "score": 80.0
       },
@@ -99,7 +99,7 @@
         "retry_count": 0,
         "consecutive_failures": 3,
         "last_success_timestamp": null,
-        "last_failed_timestamp": 1783779833.690595,
+        "last_failed_timestamp": 1783865126.4535773,
         "score": 0.0
       },
       {
@@ -115,7 +115,7 @@
         "retry_count": 0,
         "consecutive_failures": 3,
         "last_success_timestamp": null,
-        "last_failed_timestamp": 1783779833.6907454,
+        "last_failed_timestamp": 1783865126.45391,
         "score": 0.0
       }
     ],
@@ -131,9 +131,9 @@
       },
       "provider_errors": {
         "Claude": [
-          "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRCxWioXA1xQq3BxJkX'}",
-          "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRHEfBZadcwzJ9MNHH1'}",
-          "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRMs2pVNyGpJqHnfGtT'}"
+          "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHdsd4CG6CkzcfyZ5WM'}",
+          "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHhRAhS4dY8JpRAJGfj'}",
+          "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHkgH86nCzQMa5U1FjF'}"
         ],
         "DeepSeek": [
           "402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}",
@@ -144,19 +144,19 @@
     },
     "fastest_provider": "Cerebras",
     "slowest_provider": "OpenRouter",
-    "avg_prompt_score": 93.36666666666667,
-    "highest_prompt_score": 96.6,
-    "lowest_prompt_score": 87.0,
-    "avg_consensus_score": 93.36666666666667,
-    "avg_confidence_score": 11.060785714285714,
-    "avg_agreement_score": 0.14270833333333333,
-    "avg_diversity_score": 87.51333333333334,
-    "avg_coverage_score": 71.43,
+    "avg_prompt_score": 94.39999999999999,
+    "highest_prompt_score": 97.6,
+    "lowest_prompt_score": 89.5,
+    "avg_consensus_score": 94.39999999999999,
+    "avg_confidence_score": 11.159785714285713,
+    "avg_agreement_score": 0.16474999999999998,
+    "avg_diversity_score": 87.18,
+    "avg_coverage_score": 71.42666666666666,
     "avg_completeness_score": 85.71428571428571,
     "avg_learning_style_score": 100.0,
     "avg_learning_style_accuracy": 100.0,
-    "avg_validation_score": 90.0,
-    "avg_recommendations": 0.6666666666666666,
+    "avg_validation_score": 92.66666666666667,
+    "avg_recommendations": 1.0,
     "most_common_conflict": "None",
     "provider_success_rates": {
       "Groq": 100.0,
@@ -182,17 +182,17 @@
       "groq": 3
     },
     "avg_provider_latencies": {
-      "Groq": 8741.018931070963,
-      "Gemini": 39192.29404131571,
-      "OpenRouter": 56695.22452354431,
-      "Cerebras": 3261.46133740743,
-      "SambaNova": 7360.3730996449785
+      "Groq": 12364.939371744791,
+      "Gemini": 45803.051789601646,
+      "OpenRouter": 46322.2599029541,
+      "Cerebras": 3770.9030310312905,
+      "SambaNova": 7257.0773760477705
     },
     "provider_errors": {
       "Claude": [
-        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRCxWioXA1xQq3BxJkX'}",
-        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRHEfBZadcwzJ9MNHH1'}",
-        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRMs2pVNyGpJqHnfGtT'}"
+        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHdsd4CG6CkzcfyZ5WM'}",
+        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHhRAhS4dY8JpRAJGfj'}",
+        "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHkgH86nCzQMa5U1FjF'}"
       ],
       "DeepSeek": [
         "402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}",
@@ -205,7 +205,7 @@
     {
       "topic": "Python Programming",
       "learning_style": "Step-by-step learner",
-      "execution_time": 62.62061929702759,
+      "execution_time": 41.59498405456543,
       "winning_provider": "groq",
       "contributors": [
         "groq",
@@ -214,10 +214,10 @@
         "cerebras",
         "sambanova"
       ],
-      "prompt_score": 87.0,
-      "consensus_score": 87.0,
-      "confidence_score": 10.578285714285716,
-      "agreement_score": 0.13475,
+      "prompt_score": 89.5,
+      "consensus_score": 89.5,
+      "confidence_score": 11.571285714285715,
+      "agreement_score": 0.21787499999999999,
       "completeness_score": 85.71428571428571,
       "learning_style_score": 100.0,
       "provider_contributions": {
@@ -227,6 +227,8 @@
           "Examples",
           "Practice",
           "Exercises",
+          "Tips",
+          "Analogies",
           "Real-world applications"
         ],
         "Gemini": [
@@ -234,6 +236,7 @@
           "Explanation",
           "Examples",
           "Practice",
+          "Exercises",
           "Tips",
           "Visual aids",
           "Analogies"
@@ -245,7 +248,6 @@
           "Practice",
           "Exercises",
           "Tips",
-          "Analogies",
           "Real-world applications"
         ],
         "Cerebras": [
@@ -255,7 +257,7 @@
           "Practice",
           "Exercises",
           "Tips",
-          "Visual aids",
+          "Analogies",
           "Real-world applications"
         ],
         "SambaNova": [
@@ -273,39 +275,39 @@
           "provider_name": "Groq",
           "model_name": "llama-3.3-70b-versatile",
           "success": true,
-          "latency": 9606.664657592773,
-          "response_length": 5412,
+          "latency": 8621.965646743774,
+          "response_length": 5011,
           "error_message": null
         },
         {
           "provider_name": "Gemini",
           "model_name": "gemini-2.5-flash",
           "success": true,
-          "latency": 29961.753606796265,
-          "response_length": 16773,
+          "latency": 33924.69811439514,
+          "response_length": 19169,
           "error_message": null
         },
         {
           "provider_name": "OpenRouter",
           "model_name": "openai/gpt-oss-120b",
           "success": true,
-          "latency": 57424.03483390808,
-          "response_length": 7919,
+          "latency": 36854.12907600403,
+          "response_length": 8040,
           "error_message": null
         },
         {
           "provider_name": "Cerebras",
           "model_name": "gpt-oss-120b",
           "success": true,
-          "latency": 2952.6240825653076,
-          "response_length": 7498,
+          "latency": 3529.123306274414,
+          "response_length": 8122,
           "error_message": null
         },
         {
           "provider_name": "SambaNova",
           "model_name": "Meta-Llama-3.3-70B-Instruct",
           "success": true,
-          "latency": 7285.598516464233,
+          "latency": 7011.840343475342,
           "response_length": 4871,
           "error_message": null
         },
@@ -315,7 +317,7 @@
           "success": false,
           "latency": 0.0,
           "response_length": 0,
-          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRCxWioXA1xQq3BxJkX'}"
+          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHdsd4CG6CkzcfyZ5WM'}"
         },
         {
           "provider_name": "DeepSeek",
@@ -327,27 +329,27 @@
         }
       ],
       "num_successful_providers": 5,
-      "diversity_score": 89.12,
+      "diversity_score": 85.81,
       "coverage_score": 71.43,
       "learning_style_verification": {
         "requested": "Step_by_step",
-        "detected": "Kinesthetic",
+        "detected": "Reading",
         "confidence": 100.0
       },
-      "explanation": "While providers disagreed on some concepts like general structure, the council ultimately selected SambaNova's approach as the most balanced. Groq contributed introduction, explanation, examples, practice, exercises, real-world applications. Gemini contributed introduction, explanation, examples, practice, tips, visual aids, analogies. OpenRouter contributed introduction, explanation, examples, practice, exercises, tips, analogies, real-world applications. Cerebras contributed introduction, explanation, examples, practice, exercises, tips, visual aids, real-world applications.",
+      "explanation": "While providers disagreed on some concepts like general structure, the council ultimately selected Groq's approach as the most balanced. Gemini contributed introduction, explanation, examples, practice, exercises, tips, visual aids, analogies. OpenRouter contributed introduction, explanation, examples, practice, exercises, tips, real-world applications. Cerebras contributed introduction, explanation, examples, practice, exercises, tips, analogies, real-world applications. SambaNova contributed introduction, explanation, examples, practice, exercises, real-world applications.",
       "evaluation_summary": "Low confidence consensus. Adequate educational coverage. Providers disagreed. No major conflicts detected.",
       "confidence_level": "Low",
       "conflicting_concepts": [],
       "cache_hit": false,
-      "parallel_efficiency": 0.9170179307504588,
-      "validation_score": 90.0,
+      "parallel_efficiency": 0.88610857859077,
+      "validation_score": 92.0,
       "num_recommendations": 1,
       "error": null
     },
     {
       "topic": "Java",
       "learning_style": "Visual learner",
-      "execution_time": 56.13888478279114,
+      "execution_time": 44.407089710235596,
       "winning_provider": "groq",
       "contributors": [
         "groq",
@@ -356,10 +358,10 @@
         "cerebras",
         "sambanova"
       ],
-      "prompt_score": 96.5,
-      "consensus_score": 96.5,
-      "confidence_score": 11.422785714285714,
-      "agreement_score": 0.143125,
+      "prompt_score": 97.6,
+      "consensus_score": 97.6,
+      "confidence_score": 10.987785714285714,
+      "agreement_score": 0.134625,
       "completeness_score": 85.71428571428571,
       "learning_style_score": 100.0,
       "provider_contributions": {
@@ -383,10 +385,12 @@
           "Real-world applications"
         ],
         "OpenRouter": [
+          "Introduction",
           "Explanation",
           "Examples",
           "Practice",
           "Exercises",
+          "Tips",
           "Visual aids",
           "Analogies",
           "Real-world applications"
@@ -397,7 +401,6 @@
           "Examples",
           "Practice",
           "Exercises",
-          "Tips",
           "Visual aids",
           "Analogies",
           "Real-world applications"
@@ -418,39 +421,39 @@
           "provider_name": "Groq",
           "model_name": "llama-3.3-70b-versatile",
           "success": true,
-          "latency": 4992.6910400390625,
-          "response_length": 5077,
+          "latency": 14355.589628219604,
+          "response_length": 5513,
           "error_message": null
         },
         {
           "provider_name": "Gemini",
           "model_name": "gemini-2.5-flash",
           "success": true,
-          "latency": 43805.46164512634,
-          "response_length": 23148,
+          "latency": 39771.89254760742,
+          "response_length": 18815,
           "error_message": null
         },
         {
           "provider_name": "OpenRouter",
           "model_name": "openai/gpt-oss-120b",
           "success": true,
-          "latency": 54509.50574874878,
-          "response_length": 8527,
+          "latency": 35188.19570541382,
+          "response_length": 8780,
           "error_message": null
         },
         {
           "provider_name": "Cerebras",
           "model_name": "gpt-oss-120b",
           "success": true,
-          "latency": 2973.1602668762207,
-          "response_length": 8502,
+          "latency": 3852.815628051758,
+          "response_length": 9238,
           "error_message": null
         },
         {
           "provider_name": "SambaNova",
           "model_name": "Meta-Llama-3.3-70B-Instruct",
           "success": true,
-          "latency": 8142.763376235962,
+          "latency": 7518.213748931885,
           "response_length": 6111,
           "error_message": null
         },
@@ -460,7 +463,7 @@
           "success": false,
           "latency": 0.0,
           "response_length": 0,
-          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRHEfBZadcwzJ9MNHH1'}"
+          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHhRAhS4dY8JpRAJGfj'}"
         },
         {
           "provider_name": "DeepSeek",
@@ -472,27 +475,27 @@
         }
       ],
       "num_successful_providers": 5,
-      "diversity_score": 86.31,
-      "coverage_score": 71.43,
+      "diversity_score": 87.75,
+      "coverage_score": 57.14,
       "learning_style_verification": {
         "requested": "Visual",
-        "detected": "Kinesthetic",
+        "detected": "Visual",
         "confidence": 100.0
       },
-      "explanation": "While providers disagreed on some concepts like general structure, the council ultimately selected Cerebras's approach as the most balanced. Groq contributed introduction, explanation, examples, practice, exercises, analogies, real-world applications. Gemini contributed introduction, explanation, examples, practice, tips, visual aids, analogies, real-world applications. OpenRouter contributed explanation, examples, practice, exercises, visual aids, analogies, real-world applications. SambaNova contributed introduction, explanation, examples, practice, exercises, analogies, real-world applications.",
+      "explanation": "While providers disagreed on some concepts like general structure, the council ultimately selected Cerebras's approach as the most balanced. Groq contributed introduction, explanation, examples, practice, exercises, analogies, real-world applications. Gemini contributed introduction, explanation, examples, practice, tips, visual aids, analogies, real-world applications. OpenRouter contributed introduction, explanation, examples, practice, exercises, tips, visual aids, analogies, real-world applications. SambaNova contributed introduction, explanation, examples, practice, exercises, analogies, real-world applications.",
       "evaluation_summary": "Low confidence consensus. Adequate educational coverage. Providers disagreed. No major conflicts detected.",
       "confidence_level": "Low",
       "conflicting_concepts": [],
       "cache_hit": false,
-      "parallel_efficiency": 0.9709783197374021,
-      "validation_score": 96.0,
+      "parallel_efficiency": 0.895627874489197,
+      "validation_score": 90.0,
       "num_recommendations": 0,
       "error": null
     },
     {
       "topic": "Data Structures",
       "learning_style": "Hands-on learner",
-      "execution_time": 64.25416254997253,
+      "execution_time": 76.3490092754364,
       "winning_provider": "groq",
       "contributors": [
         "groq",
@@ -501,10 +504,10 @@
         "cerebras",
         "sambanova"
       ],
-      "prompt_score": 96.6,
-      "consensus_score": 96.6,
-      "confidence_score": 11.181285714285714,
-      "agreement_score": 0.15025,
+      "prompt_score": 96.1,
+      "consensus_score": 96.1,
+      "confidence_score": 10.920285714285715,
+      "agreement_score": 0.14175,
       "completeness_score": 85.71428571428571,
       "learning_style_score": 100.0,
       "provider_contributions": {
@@ -514,11 +517,10 @@
           "Examples",
           "Practice",
           "Exercises",
-          "Visual aids",
-          "Analogies",
           "Real-world applications"
         ],
         "Gemini": [
+          "Introduction",
           "Explanation",
           "Examples",
           "Practice",
@@ -534,8 +536,6 @@
           "Practice",
           "Exercises",
           "Tips",
-          "Visual aids",
-          "Analogies",
           "Real-world applications"
         ],
         "Cerebras": [
@@ -544,7 +544,7 @@
           "Examples",
           "Practice",
           "Exercises",
-          "Analogies",
+          "Tips",
           "Real-world applications"
         ],
         "SambaNova": [
@@ -562,39 +562,39 @@
           "provider_name": "Groq",
           "model_name": "llama-3.3-70b-versatile",
           "success": true,
-          "latency": 11623.701095581055,
-          "response_length": 5698,
+          "latency": 14117.262840270996,
+          "response_length": 5668,
           "error_message": null
         },
         {
           "provider_name": "Gemini",
           "model_name": "gemini-2.5-flash",
           "success": true,
-          "latency": 43809.666872024536,
-          "response_length": 21518,
+          "latency": 63712.56470680237,
+          "response_length": 27534,
           "error_message": null
         },
         {
           "provider_name": "OpenRouter",
           "model_name": "openai/gpt-oss-120b",
           "success": true,
-          "latency": 58152.132987976074,
-          "response_length": 10215,
+          "latency": 66924.45492744446,
+          "response_length": 10061,
           "error_message": null
         },
         {
           "provider_name": "Cerebras",
           "model_name": "gpt-oss-120b",
           "success": true,
-          "latency": 3858.5996627807617,
-          "response_length": 9319,
+          "latency": 3930.7701587677,
+          "response_length": 8118,
           "error_message": null
         },
         {
           "provider_name": "SambaNova",
           "model_name": "Meta-Llama-3.3-70B-Instruct",
           "success": true,
-          "latency": 6652.757406234741,
+          "latency": 7241.178035736084,
           "response_length": 5161,
           "error_message": null
         },
@@ -604,7 +604,7 @@
           "success": false,
           "latency": 0.0,
           "response_length": 0,
-          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRMs2pVNyGpJqHnfGtT'}"
+          "error_message": "400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHkgH86nCzQMa5U1FjF'}"
         },
         {
           "provider_name": "DeepSeek",
@@ -616,21 +616,21 @@
         }
       ],
       "num_successful_providers": 5,
-      "diversity_score": 87.11,
-      "coverage_score": 71.43,
+      "diversity_score": 87.98,
+      "coverage_score": 85.71,
       "learning_style_verification": {
         "requested": "Step_by_step",
-        "detected": "Reading",
+        "detected": "Kinesthetic",
         "confidence": 100.0
       },
-      "explanation": "While providers disagreed on some concepts like general structure, the council ultimately selected Cerebras's approach as the most balanced. Groq contributed introduction, explanation, examples, practice, exercises, visual aids, analogies, real-world applications. Gemini contributed explanation, examples, practice, exercises, tips, visual aids, analogies. OpenRouter contributed introduction, explanation, examples, practice, exercises, tips, visual aids, analogies, real-world applications. SambaNova contributed introduction, explanation, examples, practice, exercises, real-world applications.",
-      "evaluation_summary": "Low confidence consensus. Adequate educational coverage. Providers disagreed. No major conflicts detected.",
+      "explanation": "While providers disagreed on some concepts like general structure, the council ultimately selected Cerebras's approach as the most balanced. Groq contributed introduction, explanation, examples, practice, exercises, real-world applications. Gemini contributed introduction, explanation, examples, practice, exercises, tips, visual aids, analogies. OpenRouter contributed introduction, explanation, examples, practice, exercises, tips, real-world applications. SambaNova contributed introduction, explanation, examples, practice, exercises, real-world applications.",
+      "evaluation_summary": "Low confidence consensus. Excellent educational coverage. Providers disagreed. No major conflicts detected.",
       "confidence_level": "Low",
       "conflicting_concepts": [],
       "cache_hit": false,
-      "parallel_efficiency": 0.905036022743848,
-      "validation_score": 84.0,
-      "num_recommendations": 1,
+      "parallel_efficiency": 0.8765640369649595,
+      "validation_score": 96.0,
+      "num_recommendations": 2,
       "error": null
     }
   ]
