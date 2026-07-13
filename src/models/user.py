@@ -19,13 +19,13 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
+        server_default=func.current_timestamp(),
         nullable=False,
     )
     updated_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
         nullable=False,
     )
     # Relationship to prompt requests created by this user
@@ -34,6 +34,3 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
-
-    # Backwards-compatible alias for older code that used `requests`
-    requests = prompt_requests
