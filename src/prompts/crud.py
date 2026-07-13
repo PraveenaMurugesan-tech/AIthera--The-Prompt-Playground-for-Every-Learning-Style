@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, delete as sa_delete
 
 from src.models.prompt_request import PromptRequest
 
@@ -44,6 +44,21 @@ def get_user_prompt_requests(db: Session, user_id: int) -> List[PromptRequest]:
     return db.execute(stmt).scalars().all()
 
 
+def get_prompt_request_owner(db: Session, request_id: int) -> Optional[int]:
+    """Return the `user_id` owner for a PromptRequest id, or None if not found.
+
+    This performs a lightweight query selecting only the `user_id` column to avoid
+    loading the full ORM object and any related collections which could trigger
+    lazy-loads against missing tables.
+    """
+
+    stmt = select(PromptRequest.user_id).where(PromptRequest.id == request_id)
+    row = db.execute(stmt).first()
+    if not row:
+        return None
+    return int(row[0])
+
+
 def update_generated_prompt(db: Session, request_id: int, generated_prompt: str) -> Optional[PromptRequest]:
     """Update the `generated_prompt` field for a PromptRequest."""
 
@@ -64,12 +79,22 @@ def update_generated_prompt(db: Session, request_id: int, generated_prompt: str)
 def delete_prompt_request(db: Session, request_id: int) -> bool:
     """Delete a PromptRequest by id. Returns True if deleted, False if not found."""
 
-    request = get_prompt_request(db, request_id)
-
-    if not request:
-        return False
-
-    db.delete(request)
+    # Use a bulk DELETE to avoid SQLAlchemy loading related collections which
+    # may reference database tables that are not present in the current schema
+    # (causes lazy-load queries and errors). Bulk delete issues a direct SQL
+    # DELETE and does not trigger relationship-loading on the Python side.
+    stmt = sa_delete(PromptRequest).where(PromptRequest.id == request_id)
+    result = db.execute(stmt)
     db.commit()
 
-    return True
+    # result.rowcount is the number of rows affected by the DELETE
+    return (result.rowcount or 0) > 0
+
+
+def generate_and_save_prompt(db: Session, request_id: int, generated_prompt: str) -> Optional[PromptRequest]:
+    """Convenience helper to save a generated prompt to a PromptRequest.
+
+    Returns the updated PromptRequest or `None` if not found.
+    """
+
+    return update_generated_prompt(db=db, request_id=request_id, generated_prompt=generated_prompt)

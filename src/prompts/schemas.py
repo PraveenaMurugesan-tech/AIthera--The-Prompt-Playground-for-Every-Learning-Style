@@ -19,6 +19,15 @@ class PromptRequestCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PromptGenerateResponse(BaseModel):
+    """Response schema for generated prompts."""
+
+    request_id: int
+    generated_prompt: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PromptRequestResponse(BaseModel):
     """Representation of a persisted PromptRequest returned by the API."""
 

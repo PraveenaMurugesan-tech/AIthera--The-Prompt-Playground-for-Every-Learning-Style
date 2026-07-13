@@ -1,6 +1,5 @@
 import os
 from typing import Optional
-import os.path
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -8,10 +7,26 @@ from sqlalchemy.engine import Engine
 
 # Database configuration and reusable engine creation.
 
-# Load environment variables from project root .env if present.
+# Project repository root and expected .env path
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DOTENV_PATH = os.path.join(REPO_ROOT, ".env")
-# Override existing environment variables so local .env takes precedence during dev/migrations
+
+# If the project .env is missing, raise a clear error instructing the developer how
+# to create it (do not commit real credentials). This makes startup failures
+# explicit and tells users to copy the provided .env.example into place.
+if not os.path.exists(DOTENV_PATH):
+    raise RuntimeError(
+        "Required .env file not found at: {path}\n"
+        "Create it by copying the provided .env.example in the project root and filling in values.\n\n"
+        "Example (from project root):\n"
+        "  copy .env.example .env            (Windows)\n"
+        "  cp .env.example .env              (Linux / macOS)\n\n"
+        "Expected environment variables in .env:\n"
+        "  DATABASE_URL, JWT_SECRET_KEY, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES\n"
+    ).format(path=DOTENV_PATH)
+
+# Load environment variables from project root .env, overriding existing values so
+# the local .env takes precedence during development and migrations.
 load_dotenv(dotenv_path=DOTENV_PATH, override=True)
 
 
@@ -24,7 +39,9 @@ def get_database_url() -> str:
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         raise RuntimeError(
-            f"DATABASE_URL environment variable is not set. Expected .env at: {DOTENV_PATH}"
+            "DATABASE_URL environment variable is not set.\n"
+            f"Expected .env at: {DOTENV_PATH}\n"
+            "Create it by copying .env.example and setting `DATABASE_URL` accordingly."
         )
     return database_url
 
