@@ -1,4 +1,8 @@
+import logging
+import asyncio
 from typing import Annotated, List
+
+from src.services.ai_service import AIService, AIServiceError
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
@@ -91,3 +95,105 @@ def delete_prompt(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete prompt request")
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+logger = logging.getLogger("aithera.api")
+
+def get_ai_service() -> AIService:
+    return AIService()
+
+@router.post("/generate", response_model=schemas.GeneratePromptResponse, status_code=status.HTTP_200_OK)
+async def generate_prompt(
+    payload: schemas.GeneratePromptRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    ai_service: Annotated[AIService, Depends(get_ai_service)],
+) -> schemas.GeneratePromptResponse:
+    """
+    Generate an optimized prompt and educational metrics via the AI Council.
+    """
+    # 1. Create DB record
+    try:
+        request_record = crud.create_prompt_request(
+            db,
+            user_id=int(current_user.id),
+            topic=payload.topic,
+            learning_style=payload.learning_style,
+            difficulty=payload.difficulty,
+        )
+    except Exception as e:
+        logger.error(f"Failed to create prompt request in DB: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
+
+    # Options mapping
+    skip_variants = payload.options.get("skip_variants", False) if payload.options else False
+    skip_learning_path = payload.options.get("skip_learning_path", False) if payload.options else False
+    timeout = payload.options.get("timeout", 300.0) if payload.options else 300.0
+
+    # 2. Execute Live Council
+    try:
+        council_result = await ai_service.generate_prompt(request_record, timeout=timeout)
+    except TimeoutError:
+        logger.warning(f"Timeout during Live Council generation for request {request_record.id}")
+        raise HTTPException(status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Generation timed out")
+    except AIServiceError as e:
+        logger.error(f"AIServiceError for request {request_record.id}: {e}")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error during generation for request {request_record.id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal AI service error")
+
+    consensus = council_result.get("consensus")
+    if not consensus:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No consensus reached")
+
+    # 3. Generate secondary assets (learning path, variants, recommendations)
+    learning_path = None
+    if not skip_learning_path:
+        try:
+            learning_path = await ai_service.generate_learning_path(payload.topic, payload.difficulty)
+        except Exception as e:
+            logger.warning(f"Failed to generate learning path: {e}")
+
+    variants = None
+    if not skip_variants:
+        try:
+            variants = ai_service.generate_prompt_variants(payload.topic)
+        except Exception as e:
+            logger.warning(f"Failed to generate variants: {e}")
+
+    recommendations = None
+    try:
+        # Validate prompt and generate recommendations
+        # Ensure we have a generated prompt string
+        generated_prompt_text = consensus.final_prompt or ""
+        validation_score = ai_service.validate_prompt(generated_prompt_text)
+        recommendations = ai_service.generate_recommendations(
+            generated_prompt_text, 
+            payload.learning_style, 
+            payload.difficulty,
+            validation_score
+        )
+    except Exception as e:
+        logger.warning(f"Failed to generate recommendations: {e}")
+
+    # Build Response
+    return schemas.GeneratePromptResponse(
+        optimized_prompt=consensus.final_prompt,
+        consensus_reasoning=consensus.consensus_reasoning,
+        confidence_score=consensus.confidence_score,
+        agreement_score=consensus.agreement_score,
+        provider_contributions=consensus.provider_contributions,
+        educational_metrics={
+            "structure_score": consensus.educational_structure_score,
+            "diversity_score": consensus.diversity_score,
+            "coverage_score": consensus.coverage_score,
+        },
+        explainability_metrics={
+            "explanation": consensus.explanation,
+            "evaluation_summary": consensus.evaluation_summary,
+        },
+        recommendations=recommendations,
+        learning_path=learning_path,
+        prompt_variants=variants
+    )
