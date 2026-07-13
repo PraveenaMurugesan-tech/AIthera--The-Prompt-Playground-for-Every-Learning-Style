@@ -1,22 +1,22 @@
 Topic,Provider Name,Model Name,Success,Latency (ms),Error Message
-Python Programming,Groq,llama-3.3-70b-versatile,Yes,9606.66,
-Python Programming,Gemini,gemini-2.5-flash,Yes,29961.75,
-Python Programming,OpenRouter,openai/gpt-oss-120b,Yes,57424.03,
-Python Programming,Cerebras,gpt-oss-120b,Yes,2952.62,
-Python Programming,SambaNova,Meta-Llama-3.3-70B-Instruct,Yes,7285.60,
-Python Programming,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRCxWioXA1xQq3BxJkX'}"
+Python Programming,Groq,llama-3.3-70b-versatile,Yes,8621.97,
+Python Programming,Gemini,gemini-2.5-flash,Yes,33924.70,
+Python Programming,OpenRouter,openai/gpt-oss-120b,Yes,36854.13,
+Python Programming,Cerebras,gpt-oss-120b,Yes,3529.12,
+Python Programming,SambaNova,Meta-Llama-3.3-70B-Instruct,Yes,7011.84,
+Python Programming,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHdsd4CG6CkzcfyZ5WM'}"
 Python Programming,DeepSeek,unknown,No,0.00,"402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
-Java,Groq,llama-3.3-70b-versatile,Yes,4992.69,
-Java,Gemini,gemini-2.5-flash,Yes,43805.46,
-Java,OpenRouter,openai/gpt-oss-120b,Yes,54509.51,
-Java,Cerebras,gpt-oss-120b,Yes,2973.16,
-Java,SambaNova,Meta-Llama-3.3-70B-Instruct,Yes,8142.76,
-Java,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRHEfBZadcwzJ9MNHH1'}"
+Java,Groq,llama-3.3-70b-versatile,Yes,14355.59,
+Java,Gemini,gemini-2.5-flash,Yes,39771.89,
+Java,OpenRouter,openai/gpt-oss-120b,Yes,35188.20,
+Java,Cerebras,gpt-oss-120b,Yes,3852.82,
+Java,SambaNova,Meta-Llama-3.3-70B-Instruct,Yes,7518.21,
+Java,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHhRAhS4dY8JpRAJGfj'}"
 Java,DeepSeek,unknown,No,0.00,"402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"
-Data Structures,Groq,llama-3.3-70b-versatile,Yes,11623.70,
-Data Structures,Gemini,gemini-2.5-flash,Yes,43809.67,
-Data Structures,OpenRouter,openai/gpt-oss-120b,Yes,58152.13,
-Data Structures,Cerebras,gpt-oss-120b,Yes,3858.60,
-Data Structures,SambaNova,Meta-Llama-3.3-70B-Instruct,Yes,6652.76,
-Data Structures,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcvRMs2pVNyGpJqHnfGtT'}"
+Data Structures,Groq,llama-3.3-70b-versatile,Yes,14117.26,
+Data Structures,Gemini,gemini-2.5-flash,Yes,63712.56,
+Data Structures,OpenRouter,openai/gpt-oss-120b,Yes,66924.45,
+Data Structures,Cerebras,gpt-oss-120b,Yes,3930.77,
+Data Structures,SambaNova,Meta-Llama-3.3-70B-Instruct,Yes,7241.18,
+Data Structures,Claude,unknown,No,0.00,"400 ClaudeNonTransientError: Claude non-transient API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcxHkgH86nCzQMa5U1FjF'}"
 Data Structures,DeepSeek,unknown,No,0.00,"402 DeepSeekNonTransientError: DeepSeek non-transient API error: Error code: 402 - {'error': {'message': 'Insufficient Balance', 'type': 'unknown_error', 'param': None, 'code': 'invalid_request_error'}}"

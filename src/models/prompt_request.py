@@ -15,11 +15,43 @@ class PromptRequest(Base):
 
     def __init__(self, **kwargs):
         # Pop out fields that aren't database columns in the current schema
-        self.objective = kwargs.pop("objective", None)
-        self.education_level = kwargs.pop("education_level", None)
-        self.output_length = kwargs.pop("output_length", None)
-        self.status = kwargs.pop("status", "pending")
+        self._objective = kwargs.pop("objective", None)
+        self._education_level = kwargs.pop("education_level", None)
+        self._output_length = kwargs.pop("output_length", None)
+        self._status = kwargs.pop("status", "pending")
         super().__init__(**kwargs)
+
+    @property
+    def objective(self):
+        return getattr(self, "_objective", None) or f"Learn {self.topic}"
+
+    @objective.setter
+    def objective(self, value):
+        self._objective = value
+
+    @property
+    def education_level(self):
+        return getattr(self, "_education_level", None) or self.difficulty
+
+    @education_level.setter
+    def education_level(self, value):
+        self._education_level = value
+
+    @property
+    def output_length(self):
+        return getattr(self, "_output_length", None) or "moderate"
+
+    @output_length.setter
+    def output_length(self, value):
+        self._output_length = value
+
+    @property
+    def status(self):
+        return getattr(self, "_status", None) or "pending"
+
+    @status.setter
+    def status(self, value):
+        self._status = value
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
@@ -32,7 +64,7 @@ class PromptRequest(Base):
 
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
+        server_default=func.current_timestamp(),
         nullable=False,
     )
 

@@ -1,5 +1,5 @@
 alembic==1.18.4
-bcrypt==5.0.0
+bcrypt==4.0.1
 beautifulsoup4==4.14.2
 blinker==1.9.0
 certifi==2025.11.12
@@ -20,7 +20,7 @@ MarkupSafe==3.0.3
 mysql-connector-python==9.6.0
 numpy==2.3.5
 pandas==2.3.3
-passlib==1.7.4
+passlib[bcrypt]==1.7.4
 pdfkit==1.0.0
 psycopg2-binary==2.9.12
 pyasn1==0.6.3
@@ -47,3 +47,8 @@ tenacity
 groq
 google-genai
 anthropic
+fastapi
+uvicorn
+pydantic
+httpx
+pytest

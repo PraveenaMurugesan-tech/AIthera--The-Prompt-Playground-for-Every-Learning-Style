@@ -262,7 +262,7 @@ class CouncilResponseDB(Base):
     strengths: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     response_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column("metadata", JSON, nullable=True)
 
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False)
 
     # Relationship back to the prompt request
     request: Mapped["PromptRequest"] = relationship("PromptRequest", back_populates="council_responses")

@@ -70,7 +70,7 @@ class ConsensusResult(Base):
     cache_hit: Mapped[Optional[bool]] = mapped_column(JSON, nullable=True) # JSON allows True/False neatly or Boolean
     retry_stats: Mapped[Optional[Dict[str, int]]] = mapped_column(JSON, nullable=True)
 
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False)
 
     # One-to-one back to the request
     request: Mapped["PromptRequest"] = relationship("PromptRequest", back_populates="consensus_result", uselist=False)

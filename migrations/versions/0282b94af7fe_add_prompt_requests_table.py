@@ -26,7 +26,7 @@ def upgrade() -> None:
     sa.Column('learning_style', sa.String(length=100), nullable=False),
     sa.Column('difficulty', sa.String(length=50), nullable=False),
     sa.Column('generated_prompt', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

@@ -22,7 +22,7 @@ class Explanation(Base):
 
     explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False)
 
     # One-to-one back to the request
     request: Mapped["PromptRequest"] = relationship("PromptRequest", back_populates="explanation")
