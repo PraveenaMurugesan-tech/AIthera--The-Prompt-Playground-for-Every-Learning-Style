@@ -1,7 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { ProtectedRoute } from './components/auth/ProtectedRoute'
+import { MainLayout } from './components/layout/MainLayout'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
-import { MainLayout } from './components/layout/MainLayout'
 import { LoginPage } from './pages/auth/Login'
 import { RegisterPage } from './pages/auth/Register'
 import { DashboardPage } from './pages/dashboard/Dashboard'
@@ -20,7 +21,13 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route element={<MainLayout />}>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
