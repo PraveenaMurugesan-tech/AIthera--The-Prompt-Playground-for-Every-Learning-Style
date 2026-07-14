@@ -1,9 +1,17 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { Button } from '../common/Button'
 
 export const Navbar = () => {
   const { theme, toggleTheme } = useTheme()
+  const { isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <header className="navbar">
@@ -14,9 +22,14 @@ export const Navbar = () => {
         <NavLink to="/settings">Settings</NavLink>
         <NavLink to="/help">Help</NavLink>
       </nav>
-      <Button type="button" variant="secondary" onClick={toggleTheme}>
-        {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-      </Button>
+      <div className="navbar-actions">
+        <Button type="button" variant="secondary" onClick={toggleTheme}>
+          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
+        </Button>
+        {isAuthenticated ? (
+          <Button type="button" onClick={handleLogout}>Logout</Button>
+        ) : null}
+      </div>
     </header>
   )
 }
