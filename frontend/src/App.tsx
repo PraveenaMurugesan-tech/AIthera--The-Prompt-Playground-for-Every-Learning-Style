@@ -10,6 +10,7 @@ import { HelpPage } from './pages/help/Help'
 import { NotFoundPage } from './pages/NotFound'
 import { ProfilePage } from './pages/profile/Profile'
 import { SettingsPage } from './pages/settings/Settings'
+import { PromptPage } from './pages/prompt/PromptPage'
 import './styles/global.css'
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/prompt" element={<PromptPage />} />
               <Route path="/help" element={<HelpPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
