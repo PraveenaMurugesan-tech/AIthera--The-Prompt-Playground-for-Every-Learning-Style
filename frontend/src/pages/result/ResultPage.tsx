@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { OptimizedPromptCard } from '../../components/result/OptimizedPromptCard';
 import { ConsensusSummary } from '../../components/result/ConsensusSummary';
@@ -12,6 +12,9 @@ import type { GenerationResult } from '../../services/promptService';
 
 export const ResultPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const formData = location.state?.formData || {};
+  
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +22,7 @@ export const ResultPage: React.FC = () => {
     const fetchResult = async () => {
       try {
         // In a real scenario, this would use a job ID passed via state or URL
-        const data = await promptService.getPromptResult('mock-job');
+        const data = await promptService.getPromptResult('mock-job', formData);
         setResult(data);
       } catch (error) {
         console.error("Failed to fetch result:", error);

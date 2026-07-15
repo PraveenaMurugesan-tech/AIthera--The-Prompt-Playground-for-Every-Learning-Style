@@ -13,6 +13,9 @@ import { SettingsPage } from './pages/settings/Settings'
 import { PromptPage } from './pages/prompt/PromptPage'
 import { LoadingScreen } from './components/ai/LoadingScreen'
 import { ResultPage } from './pages/result/ResultPage'
+import { ChatPage } from './pages/chat/ChatPage'
+import { CouncilPage } from './pages/council/CouncilPage'
+import { HistoryPage } from './pages/history/HistoryPage'
 import './styles/global.css'
 
 function App() {
@@ -37,6 +40,9 @@ function App() {
               <Route path="/prompt" element={<PromptPage />} />
               <Route path="/loading" element={<LoadingScreen />} />
               <Route path="/result" element={<ResultPage />} />
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/council" element={<CouncilPage />} />
+              <Route path="/history" element={<HistoryPage />} />
               <Route path="/help" element={<HelpPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />

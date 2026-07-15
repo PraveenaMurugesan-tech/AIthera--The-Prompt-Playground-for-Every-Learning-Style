@@ -2,9 +2,10 @@ import { NavLink } from 'react-router-dom'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard' },
-  { to: '/profile', label: 'Profile' },
-  { to: '/settings', label: 'Settings' },
-  { to: '/help', label: 'Help' },
+  { to: '/prompt', label: 'Generate Prompt' },
+  { to: '/chat', label: 'AI Chat' },
+  { to: '/council', label: 'AI Council' },
+  { to: '/history', label: 'History' },
 ]
 
 export const Sidebar = () => {
