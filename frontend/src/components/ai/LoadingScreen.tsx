@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { ProviderCard } from './ProviderCard';
 import { CouncilProgress } from './CouncilProgress';
@@ -9,6 +9,8 @@ import type { ProviderState } from '../../services/promptService';
 
 export const LoadingScreen: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const formData = location.state?.formData || {};
   const [providers, setProviders] = useState<ProviderState[]>(promptService.getInitialProviders());
   const [progress, setProgress] = useState(0);
   const [estimatedTime, setEstimatedTime] = useState(15);
@@ -60,7 +62,7 @@ export const LoadingScreen: React.FC = () => {
       
       // All completed, wait a moment then navigate
       await new Promise(r => setTimeout(r, 1000));
-      navigate('/result');
+      navigate('/result', { state: { formData } });
     };
 
     runSimulation();

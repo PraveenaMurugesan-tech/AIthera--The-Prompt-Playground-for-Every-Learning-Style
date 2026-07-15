@@ -56,20 +56,30 @@ export const promptService = {
     });
   },
 
-  getPromptResult: async (jobId: string): Promise<GenerationResult> => {
-    console.log('Fetching result for job:', jobId);
+  getPromptResult: async (jobId: string, formData: any = {}): Promise<GenerationResult> => {
+    console.log('Fetching result for job:', jobId, 'with data:', formData);
+    
+    // Default values if formData is empty
+    const topic = formData.topic || '[Topic]';
+    const difficulty = formData.difficulty || '[Difficulty]';
+    const bloomLevel = formData.bloomLevel || '[Bloom Level]';
+    const learningStyle = formData.learningStyle || 'visual';
+    const instructions = formData.instructions ? ` Please follow these additional instructions: ${formData.instructions}.` : '';
+
+    const optimizedPrompt = `Act as an expert computer science tutor specializing in ${learningStyle} learning. Explain the concept of ${topic} using clear analogies, diagrams described in text, and real-world examples. Ensure the difficulty is tailored to a ${difficulty} level and targets the ${bloomLevel} level of understanding.${instructions}`;
+
     // Simulate fetching the final result
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
-          optimizedPrompt: "Act as an expert computer science tutor specializing in visual learning. Explain the concept of [Topic] using clear analogies, diagrams described in text, and real-world examples. Ensure the difficulty is tailored to a [Difficulty] level and targets the [Bloom Level] level of understanding. Please follow these additional instructions: [Instructions].",
-          consensusSummary: "The AI Council agreed that a visual approach with concrete analogies best suits your learning style. GPT provided the structure, Claude refined the analogies, and Gemini ensured the Bloom's taxonomy level was perfectly targeted.",
+          optimizedPrompt,
+          consensusSummary: `The AI Council agreed that a ${learningStyle} approach with concrete analogies best suits your learning style. GPT provided the structure, Claude refined the analogies, and Gemini ensured the Bloom's taxonomy level was perfectly targeted for ${topic}.`,
           confidenceScore: 94,
           agreementScore: 91,
           educationalMetrics: {
-            difficulty: 'Intermediate',
-            bloomLevel: 'Application',
-            learningStyle: 'Visual',
+            difficulty: difficulty !== '[Difficulty]' ? difficulty : 'Intermediate',
+            bloomLevel: bloomLevel !== '[Bloom Level]' ? bloomLevel : 'Application',
+            learningStyle: learningStyle !== 'visual' ? learningStyle : 'Visual',
             estimatedStudyTime: '45 mins',
             complexity: 'Medium',
           },
@@ -82,12 +92,12 @@ export const promptService = {
             {
               id: 'v1',
               name: 'Socratic Method',
-              content: 'Act as a Socratic tutor. Guide me to understand [Topic] by asking probing questions...'
+              content: `Act as a Socratic tutor. Guide me to understand ${topic} by asking probing questions...`
             },
             {
               id: 'v2',
               name: 'Direct Instruction',
-              content: 'Provide a clear, step-by-step explanation of [Topic] focusing on the core principles...'
+              content: `Provide a clear, step-by-step explanation of ${topic} focusing on the core principles...`
             }
           ]
         });
