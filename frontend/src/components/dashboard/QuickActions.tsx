@@ -8,8 +8,8 @@ type QuickAction = {
 }
 
 const actions: QuickAction[] = [
-  { label: 'Generate Prompt', path: '/dashboard', description: 'Create your next challenge' },
-  { label: 'Continue Learning', path: '/dashboard', description: 'Pick up where you left off' },
+  { label: 'Generate Prompt', path: '/workspace', description: 'Create your next challenge' },
+  { label: 'Continue Learning', path: '/workspace', description: 'Pick up where you left off' },
   { label: 'View History', path: '/profile', description: 'Review saved progress' },
   { label: 'Profile', path: '/profile', description: 'Manage your account' },
   { label: 'Settings', path: '/settings', description: 'Tune your experience' },
