@@ -1,17 +1,17 @@
 import axios, { AxiosError } from 'axios'
 
-type RegisterRequest = {
+export type RegisterRequest = {
   name: string
   email: string
   password: string
 }
 
-type AuthResponse = {
+export type AuthResponse = {
   access_token: string
   token_type: string
 }
 
-type User = {
+export type User = {
   id: number
   email: string
   name?: string
@@ -28,19 +28,72 @@ const getAuthHeaders = (token?: string) => ({
   Authorization: token ? `Bearer ${token}` : undefined,
 })
 
+const extractErrorMessage = (payload: unknown): string | null => {
+  if (typeof payload === 'string') {
+    return payload
+  }
+
+  if (payload && typeof payload === 'object') {
+    const record = payload as Record<string, unknown>
+
+    if (typeof record.detail === 'string') {
+      return record.detail
+    }
+
+    if (typeof record.message === 'string') {
+      return record.message
+    }
+
+    if (typeof record.error === 'string') {
+      return record.error
+    }
+
+    if (Array.isArray(record.errors)) {
+      return record.errors.map((item) => (typeof item === 'string' ? item : '')).filter(Boolean).join(' ')
+    }
+  }
+
+  return null
+}
+
 const normalizeError = (error: unknown) => {
   if (error instanceof AxiosError) {
-    const message = error.response?.data?.detail || error.message
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return 'The request timed out. Please try again.'
+    const message = extractErrorMessage(error.response?.data) ?? error.message
+    const lowerMessage = message.toLowerCase()
+
+    if (error.code === 'ERR_NETWORK' || error.message.toLowerCase().includes('network') || error.code === 'ECONNABORTED' || error.message.toLowerCase().includes('timeout')) {
+      return 'The server is unavailable right now. Please try again in a moment.'
     }
+
     if (error.response?.status === 401) {
+      if (lowerMessage.includes('credential') || lowerMessage.includes('invalid') || lowerMessage.includes('password')) {
+        return 'Invalid credentials. Please check your email and password.'
+      }
       return 'Your session has expired. Please sign in again.'
     }
+
     if (error.response?.status === 403) {
       return 'You do not have permission to perform this action.'
     }
-    return typeof message === 'string' ? message : 'Unexpected server error.'
+
+    if (error.response?.status === 400 || error.response?.status === 409) {
+      if (lowerMessage.includes('already') && lowerMessage.includes('exist')) {
+        return 'An account with this email already exists.'
+      }
+      if (lowerMessage.includes('email')) {
+        return 'Please use a valid email address.'
+      }
+      if (lowerMessage.includes('password')) {
+        return 'Please choose a stronger password with at least 8 characters.'
+      }
+      return 'Please review your information and try again.'
+    }
+
+    if (error.response?.status && error.response.status >= 500) {
+      return 'The server is unavailable right now. Please try again later.'
+    }
+
+    return typeof message === 'string' && message ? message : 'Unexpected server error.'
   }
 
   return 'Unexpected server error.'

@@ -1,11 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { fetchCurrentUser, loginUser, logoutUser, registerUser } from '../services/api'
-
-type User = {
-  id: number
-  email: string
-  name?: string
-}
+import { fetchCurrentUser, loginUser, logoutUser, registerUser, type RegisterRequest, type User } from '../services/api'
 
 type LoginRequest = {
   email: string
@@ -13,17 +7,12 @@ type LoginRequest = {
   rememberMe?: boolean
 }
 
-type RegisterRequest = {
-  name: string
-  email: string
-  password: string
-}
-
 type AuthContextValue = {
   currentUser: User | null
   isAuthenticated: boolean
   loading: boolean
   error: string | null
+  token: string | null
   login: (credentials: LoginRequest) => Promise<void>
   register: (payload: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
@@ -43,29 +32,33 @@ const getStoredToken = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(getStoredToken())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const clearError = () => setError(null)
 
   const getCurrentUser = async () => {
-    const token = getStoredToken()
+    const activeToken = getStoredToken()
 
-    if (!token) {
+    if (!activeToken) {
       setCurrentUser(null)
+      setToken(null)
       setLoading(false)
       return
     }
 
     try {
       setLoading(true)
-      const user = await fetchCurrentUser(token)
+      const user = await fetchCurrentUser(activeToken)
       setCurrentUser(user)
+      setToken(activeToken)
       setError(null)
     } catch (requestError) {
       setCurrentUser(null)
+      setToken(null)
       window.localStorage.removeItem('auth_token')
-      setError(requestError instanceof Error ? requestError.message : 'Session expired. Please sign in again.')
+      setError(requestError instanceof Error ? requestError.message : 'Your session has expired. Please sign in again.')
     } finally {
       setLoading(false)
     }
@@ -77,11 +70,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const response = await loginUser(credentials.email, credentials.password)
-      window.localStorage.setItem('auth_token', response.access_token)
-      const user = await fetchCurrentUser(response.access_token)
+      const nextToken = response.access_token
+      window.localStorage.setItem('auth_token', nextToken)
+      setToken(nextToken)
+      const user = await fetchCurrentUser(nextToken)
       setCurrentUser(user)
+      setError(null)
     } catch (requestError) {
       setCurrentUser(null)
+      setToken(null)
       window.localStorage.removeItem('auth_token')
       throw requestError
     } finally {
@@ -110,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       window.localStorage.removeItem('auth_token')
       setCurrentUser(null)
+      setToken(null)
       setError(null)
     }
   }
@@ -121,16 +119,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo(
     () => ({
       currentUser,
-      isAuthenticated: Boolean(currentUser),
+      isAuthenticated: Boolean(currentUser && token),
       loading,
       error,
+      token,
       login,
       register,
       logout,
       getCurrentUser,
       clearError,
     }),
-    [currentUser, loading, error],
+    [currentUser, loading, error, token],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
