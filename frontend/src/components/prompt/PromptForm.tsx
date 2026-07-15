@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TopicInput } from './TopicInput';
 import { LearningStyleSelect } from './LearningStyleSelect';
 import { DifficultySelect } from './DifficultySelect';
@@ -7,6 +8,7 @@ import { InstructionInput } from './InstructionInput';
 import { GenerateButton } from './GenerateButton';
 
 export const PromptForm: React.FC = () => {
+  const navigate = useNavigate();
   const [topic, setTopic] = useState('');
   const [learningStyle, setLearningStyle] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -27,7 +29,7 @@ export const PromptForm: React.FC = () => {
     };
     
     console.log('Generating prompt with data:', formData);
-    // Future backend integration will go here
+    navigate('/loading', { state: { formData } });
   };
 
   return (
