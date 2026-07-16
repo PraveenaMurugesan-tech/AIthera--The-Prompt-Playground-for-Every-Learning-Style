@@ -218,4 +218,96 @@ export const generateLearningPrompt = async (
   return buildMockPrompt(payload)
 }
 
+export type PromptHistoryItem = {
+  id: number
+  user_id: number
+  topic: string
+  learning_style: string
+  difficulty: string
+  generated_prompt: string | null
+  created_at: string
+}
+
+// Fetch full prompt history from backend API, with fallback to local mock data
+export const fetchPromptHistory = async (token: string): Promise<PromptHistoryItem[]> => {
+  try {
+    const response = await api.get<PromptHistoryItem[]>('/prompts/', {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.warn('FastAPI prompt history API is not available, falling back to local storage mock history:', error)
+    
+    // Fetch mock history from localStorage
+    const saved = localStorage.getItem('aithera_prompt_history')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch {
+        // Fall back to empty
+      }
+    }
+    
+    // Return default seeded mock database history
+    const initialMockHistory: PromptHistoryItem[] = [
+      {
+        id: 101,
+        user_id: 1,
+        topic: 'React lifecycle hooks and useEffect dependencies',
+        learning_style: 'visual',
+        difficulty: 'intermediate',
+        generated_prompt: '### 👁️ React Hooks Diagram\n\n1. **Mounting**: Runs the body and schedules the effect.\n2. **Updating**: Compares dependencies list. Re-runs if they change.\n3. **Unmounting**: Executes the return cleanup function.\n\n```typescript\nuseEffect(() => {\n  console.log("Mount effect");\n  return () => console.log("Cleanup effect");\n}, [dependencies]);\n```',
+        created_at: new Date(Date.now() - 4 * 3600000).toISOString()
+      },
+      {
+        id: 102,
+        user_id: 1,
+        topic: 'Python Decorators implementation guidelines',
+        learning_style: 'step_by_step',
+        difficulty: 'advanced',
+        generated_prompt: '### 🪜 Step-by-Step Python Decorators\n\n```python\ndef my_decorator(func):\n    def wrapper(*args, **kwargs):\n        print("Before execution")\n        result = func(*args, **kwargs)\n        print("After execution")\n        return result\n    return wrapper\n\n@my_decorator\ndef greet(name):\n    return f"Hello {name}"\n```',
+        created_at: new Date(Date.now() - 24 * 3600000).toISOString()
+      },
+      {
+        id: 103,
+        user_id: 1,
+        topic: 'Introduction to Relational Databases and Primary Keys',
+        learning_style: 'conversational',
+        difficulty: 'beginner',
+        generated_prompt: '### 💬 Databases Analogy\n\nThink of a database like a huge digital school ledger. Each student needs a unique Student ID so they do not get mixed up. In database terms, this is called a **Primary Key**.',
+        created_at: new Date(Date.now() - 48 * 3600000).toISOString()
+      }
+    ]
+    localStorage.setItem('aithera_prompt_history', JSON.stringify(initialMockHistory))
+    return initialMockHistory
+  }
+}
+
+// Delete prompt request item from history backend, with local cache cleanup
+export const deletePromptFromHistory = async (id: number, token: string): Promise<void> => {
+  try {
+    await api.delete(`/prompts/${id}`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+      },
+    })
+  } catch (error) {
+    console.warn('FastAPI prompt deletion failed, cleaning up local storage mock copy:', error)
+  }
+  
+  // Clean up local storage list
+  const saved = localStorage.getItem('aithera_prompt_history')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved) as PromptHistoryItem[]
+      const updated = parsed.filter(item => item.id !== id)
+      localStorage.setItem('aithera_prompt_history', JSON.stringify(updated))
+    } catch {
+      // Ignored
+    }
+  }
+}
+
 export default api
