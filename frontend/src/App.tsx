@@ -12,6 +12,8 @@ import { ProfilePage } from './pages/profile/Profile'
 import { SettingsPage } from './pages/settings/Settings'
 import { WorkspacePage } from './pages/workspace/Workspace'
 import { ChatPage } from './pages/chat/Chat'
+import { ImageUploadPage } from './pages/multimodal/ImageUploadPage'
+import { VoicePage } from './pages/multimodal/VoicePage'
 import './styles/global.css'
 
 function App() {
@@ -33,6 +35,8 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/workspace" element={<WorkspacePage />} />
               <Route path="/chat" element={<ChatPage />} />
+              <Route path="/image-upload" element={<ImageUploadPage />} />
+              <Route path="/voice" element={<VoicePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/help" element={<HelpPage />} />
