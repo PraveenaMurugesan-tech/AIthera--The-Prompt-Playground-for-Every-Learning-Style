@@ -8,6 +8,7 @@ const links = [
   { to: '/history', label: 'History' },
   { to: '/voice', label: 'Voice Learning' },
   { to: '/upload', label: 'Image Upload' },
+  { to: '/recommendations', label: 'AI Recommendations' },
 ]
 
 export const Sidebar = () => {
