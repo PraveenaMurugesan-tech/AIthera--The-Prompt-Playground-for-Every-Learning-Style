@@ -1,9 +1,11 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '../../components/common/Button'
 import { Card } from '../../components/common/Card'
 import { useAuth } from '../../context/AuthContext'
 import { generateLearningPrompt, type PromptFormat } from '../../services/api'
+import { VoiceInput } from '../../components/multimodal/VoiceInput'
+import { VoicePlayback } from '../../components/multimodal/VoicePlayback'
 
 type WorkspaceFormState = {
   topic: string
@@ -29,10 +31,30 @@ const initialFormState: WorkspaceFormState = {
 export const WorkspacePage = () => {
   const { token } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [form, setForm] = useState<WorkspaceFormState>(initialFormState)
   const [result, setResult] = useState<PromptResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Handle prefilled state from ImageUpload or Voice sandboxes
+  useEffect(() => {
+    const state = location.state as {
+      prefilledTopic?: string
+      prefilledStyle?: 'adaptive' | 'visual' | 'step_by_step' | 'conversational' | 'exam_focused'
+    } | null
+
+    if (state) {
+      if (state.prefilledTopic) {
+        setForm((current) => ({ ...current, topic: state.prefilledTopic || '' }))
+      }
+      if (state.prefilledStyle) {
+        setForm((current) => ({ ...current, learningStyle: state.prefilledStyle || 'adaptive' }))
+      }
+      // Clear navigation state to avoid duplication on refresh
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
 
   const handleStartConversation = () => {
     if (!result) return
@@ -104,6 +126,10 @@ export const WorkspacePage = () => {
                 value={form.topic}
                 placeholder="What would you like to learn today?"
                 onChange={(event: ChangeEvent<HTMLInputElement>) => handleChange('topic', event.target.value)}
+              />
+              <VoiceInput
+                onTranscript={(text) => handleChange('topic', form.topic + (form.topic ? ' ' : '') + text)}
+                buttonOnly
               />
             </div>
           </label>
@@ -186,10 +212,11 @@ export const WorkspacePage = () => {
               </div>
               <p>{result.summary}</p>
               <div className="prompt-output">{result.content}</div>
-              <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem' }}>
+              <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <Button onClick={handleStartConversation} variant="secondary">
                   💬 Start Conversation in Chat
                 </Button>
+                <VoicePlayback text={result.content} buttonOnly />
               </div>
             </div>
           </div>

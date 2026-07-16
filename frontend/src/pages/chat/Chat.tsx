@@ -4,6 +4,8 @@ import { Button } from '../../components/common/Button'
 import { useAuth } from '../../context/AuthContext'
 import { sendChatMessage, type Conversation, type Message, type LearningStyle, type Difficulty } from '../../services/chatApi'
 import { Markdown } from '../../components/chat/Markdown'
+import { VoiceInput } from '../../components/multimodal/VoiceInput'
+import { VoicePlayback } from '../../components/multimodal/VoicePlayback'
 
 const SUGGESTIONS = [
   'Explain this topic in simple terms with an analogy.',
@@ -478,6 +480,7 @@ export const ChatPage = () => {
                           🔄 Regenerate
                         </button>
                       )}
+                      <VoicePlayback text={message.content} buttonOnly />
                     </div>
                   )}
                 </div>
@@ -547,6 +550,10 @@ export const ChatPage = () => {
                 placeholder="Ask your AI learning coach a question... (Enter to send, Shift+Enter for new line)"
                 rows={1}
                 disabled={isTyping}
+              />
+              <VoiceInput
+                onTranscript={(text) => setInputText(prev => prev + (prev ? ' ' : '') + text)}
+                buttonOnly
               />
               <button
                 type="submit"
