@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Button } from '../common/Button'
 import { Card } from '../common/Card'
 import { useTheme } from '../../context/ThemeContext'
+import { useToast } from '../../context/ToastContext'
 
 type SettingsFormState = {
   notifications: boolean
@@ -14,6 +15,7 @@ const storageKey = 'aithera-settings-form'
 
 export const SettingsFormCard = () => {
   const { theme, toggleTheme } = useTheme()
+  const { showToast } = useToast()
   const [settings, setSettings] = useState<SettingsFormState>({
     notifications: true,
     reminders: true,
@@ -43,12 +45,14 @@ export const SettingsFormCard = () => {
   const handleToggle = (field: keyof SettingsFormState) => {
     setSettings((current) => ({ ...current, [field]: !current[field] }))
     setMessage('Preferences updated.')
+    showToast('Preferences updated.', 'info')
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     window.localStorage.setItem(storageKey, JSON.stringify(settings))
     setMessage('Preferences saved locally.')
+    showToast('Preferences saved successfully!', 'success')
   }
 
   return (

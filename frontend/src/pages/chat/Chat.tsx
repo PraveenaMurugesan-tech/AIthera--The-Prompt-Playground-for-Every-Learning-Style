@@ -6,6 +6,7 @@ import { sendChatMessage, type Conversation, type Message, type LearningStyle, t
 import { Markdown } from '../../components/chat/Markdown'
 import { VoiceInput } from '../../components/multimodal/VoiceInput'
 import { VoicePlayback } from '../../components/multimodal/VoicePlayback'
+import { useToast } from '../../context/ToastContext'
 
 const SUGGESTIONS = [
   'Explain this topic in simple terms with an analogy.',
@@ -46,6 +47,7 @@ Use the dropdowns in the header to change your learning style and difficulty set
 
 export const ChatPage = () => {
   const { token, currentUser } = useAuth()
+  const { showToast } = useToast()
   const location = useLocation()
 
   // State
@@ -254,8 +256,10 @@ export const ChatPage = () => {
   const handleCopyResponse = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
+      showToast('Copied response to clipboard!', 'success')
     } catch (err) {
       console.error('Failed to copy response: ', err)
+      showToast('Failed to copy response text.', 'error')
     }
   }
 
@@ -326,6 +330,7 @@ export const ChatPage = () => {
     })
     saveConversations(updated)
     setErrorMessage(null)
+    showToast('Conversation history cleared.', 'info')
   }
 
   // Keypress handler for input

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from '
 import { useAuth } from '../../context/AuthContext'
 import { Button } from '../common/Button'
 import { Card } from '../common/Card'
+import { useToast } from '../../context/ToastContext'
 
 type ProfileFormState = {
   name: string
@@ -21,6 +22,7 @@ const initialState: ProfileFormState = {
 
 export const EditProfileForm = () => {
   const { currentUser } = useAuth()
+  const { showToast } = useToast()
   const [form, setForm] = useState<ProfileFormState>(initialState)
   const [message, setMessage] = useState<string>('')
   const [isSaved, setIsSaved] = useState(false)
@@ -69,12 +71,14 @@ export const EditProfileForm = () => {
     if (validationMessage) {
       setMessage(validationMessage)
       setIsSaved(false)
+      showToast(validationMessage, 'error')
       return
     }
 
     window.localStorage.setItem(storageKey, JSON.stringify(form))
     setMessage('Profile updated successfully.')
     setIsSaved(true)
+    showToast('Profile updated successfully.', 'success')
     // TODO: Replace this mock persistence with a real PATCH /profile endpoint when available.
   }
 

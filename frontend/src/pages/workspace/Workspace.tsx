@@ -4,6 +4,7 @@ import { Button } from '../../components/common/Button'
 import { Card } from '../../components/common/Card'
 import { useAuth } from '../../context/AuthContext'
 import { generateLearningPrompt, type PromptFormat } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
 import { VoiceInput } from '../../components/multimodal/VoiceInput'
 import { VoicePlayback } from '../../components/multimodal/VoicePlayback'
 
@@ -30,6 +31,7 @@ const initialFormState: WorkspaceFormState = {
 
 export const WorkspacePage = () => {
   const { token } = useAuth()
+  const { showToast, dismissToast } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
   const [form, setForm] = useState<WorkspaceFormState>(initialFormState)
@@ -85,8 +87,10 @@ export const WorkspacePage = () => {
 
     setIsGenerating(true)
     setError(null)
-
+    let toastId = ''
+    
     try {
+      toastId = showToast('Consulting AI Council & refining prompt...', 'loading', 0)
       const generated = await generateLearningPrompt(
         {
           topic: form.topic.trim(),
@@ -98,6 +102,8 @@ export const WorkspacePage = () => {
       )
 
       setResult(generated)
+      dismissToast(toastId)
+      showToast('Consensus prompt ready!', 'success')
 
       // Save local storage history cache to synchronize with Phase 8 history module
       try {
@@ -117,6 +123,8 @@ export const WorkspacePage = () => {
         console.error('Failed to update local prompt history backup:', err)
       }
     } catch (requestError) {
+      if (toastId) dismissToast(toastId)
+      showToast('Failed to generate prompt.', 'error')
       setError(requestError instanceof Error ? requestError.message : 'Unable to generate a prompt right now.')
       setResult(null)
     } finally {

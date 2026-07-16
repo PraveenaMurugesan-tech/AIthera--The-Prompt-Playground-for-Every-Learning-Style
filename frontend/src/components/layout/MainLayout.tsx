@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { Footer } from './Footer'
 import { Navbar } from './Navbar'
 import { Sidebar } from './Sidebar'
+import { ToastContainer } from '../common/ToastContainer'
 
 export const MainLayout = () => {
   return (
@@ -14,6 +15,7 @@ export const MainLayout = () => {
         </main>
       </div>
       <Footer />
+      <ToastContainer />
     </div>
   )
 }
