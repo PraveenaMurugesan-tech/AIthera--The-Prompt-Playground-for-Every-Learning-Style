@@ -14,6 +14,7 @@ import { WorkspacePage } from './pages/workspace/Workspace'
 import { ChatPage } from './pages/chat/Chat'
 import { ImageUploadPage } from './pages/multimodal/ImageUploadPage'
 import { VoicePage } from './pages/multimodal/VoicePage'
+import { HistoryPage } from './pages/history/HistoryPage'
 import './styles/global.css'
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/image-upload" element={<ImageUploadPage />} />
               <Route path="/voice" element={<VoicePage />} />
+              <Route path="/history" element={<HistoryPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/help" element={<HelpPage />} />
