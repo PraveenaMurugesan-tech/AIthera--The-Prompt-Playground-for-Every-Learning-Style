@@ -26,9 +26,17 @@ export const VoiceRecorder = () => {
   }
 
   const handleSendToGenerator = (text: string) => {
-    // In a real app, this might use context/state management to pre-fill the prompt generator
-    // For now, we'll navigate with state
-    navigate('/prompt', { state: { initialPrompt: text } });
+    navigate('/loading', { 
+      state: { 
+        formData: {
+          topic: text,
+          learningStyle: 'conversational', // Default for voice
+          difficulty: 'beginner',
+          bloomLevel: 'understand',
+          instructions: 'Generated from Voice Recording'
+        }
+      } 
+    });
   };
 
   return (

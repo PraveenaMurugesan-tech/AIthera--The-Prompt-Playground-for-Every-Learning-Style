@@ -7,39 +7,23 @@ import { ScoreCards } from '../../components/result/ScoreCards';
 import { EducationalMetrics } from '../../components/result/EducationalMetrics';
 import { LearningRecommendations } from '../../components/result/LearningRecommendations';
 import { PromptVariants } from '../../components/result/PromptVariants';
-import { promptService } from '../../services/promptService';
 import type { GenerationResult } from '../../services/promptService';
 
 export const ResultPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const formData = location.state?.formData || {};
   
-  const [result, setResult] = useState<GenerationResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [result] = useState<GenerationResult | null>(location.state?.resultData || null);
 
   useEffect(() => {
-    const fetchResult = async () => {
-      try {
-        // In a real scenario, this would use a job ID passed via state or URL
-        const data = await promptService.getPromptResult('mock-job', formData);
-        setResult(data);
-      } catch (error) {
-        console.error("Failed to fetch result:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // If someone navigated directly here without state, redirect to prompt page
+    if (!result) {
+      navigate('/prompt');
+    }
+  }, [result, navigate]);
 
-    fetchResult();
-  }, []);
-
-  if (loading || !result) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+  if (!result) {
+    return null;
   }
 
   return (

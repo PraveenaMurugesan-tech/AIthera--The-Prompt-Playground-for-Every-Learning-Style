@@ -1,17 +1,17 @@
 import axios, { AxiosError } from 'axios'
 
-type RegisterRequest = {
+export type RegisterRequest = {
   name: string
   email: string
   password: string
 }
 
-type AuthResponse = {
+export type AuthResponse = {
   access_token: string
   token_type: string
 }
 
-type User = {
+export type User = {
   id: number
   email: string
   name?: string
@@ -22,11 +22,33 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 300000, // 5 minutes timeout
 })
 
-const getAuthHeaders = (token?: string) => ({
-  Authorization: token ? `Bearer ${token}` : undefined,
-})
+// Request Interceptor: Attach JWT Token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response Interceptor: Centralized error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
+      // Dispatch custom event to trigger logout in AuthContext
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
+    return Promise.reject(error);
+  }
+);
 
 const normalizeError = (error: unknown) => {
   if (error instanceof AxiosError) {
@@ -72,11 +94,26 @@ export const registerUser = async (payload: RegisterRequest): Promise<User> => {
   }
 }
 
-export const fetchCurrentUser = async (token: string): Promise<User> => {
+export const analyzeImage = async (file: File): Promise<{ topic: string, instructions: string }> => {
   try {
-    const response = await api.get<User>('/auth/me', {
-      headers: getAuthHeaders(token),
-    })
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post('/prompts/analyze-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(normalizeError(error))
+  }
+}
+
+export const fetchCurrentUser = async (): Promise<User> => {
+  try {
+    // Interceptor will attach token
+    const response = await api.get<User>('/auth/me')
     return response.data
   } catch (error) {
     throw new Error(normalizeError(error))
@@ -84,6 +121,7 @@ export const fetchCurrentUser = async (token: string): Promise<User> => {
 }
 
 export const logoutUser = async (): Promise<void> => {
+  localStorage.removeItem('auth_token');
   await Promise.resolve()
 }
 

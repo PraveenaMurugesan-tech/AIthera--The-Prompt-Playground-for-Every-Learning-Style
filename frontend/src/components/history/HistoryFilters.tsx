@@ -18,10 +18,11 @@ export const HistoryFilters: React.FC<HistoryFiltersProps> = ({ onFilterChange }
         onChange={(e) => onFilterChange({ learningStyle: e.target.value })}
       >
         <option value="">Any Style</option>
-        <option value="Visual">Visual</option>
-        <option value="Auditory">Auditory</option>
-        <option value="Kinesthetic">Kinesthetic</option>
-        <option value="Reading/Writing">Reading/Writing</option>
+        <option value="visual">Visual</option>
+        <option value="conversational">Conversational</option>
+        <option value="step_by_step">Step-by-Step</option>
+        <option value="exam_focused">Exam-Focused</option>
+        <option value="research_oriented">Research-Oriented</option>
       </select>
 
       <select 

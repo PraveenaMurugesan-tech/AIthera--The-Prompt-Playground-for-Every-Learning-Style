@@ -15,7 +15,9 @@ from src.optimizer.recommendation_engine import RecommendationEngine, Recommenda
 logger = logging.getLogger("aithera.ai_service")
 
 class AIServiceError(Exception):
-    pass
+    def __init__(self, message: str, error_details: Optional[Dict[str, Any]] = None):
+        super().__init__(message)
+        self.error_details = error_details or {}
 
 class AIService:
     """
@@ -50,8 +52,8 @@ class AIService:
         try:
             return await self.live_council.execute(request, timeout=timeout)
         except Exception as e:
-            logger.error(f"Error in generate_prompt: {e}")
-            raise AIServiceError(f"Failed to generate prompt: {e}")
+            logger.exception("Council execution failed")
+            raise AIServiceError(f"Failed to generate prompt: {e}", getattr(e, "error_details", {})) from e
 
     def optimize_prompt(self, prompt: str) -> str:
         """
@@ -59,7 +61,7 @@ class AIService:
         """
         return self.prompt_optimizer.optimize(prompt)
 
-    async def generate_learning_path(self, topic: str, difficulty: str = "beginner") -> Optional[LearningPath]:
+    async def generate_learning_path(self, topic: str, difficulty: str = "beginner", timeout: float = 300.0) -> Optional[LearningPath]:
         """
         Generates a structured learning path using the AI Council.
         """
@@ -80,7 +82,7 @@ class AIService:
         request.objective = path_prompt
         
         try:
-            result = await self.live_council.execute(request)
+            result = await self.live_council.execute(request, timeout=timeout)
             consensus_text = result["consensus"].final_prompt
             return self.learning_path_gen.parse_path_response(consensus_text)
         except Exception as e:

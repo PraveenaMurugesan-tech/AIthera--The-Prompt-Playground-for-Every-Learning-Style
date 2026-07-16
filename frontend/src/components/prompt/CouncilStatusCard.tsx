@@ -3,7 +3,6 @@ import { CheckCircle2 } from 'lucide-react';
 
 export const CouncilStatusCard: React.FC = () => {
   const members = [
-    'GPT',
     'Claude',
     'Gemini',
     'DeepSeek',

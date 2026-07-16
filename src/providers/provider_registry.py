@@ -48,9 +48,16 @@ class ProviderRegistry:
         # Instantiate default providers
         for name, cls in self._provider_classes.items():
             try:
+                logger.info(f"Before provider initialization for: {name}")
                 self._providers[name] = cls()
+                logger.info(f"After provider initialization for: {name}. Successfully loaded provider.")
+            except ValueError as ve:
+                if "API key" in str(ve) or "key" in str(ve).lower():
+                    logger.warning(f"Provider {name} skipped due to missing API key: {ve}")
+                else:
+                    logger.exception(f"Provider {name} skipped due to ValueError: {ve}")
             except Exception as e:
-                logger.warning("Failed to initialize default provider '%s': %s", name, e)
+                logger.exception(f"Initialization failure for provider '{name}': {e}")
 
     def validate_name(self, name: str) -> str:
         """Validate provider name and return its standardized lowercase form.
@@ -116,7 +123,11 @@ class ProviderRegistry:
         if std_name not in self._providers:
             # Lazy instantiation fallback
             cls = self._provider_classes[std_name]
-            self._providers[std_name] = cls()
+            try:
+                self._providers[std_name] = cls()
+            except Exception as e:
+                logger.warning("Lazy initialization failed for provider '%s': %s", std_name, e)
+                raise ValueError(f"Provider '{name}' could not be initialized: {e}")
         return self._providers[std_name]
 
     def enable_provider(self, name: str) -> None:
@@ -154,7 +165,16 @@ class ProviderRegistry:
         # Ensure all registered classes are instantiated
         for name in self._provider_classes:
             if name not in self._providers:
-                self._providers[name] = self._provider_classes[name]()
+                try:
+                    self._providers[name] = self._provider_classes[name]()
+                    logger.info(f"Successfully loaded provider: {name}")
+                except ValueError as ve:
+                    if "API key" in str(ve) or "key" in str(ve).lower():
+                        logger.warning(f"Provider {name} skipped due to missing API key: {ve}")
+                    else:
+                        logger.exception(f"Provider {name} skipped due to ValueError: {ve}")
+                except Exception as e:
+                    logger.exception(f"Initialization failure for provider '{name}' during get_all_providers: {e}")
         return dict(self._providers)
 
     def get_active_providers(self) -> Dict[str, BaseProvider]:

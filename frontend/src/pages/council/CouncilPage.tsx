@@ -8,7 +8,6 @@ import type { ExtendedProviderState } from '../../components/ai/ProviderStatusCa
 
 export const CouncilPage: React.FC = () => {
   const [providers, setProviders] = useState<ExtendedProviderState[]>([
-    { id: 'gpt', name: 'GPT', status: 'Waiting', confidence: 0, responseTime: 0 },
     { id: 'claude', name: 'Claude', status: 'Waiting', confidence: 0, responseTime: 0 },
     { id: 'gemini', name: 'Gemini', status: 'Waiting', confidence: 0, responseTime: 0 },
     { id: 'deepseek', name: 'DeepSeek', status: 'Waiting', confidence: 0, responseTime: 0 },
@@ -117,7 +116,7 @@ export const CouncilPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-slate-600 dark:text-slate-400">Models Consulted</span>
-                  <span className="font-mono font-medium text-slate-900 dark:text-white">8/8</span>
+                  <span className="font-mono font-medium text-slate-900 dark:text-white">7/7</span>
                 </div>
              </div>
           </div>

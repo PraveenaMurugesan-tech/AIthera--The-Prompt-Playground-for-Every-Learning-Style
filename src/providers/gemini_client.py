@@ -79,7 +79,7 @@ class GeminiClient(BaseProvider):
         super().__init__(config)
 
         # Load API key and timeout from environment
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_key = self.validate_api_key("GEMINI_API_KEY")
         try:
             self.timeout = float(os.getenv("GEMINI_TIMEOUT", "20"))
         except (ValueError, TypeError):
@@ -97,7 +97,8 @@ class GeminiClient(BaseProvider):
         learning_style: str,
         difficulty: str,
         education_level: str,
-        output_length: str
+        output_length: str,
+        bloom_level: str = 'understand'
     ) -> str:
         """Load prompt template from prompts/gemini_visual.txt and substitute variables."""
         from pathlib import Path
@@ -115,7 +116,8 @@ class GeminiClient(BaseProvider):
                 f"Learning Style: {learning_style}\n"
                 f"Difficulty: {difficulty}\n"
                 f"Education Level: {education_level}\n"
-                f"Output Length: {output_length}"
+                f"Output Length: {output_length}\n" \
+                f"Bloom's Level: {bloom_level}"
             )
 
         try:
@@ -128,7 +130,8 @@ class GeminiClient(BaseProvider):
                 learning_style=learning_style,
                 difficulty=difficulty,
                 education_level=education_level,
-                output_length=output_length
+                output_length=output_length,
+                bloom_level=bloom_level
             )
         except Exception as e:
             logger.error("Failed to load/format prompt template: %s", str(e))
@@ -142,6 +145,7 @@ class GeminiClient(BaseProvider):
         difficulty: Optional[str] = None,
         education_level: Optional[str] = None,
         output_length: Optional[str] = None,
+        bloom_level: Optional[str] = None,
         prompt: Optional[str] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
@@ -171,7 +175,8 @@ class GeminiClient(BaseProvider):
                 learning_style=learning_style or "",
                 difficulty=difficulty or "",
                 education_level=education_level or "",
-                output_length=output_length or ""
+                output_length=output_length or "",
+                bloom_level=bloom_level or "understand"
             )
 
         if not resolved_prompt or not resolved_prompt.strip():
@@ -181,7 +186,8 @@ class GeminiClient(BaseProvider):
         logger.info("Request start - Provider: Gemini, Model: %s", model_name)
 
         # Client instantiation
-        client = genai.Client(api_key=self.api_key)
+        if not getattr(self, '_client', None):
+            self._client = genai.Client(api_key=self.api_key)
 
         # Retry logic with tenacity
         def is_transient_error(exception: Exception) -> bool:
@@ -213,7 +219,7 @@ class GeminiClient(BaseProvider):
                     
                     # Ensure timeout wrapper
                     async def fetch_with_timeout():
-                        return await client.aio.models.generate_content(
+                        return await self._client.aio.models.generate_content(
                             model=model_name,
                             contents=resolved_prompt,
                             config=config

@@ -6,6 +6,7 @@ interface UploadToolbarProps {
   onUpload: () => void;
   onReplace: () => void;
   onRemove: () => void;
+  onAnalyze: () => void;
   previewUrl?: string;
 }
 
@@ -14,6 +15,7 @@ export const UploadToolbar = ({
   onUpload,
   onReplace,
   onRemove,
+  onAnalyze,
   previewUrl
 }: UploadToolbarProps) => {
   
@@ -75,16 +77,13 @@ export const UploadToolbar = ({
         
         <div className="relative group">
           <button
+            onClick={onAnalyze}
             disabled={!isSuccess}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500"
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl font-medium transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500"
           >
             <Wand2 className="w-4 h-4" />
             Analyze Image
           </button>
-          
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-            Backend integration planned for future phase
-          </div>
         </div>
       </div>
     </div>

@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       setLoading(true)
-      const user = await fetchCurrentUser(token)
+      const user = await fetchCurrentUser()
       setCurrentUser(user)
       setError(null)
     } catch (requestError) {
@@ -78,11 +78,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await loginUser(credentials.email, credentials.password)
       window.localStorage.setItem('auth_token', response.access_token)
-      const user = await fetchCurrentUser(response.access_token)
+      const user = await fetchCurrentUser()
       setCurrentUser(user)
     } catch (requestError) {
       setCurrentUser(null)
       window.localStorage.removeItem('auth_token')
+      setError(requestError instanceof Error ? requestError.message : 'Invalid credentials or network error.')
       throw requestError
     } finally {
       setLoading(false)
@@ -116,6 +117,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     void getCurrentUser()
+    
+    // Listen for unauthorized events from api.ts interceptor
+    const handleUnauthorized = () => {
+      setCurrentUser(null)
+      window.localStorage.removeItem('auth_token')
+    }
+    
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
   const value = useMemo(

@@ -9,10 +9,10 @@ interface LearningStyleSelectProps {
 export const LearningStyleSelect: React.FC<LearningStyleSelectProps> = ({ value, onChange }) => {
   const styles = [
     { id: 'visual', label: 'Visual', icon: Palette },
-    { id: 'auditory', label: 'Auditory', icon: Headphones },
-    { id: 'reading_writing', label: 'Reading/Writing', icon: Book },
-    { id: 'logical', label: 'Logical', icon: Brain },
-    { id: 'kinesthetic', label: 'Kinesthetic', icon: Activity },
+    { id: 'conversational', label: 'Conversational', icon: Headphones },
+    { id: 'step_by_step', label: 'Step-by-Step', icon: Book },
+    { id: 'exam_focused', label: 'Exam-Focused', icon: Brain },
+    { id: 'research_oriented', label: 'Research-Oriented', icon: Activity },
   ];
 
   return (

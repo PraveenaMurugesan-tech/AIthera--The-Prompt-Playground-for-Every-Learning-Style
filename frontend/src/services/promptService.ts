@@ -1,3 +1,5 @@
+import api from './api';
+
 export type ProviderStatus = 'Waiting' | 'Processing' | 'Completed' | 'Failed';
 
 export interface ProviderState {
@@ -31,7 +33,6 @@ export interface GenerationResult {
 }
 
 const mockProviders: ProviderState[] = [
-  { id: 'gpt', name: 'GPT', status: 'Waiting' },
   { id: 'claude', name: 'Claude', status: 'Waiting' },
   { id: 'gemini', name: 'Gemini', status: 'Waiting' },
   { id: 'deepseek', name: 'DeepSeek', status: 'Waiting' },
@@ -46,62 +47,53 @@ export const promptService = {
     return [...mockProviders];
   },
 
-  generatePrompt: async (data: any): Promise<{ jobId: string }> => {
-    // Simulate initiating a generation job
-    console.log('Initiating prompt generation with data:', data);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ jobId: 'mock-job-123' });
-      }, 500);
-    });
+  generatePrompt: async (data: any): Promise<GenerationResult> => {
+    try {
+      const payload = {
+        topic: data.topic,
+        learning_style: data.learningStyle,
+        difficulty: data.difficulty,
+        bloom_level: data.bloomLevel || 'understand',
+        options: data.instructions ? { instructions: data.instructions } : {}
+      };
+
+      console.log('Sending prompt generation request with payload:', JSON.stringify(payload, null, 2));
+
+      const response = await api.post('/prompts/generate', payload);
+      const backendData = response.data;
+
+      return {
+        optimizedPrompt: backendData.optimized_prompt || 'No prompt generated.',
+        consensusSummary: backendData.consensus_reasoning || 'No consensus reasoning provided.',
+        confidenceScore: backendData.confidence_score || 0,
+        agreementScore: backendData.agreement_score || 0,
+        educationalMetrics: {
+          difficulty: backendData.educational_metrics?.difficulty || data.difficulty,
+          bloomLevel: backendData.educational_metrics?.bloomLevel || data.bloomLevel,
+          learningStyle: backendData.educational_metrics?.learningStyle || data.learningStyle,
+          estimatedStudyTime: backendData.educational_metrics?.estimatedStudyTime || '30 mins',
+          complexity: backendData.educational_metrics?.complexity || 'Medium',
+        },
+        recommendations: {
+          followUpTopics: backendData.recommendations?.filter((r: any) => r.category === 'Topics' || r.category === 'Follow Up').map((r: any) => r.suggestion) || [],
+          learningPath: backendData.learning_path?.steps?.map((s: any) => s.title) || [],
+          practiceSuggestions: backendData.recommendations?.filter((r: any) => r.category !== 'Topics' && r.category !== 'Follow Up').map((r: any) => r.suggestion) || [],
+        },
+        variants: backendData.prompt_variants?.map((v: any) => ({
+          id: v.style || Math.random().toString(),
+          name: v.title,
+          content: v.prompt_text,
+        })) || []
+      };
+    } catch (error) {
+      console.error('Error generating prompt:', error);
+      throw error;
+    }
   },
 
-  getPromptResult: async (jobId: string, formData: any = {}): Promise<GenerationResult> => {
-    console.log('Fetching result for job:', jobId, 'with data:', formData);
-    
-    // Default values if formData is empty
-    const topic = formData.topic || '[Topic]';
-    const difficulty = formData.difficulty || '[Difficulty]';
-    const bloomLevel = formData.bloomLevel || '[Bloom Level]';
-    const learningStyle = formData.learningStyle || 'visual';
-    const instructions = formData.instructions ? ` Please follow these additional instructions: ${formData.instructions}.` : '';
-
-    const optimizedPrompt = `Act as an expert computer science tutor specializing in ${learningStyle} learning. Explain the concept of ${topic} using clear analogies, diagrams described in text, and real-world examples. Ensure the difficulty is tailored to a ${difficulty} level and targets the ${bloomLevel} level of understanding.${instructions}`;
-
-    // Simulate fetching the final result
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          optimizedPrompt,
-          consensusSummary: `The AI Council agreed that a ${learningStyle} approach with concrete analogies best suits your learning style. GPT provided the structure, Claude refined the analogies, and Gemini ensured the Bloom's taxonomy level was perfectly targeted for ${topic}.`,
-          confidenceScore: 94,
-          agreementScore: 91,
-          educationalMetrics: {
-            difficulty: difficulty !== '[Difficulty]' ? difficulty : 'Intermediate',
-            bloomLevel: bloomLevel !== '[Bloom Level]' ? bloomLevel : 'Application',
-            learningStyle: learningStyle !== 'visual' ? learningStyle : 'Visual',
-            estimatedStudyTime: '45 mins',
-            complexity: 'Medium',
-          },
-          recommendations: {
-            followUpTopics: ['Advanced Data Structures', 'Algorithmic Complexity', 'System Design Basics'],
-            learningPath: ['Understand the core concept', 'Analyze real-world examples', 'Implement a basic version'],
-            practiceSuggestions: ['Draw a diagram of the process', 'Explain it to a peer', 'Write a short summary'],
-          },
-          variants: [
-            {
-              id: 'v1',
-              name: 'Socratic Method',
-              content: `Act as a Socratic tutor. Guide me to understand ${topic} by asking probing questions...`
-            },
-            {
-              id: 'v2',
-              name: 'Direct Instruction',
-              content: `Provide a clear, step-by-step explanation of ${topic} focusing on the core principles...`
-            }
-          ]
-        });
-      }, 1000);
-    });
+  getPromptResult: async (_jobId: string, formData: any = {}): Promise<GenerationResult> => {
+    // Left for backward compatibility if any old components call it, 
+    // but the main flow now just uses the synchronous return of generatePrompt.
+    return promptService.generatePrompt(formData);
   }
 };

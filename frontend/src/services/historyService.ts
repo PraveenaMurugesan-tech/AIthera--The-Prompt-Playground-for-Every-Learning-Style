@@ -1,3 +1,5 @@
+import api from './api';
+
 export interface HistoryItem {
   id: string;
   topic: string;
@@ -8,60 +10,47 @@ export interface HistoryItem {
   isFavorite: boolean;
 }
 
-const mockHistory: HistoryItem[] = [
-  {
-    id: '1',
-    topic: 'React Hooks',
-    learningStyle: 'Visual',
-    difficulty: 'Beginner',
-    prompt: 'Explain React Hooks visually for a beginner...',
-    createdAt: new Date().toISOString(), // Today
-    isFavorite: true,
-  },
-  {
-    id: '2',
-    topic: 'Docker Containers',
-    learningStyle: 'Kinesthetic',
-    difficulty: 'Intermediate',
-    prompt: 'Provide a hands-on exercise to learn Docker...',
-    createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-    isFavorite: false,
-  },
-  {
-    id: '3',
-    topic: 'Machine Learning Basics',
-    learningStyle: 'Auditory',
-    difficulty: 'Advanced',
-    prompt: 'Explain ML concepts as a conversational podcast...',
-    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // Last week
-    isFavorite: true,
-  },
-  {
-    id: '4',
-    topic: 'TypeScript Generics',
-    learningStyle: 'Logical',
-    difficulty: 'Advanced',
-    prompt: 'Break down TS generics using mathematical logic...',
-    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), // Older
-    isFavorite: false,
-  }
-];
+interface BackendPromptResponse {
+  id: number;
+  user_id: number;
+  topic: string;
+  learning_style: string;
+  difficulty: string;
+  generated_prompt: string | null;
+  created_at: string;
+}
 
 export const historyService = {
   getHistory: async (): Promise<HistoryItem[]> => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return [...mockHistory];
+    try {
+      const response = await api.get<BackendPromptResponse[]>('/prompts/');
+      return response.data.map(item => ({
+        id: String(item.id),
+        topic: item.topic,
+        learningStyle: item.learning_style,
+        difficulty: item.difficulty,
+        prompt: item.generated_prompt || 'No prompt generated.',
+        createdAt: item.created_at,
+        isFavorite: false, // Not supported by backend yet
+      }));
+    } catch (error) {
+      console.error('Failed to fetch history:', error);
+      throw error;
+    }
   },
   
-  toggleFavorite: async (id: string, isFavorite: boolean): Promise<void> => {
+  toggleFavorite: async (_id: string, _isFavorite: boolean): Promise<void> => {
+    // Backend doesn't support favorites yet, simulate success
     await new Promise(resolve => setTimeout(resolve, 300));
-    const item = mockHistory.find(i => i.id === id);
-    if (item) item.isFavorite = isFavorite;
+    console.warn('Favorite toggle not supported by backend.');
   },
 
   deleteHistoryItem: async (id: string): Promise<void> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const index = mockHistory.findIndex(i => i.id === id);
-    if (index > -1) mockHistory.splice(index, 1);
+    try {
+      await api.delete(`/prompts/${id}`);
+    } catch (error) {
+      console.error(`Failed to delete history item ${id}:`, error);
+      throw error;
+    }
   }
 };

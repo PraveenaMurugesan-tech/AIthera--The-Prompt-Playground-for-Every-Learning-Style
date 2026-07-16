@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useImageUpload } from '../../hooks/useImageUpload';
 import { UploadDropzone } from '../../components/upload/UploadDropzone';
 import { ImagePreview } from '../../components/upload/ImagePreview';
@@ -8,6 +9,7 @@ import { CameraCapture } from '../../components/upload/CameraCapture';
 import { FileDetails } from '../../components/upload/FileDetails';
 import { UploadTips } from '../../components/upload/UploadTips';
 import { Image } from 'lucide-react';
+import { analyzeImage } from '../../services/api';
 
 export const UploadPage = () => {
   const {
@@ -22,6 +24,7 @@ export const UploadPage = () => {
 
   const [showCamera, setShowCamera] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const handleReplaceClick = () => {
     fileInputRef.current?.click();
@@ -30,6 +33,30 @@ export const UploadPage = () => {
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       handleFileSelect(e.target.files[0]);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!selectedFile?.file) return;
+
+    try {
+      // In a real implementation we would set a loading state here
+      const result = await analyzeImage(selectedFile.file);
+      
+      navigate('/loading', {
+        state: {
+          formData: {
+            topic: result.topic,
+            learningStyle: 'visual',
+            difficulty: 'intermediate',
+            bloomLevel: 'apply',
+            instructions: result.instructions || 'Generated from Image Analysis'
+          }
+        }
+      });
+    } catch (err) {
+      console.error("Analysis failed:", err);
+      // We could add toast notification here
     }
   };
 
@@ -81,6 +108,7 @@ export const UploadPage = () => {
                   onUpload={startUpload}
                   onReplace={handleReplaceClick}
                   onRemove={removeFile}
+                  onAnalyze={handleAnalyze}
                   previewUrl={selectedFile.previewUrl}
                 />
 
