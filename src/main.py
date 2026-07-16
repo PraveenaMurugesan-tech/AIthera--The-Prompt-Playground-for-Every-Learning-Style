@@ -19,10 +19,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.auth.router import router as auth_router
-from src.prompts.router import router as prompts_router
+from src.database.base import Base
+from src.database.connection import engine
 from src.explanations.router import router as explanations_router
 from src.council_responses.router import router as council_responses_router
 from src.consensus_results.router import router as consensus_results_router
+from src.models.user import User  # noqa: F401  # Ensure the User table is registered
+from src.prompts.router import router as prompts_router
 from src.workflow.router import router as workflow_router
 
 
@@ -43,14 +46,24 @@ def _get_allowed_origins() -> List[str]:
     env = os.getenv("FRONTEND_ORIGINS")
     if env:
         return [o.strip() for o in env.split(",") if o.strip()]
+
     # Default development origins
+    print("DEBUG ORIGINS:", [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+])
     return [
         "http://localhost",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "http://localhost:8000",
     ]
-
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
@@ -82,6 +95,13 @@ def create_app() -> FastAPI:
     async def _startup_event() -> None:
         logger.info("Starting %s (version=%s)", APP_TITLE, APP_VERSION)
         logger.info("CORS allowed origins: %s", allowed_origins)
+
+        try:
+            Base.metadata.create_all(bind=engine)
+            logger.info("Database initialization completed successfully")
+        except Exception as exc:  # pragma: no cover - startup resilience
+            logger.exception("Database initialization failed: %s", exc)
+            raise
 
     # Root health endpoint
     @app.get("/", tags=["root"])

@@ -4,7 +4,7 @@ const links = [
   { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
   { to: '/workspace', label: 'AI Workspace', icon: '✨' },
   { to: '/profile', label: 'Prompt History', icon: '📜' },
-  { to: '/settings', label: 'Chat', icon: '💬' },
+  { to: '/chat', label: 'Chat', icon: '💬' },
   { to: '/help', label: 'Image Upload', icon: '🖼' },
   { to: '/profile', label: 'Voice', icon: '🎤' },
   { to: '/profile', label: 'Profile', icon: '👤' },

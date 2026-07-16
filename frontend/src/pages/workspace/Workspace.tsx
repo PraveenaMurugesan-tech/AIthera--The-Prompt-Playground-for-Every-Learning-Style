@@ -1,4 +1,5 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/common/Button'
 import { Card } from '../../components/common/Card'
 import { useAuth } from '../../context/AuthContext'
@@ -27,10 +28,23 @@ const initialFormState: WorkspaceFormState = {
 
 export const WorkspacePage = () => {
   const { token } = useAuth()
+  const navigate = useNavigate()
   const [form, setForm] = useState<WorkspaceFormState>(initialFormState)
   const [result, setResult] = useState<PromptResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handleStartConversation = () => {
+    if (!result) return
+    navigate('/chat', {
+      state: {
+        initialPrompt: result.content,
+        topic: form.topic,
+        learningStyle: form.learningStyle,
+        difficulty: form.difficulty,
+      },
+    })
+  }
 
   const handleChange = <K extends keyof WorkspaceFormState>(field: K, value: WorkspaceFormState[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -172,6 +186,11 @@ export const WorkspacePage = () => {
               </div>
               <p>{result.summary}</p>
               <div className="prompt-output">{result.content}</div>
+              <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem' }}>
+                <Button onClick={handleStartConversation} variant="secondary">
+                  💬 Start Conversation in Chat
+                </Button>
+              </div>
             </div>
           </div>
         ) : (

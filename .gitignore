@@ -36,3 +36,6 @@ migrations/versions/__pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+.env
+__pycache__/
+*.pyc
