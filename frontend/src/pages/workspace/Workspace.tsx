@@ -98,6 +98,24 @@ export const WorkspacePage = () => {
       )
 
       setResult(generated)
+
+      // Save local storage history cache to synchronize with Phase 8 history module
+      try {
+        const newHistoryItem = {
+          id: Date.now(),
+          user_id: 1,
+          topic: form.topic.trim(),
+          learning_style: form.learningStyle,
+          difficulty: form.difficulty,
+          generated_prompt: generated.content,
+          created_at: new Date().toISOString()
+        }
+        const currentHistory = localStorage.getItem('aithera_prompt_history')
+        const parsedHistory = currentHistory ? JSON.parse(currentHistory) : []
+        localStorage.setItem('aithera_prompt_history', JSON.stringify([newHistoryItem, ...parsedHistory]))
+      } catch (err) {
+        console.error('Failed to update local prompt history backup:', err)
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to generate a prompt right now.')
       setResult(null)
