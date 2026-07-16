@@ -6,6 +6,7 @@ const links = [
   { to: '/chat', label: 'AI Chat' },
   { to: '/council', label: 'AI Council' },
   { to: '/history', label: 'History' },
+  { to: '/voice', label: 'Voice Learning' },
 ]
 
 export const Sidebar = () => {

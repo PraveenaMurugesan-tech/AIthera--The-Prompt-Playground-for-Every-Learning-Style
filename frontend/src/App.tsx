@@ -16,6 +16,7 @@ import { ResultPage } from './pages/result/ResultPage'
 import { ChatPage } from './pages/chat/ChatPage'
 import { CouncilPage } from './pages/council/CouncilPage'
 import { HistoryPage } from './pages/history/HistoryPage'
+import { VoicePage } from './pages/voice/VoicePage'
 import './styles/global.css'
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/council" element={<CouncilPage />} />
               <Route path="/history" element={<HistoryPage />} />
+              <Route path="/voice" element={<VoicePage />} />
               <Route path="/help" element={<HelpPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
