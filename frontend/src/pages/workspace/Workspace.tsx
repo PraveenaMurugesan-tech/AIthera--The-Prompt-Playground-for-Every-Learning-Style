@@ -3,7 +3,7 @@ import { Button } from '../../components/common/Button'
 import { Card } from '../../components/common/Card'
 import { useAuth } from '../../context/AuthContext'
 import { generateLearningPrompt, type PromptFormat } from '../../services/api'
-
+import { generateLearningPrompt, type PromptFormat } from '../../services/api'
 type WorkspaceFormState = {
   topic: string
   learningStyle: 'adaptive' | 'visual' | 'step_by_step' | 'conversational' | 'exam_focused'
@@ -27,6 +27,12 @@ const initialFormState: WorkspaceFormState = {
 
 export const WorkspacePage = () => {
   const { token } = useAuth()
+<<<<<<< HEAD
+=======
+  const { showToast, dismissToast } = useToast()
+  const navigate = useNavigate()
+  const location = useLocation()
+>>>>>>> d6ccfb2 (feat(ui): finalize notifications, help center, and user feedback flows)
   const [form, setForm] = useState<WorkspaceFormState>(initialFormState)
   const [result, setResult] = useState<PromptResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -49,8 +55,10 @@ export const WorkspacePage = () => {
 
     setIsGenerating(true)
     setError(null)
+    let toastId = ''
 
     try {
+      toastId = showToast('Consulting AI Council & refining prompt...', 'loading', 0)
       const generated = await generateLearningPrompt(
         {
           topic: form.topic.trim(),
@@ -62,7 +70,32 @@ export const WorkspacePage = () => {
       )
 
       setResult(generated)
+<<<<<<< HEAD
+=======
+      dismissToast(toastId)
+      showToast('Consensus prompt ready!', 'success')
+
+      // Save local storage history cache to synchronize with Phase 8 history module
+      try {
+        const newHistoryItem = {
+          id: Date.now(),
+          user_id: 1,
+          topic: form.topic.trim(),
+          learning_style: form.learningStyle,
+          difficulty: form.difficulty,
+          generated_prompt: generated.content,
+          created_at: new Date().toISOString()
+        }
+        const currentHistory = localStorage.getItem('aithera_prompt_history')
+        const parsedHistory = currentHistory ? JSON.parse(currentHistory) : []
+        localStorage.setItem('aithera_prompt_history', JSON.stringify([newHistoryItem, ...parsedHistory]))
+      } catch (err) {
+        console.error('Failed to update local prompt history backup:', err)
+      }
+>>>>>>> d6ccfb2 (feat(ui): finalize notifications, help center, and user feedback flows)
     } catch (requestError) {
+      if (toastId) dismissToast(toastId)
+      showToast('Failed to generate prompt.', 'error')
       setError(requestError instanceof Error ? requestError.message : 'Unable to generate a prompt right now.')
       setResult(null)
     } finally {
@@ -148,39 +181,39 @@ export const WorkspacePage = () => {
           </div>
         </Card>
         <Card title="Generated Prompt" subtitle="Your personalized response will appear here.">
-        {error ? <div className="status-banner error">{error}</div> : null}
-        {isGenerating ? (
-          <div className="workspace-loading">
-            <div className="loading-orb" aria-hidden="true">
-              <div className="loading-orb-core" />
-            </div>
-            <div>
-              <h4>Crafting your prompt</h4>
-              <p className="muted">The AI council is shaping a response that matches your learning style…</p>
-            </div>
-          </div>
-        ) : result ? (
-          <div className="prompt-chat-layout">
-            <div className="prompt-bubble prompt-bubble-user">
-              <span className="summary-label">Request</span>
-              <p>{form.topic}</p>
-            </div>
-            <div className="prompt-bubble prompt-bubble-ai">
-              <div className="prompt-bubble-header">
-                <strong>{result.title}</strong>
-                <span className="prompt-badge">{result.badge}</span>
+          {error ? <div className="status-banner error">{error}</div> : null}
+          {isGenerating ? (
+            <div className="workspace-loading">
+              <div className="loading-orb" aria-hidden="true">
+                <div className="loading-orb-core" />
               </div>
-              <p>{result.summary}</p>
-              <div className="prompt-output">{result.content}</div>
+              <div>
+                <h4>Crafting your prompt</h4>
+                <p className="muted">The AI council is shaping a response that matches your learning style…</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="workspace-empty-state">
-            <div className="empty-state-icon">☁️</div>
-            <h4>Start a learning session</h4>
-            <p className="muted">Choose a topic, pick a learning style, and generate a prompt that fits your pace.</p>
-          </div>
-        )}
+          ) : result ? (
+            <div className="prompt-chat-layout">
+              <div className="prompt-bubble prompt-bubble-user">
+                <span className="summary-label">Request</span>
+                <p>{form.topic}</p>
+              </div>
+              <div className="prompt-bubble prompt-bubble-ai">
+                <div className="prompt-bubble-header">
+                  <strong>{result.title}</strong>
+                  <span className="prompt-badge">{result.badge}</span>
+                </div>
+                <p>{result.summary}</p>
+                <div className="prompt-output">{result.content}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="workspace-empty-state">
+              <div className="empty-state-icon">☁️</div>
+              <h4>Start a learning session</h4>
+              <p className="muted">Choose a topic, pick a learning style, and generate a prompt that fits your pace.</p>
+            </div>
+          )}
         </Card>
       </div>
     </div>

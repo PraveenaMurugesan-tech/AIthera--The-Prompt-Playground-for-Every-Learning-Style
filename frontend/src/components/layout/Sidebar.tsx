@@ -3,12 +3,8 @@ import { NavLink } from 'react-router-dom'
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
   { to: '/workspace', label: 'AI Workspace', icon: '✨' },
-  { to: '/profile', label: 'Prompt History', icon: '📜' },
-  { to: '/settings', label: 'Chat', icon: '💬' },
-  { to: '/help', label: 'Image Upload', icon: '🖼' },
-  { to: '/profile', label: 'Voice', icon: '🎤' },
   { to: '/profile', label: 'Profile', icon: '👤' },
-  { to: '/settings', label: 'Settings', icon: '⚙' },
+  { to: '/settings', label: 'Settings', icon: '⚙️' },
   { to: '/help', label: 'Help', icon: '❓' },
 ]
 
@@ -19,7 +15,13 @@ export const Sidebar = () => {
         <p className="sidebar-heading">Main</p>
         <nav className="sidebar-nav">
           {links.map((link) => (
-            <NavLink key={link.to + link.label} to={link.to} className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+            <NavLink
+              key={link.to + link.label}
+              to={link.to}
+              className={({ isActive }) =>
+                `sidebar-link${isActive ? ' active' : ''}`
+              }
+            >
               <span className="sidebar-icon">{link.icon}</span>
               <span>{link.label}</span>
             </NavLink>
