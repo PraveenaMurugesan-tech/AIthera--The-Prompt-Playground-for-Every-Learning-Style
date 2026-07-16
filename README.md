@@ -245,6 +245,70 @@ The prompt request system allows authenticated users to submit educational topic
 
 ---
 
+## 🚀 Frontend Setup & Installation
+
+The client-side interface is built using React, TypeScript, and Vite.
+
+### Prerequisites
+*   Node.js 18 or higher
+*   npm or yarn package manager
+
+### Steps
+
+1.  **Navigate to the Frontend Directory:**
+    ```bash
+    cd frontend
+    ```
+
+2.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Start the Local Development Dev Server:**
+    ```bash
+    npm run dev
+    ```
+    The dev server will boot on `http://localhost:5173`.
+
+4.  **Build the Production Bundle:**
+    ```bash
+    npm run build
+    ```
+    This compiles strictly under TypeScript checkers and exports compressed assets to `/dist`.
+
+---
+
+## 📁 Project Folder Structure
+
+```
+AIthera/
+├── src/                      # FastAPI Python Backend
+│   ├── auth/                 # Authentication logic & endpoints
+│   ├── database/             # SQLAlchemy connection & DB session
+│   ├── models/               # SQLAlchemy DB Schemas
+│   ├── prompts/              # Prompt history API & council routers
+│   ├── services/             # AI Council Orchestration & APIs
+│   └── main.py               # Backend gateway entry point
+├── frontend/                 # React 19 Client App
+│   ├── src/
+│   │   ├── components/       # Common buttons, layouts, and modals
+│   │   │   ├── chat/         # Message bubbles and markdown views
+│   │   │   ├── multimodal/   # Voice inputs and image dropzones
+│   │   │   └── layout/       # Sidebar and Navbar popovers
+│   │   ├── context/          # Auth, Theme, and Toast contexts
+│   │   ├── pages/            # Core dashboard, history, and council views
+│   │   ├── services/         # Axios API connection endpoints
+│   │   ├── App.tsx           # Route tree & Suspense splitters
+│   │   └── main.tsx          # React main root DOM mounting
+│   ├── vite.config.ts        # Vite build properties
+│   └── package.json          # Node scripts and dependencies
+├── alembic.ini               # DB migration config file
+└── README.md                 # Project README documentation
+```
+
+---
+
 ## 📈 Current Project Progress
 
 *   **[Completed]** Database models & Alembic setup.
@@ -254,12 +318,17 @@ The prompt request system allows authenticated users to submit educational topic
 *   **[Completed]** Response Normalizer & Council Executor (concurrent processing).
 *   **[Completed]** Consensus Builder (merging logic & provider prioritization).
 *   **[Completed]** Prompt Scorer (Phase 17 scoring engine for consensus evaluation).
+*   **[Completed]** Phase 6: AI Chat Experience (timeline logs, markdown highlights, response regeneration).
+*   **[Completed]** Phase 7: Voice & Image Multimodal Support (Speech-to-Text, playback Synthesis, webcam captures, and file validation).
+*   **[Completed]** Phase 8: Prompt History & Learning preferences logs (Keyword searches, parameter filters, and text downloads).
+*   **[Completed]** Phase 9: AI Council Workflow Visualization (interactive node diagrams, flow lines, and expandable raw logs).
+*   **[Completed]** Phase 10: Performance optimizations (code-splitting route lazy-loaders, global notification badges, toast contexts, accessibility polish).
 
 ---
 
 ## 🗺️ Future Roadmap
 
-*   **[Phase 18]** **Explanation Generator**: Construct human-readable rationales showing model contributions and learning style adaptations.
-*   **[Phase 19]** **API Layer Completion**: Mount prompt request generation endpoints and pipeline execution hooks.
-*   **[Phase 20]** **Frontend Dashboard Integration**: Build the playground UI allowing visual interaction with the Multi-Model AI Council.
-*   **[Phase 21]** **Telemetry & Feedback Loops**: Implement user rating features to track prompt efficacy and update weights.
+*   **[Telemetry & Feedback Loops]** Implement user rating features to track prompt efficacy and update weights.
+*   **[Live Vector Embeddings]** Incorporate semantic search matches over prompt histories.
+*   **[Exporting PDF formats]** Complete local client PDF rendering hooks for prompt downloads.
+
