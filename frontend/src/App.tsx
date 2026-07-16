@@ -17,6 +17,7 @@ import { ChatPage } from './pages/chat/ChatPage'
 import { CouncilPage } from './pages/council/CouncilPage'
 import { HistoryPage } from './pages/history/HistoryPage'
 import { VoicePage } from './pages/voice/VoicePage'
+import { UploadPage } from './pages/upload/UploadPage'
 import './styles/global.css'
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
               <Route path="/council" element={<CouncilPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/voice" element={<VoicePage />} />
+              <Route path="/upload" element={<UploadPage />} />
               <Route path="/help" element={<HelpPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />

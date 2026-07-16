@@ -7,6 +7,7 @@ const links = [
   { to: '/council', label: 'AI Council' },
   { to: '/history', label: 'History' },
   { to: '/voice', label: 'Voice Learning' },
+  { to: '/upload', label: 'Image Upload' },
 ]
 
 export const Sidebar = () => {
