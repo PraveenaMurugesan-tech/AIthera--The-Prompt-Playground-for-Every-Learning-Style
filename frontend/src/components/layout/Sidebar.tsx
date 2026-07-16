@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
   { to: '/workspace', label: 'AI Workspace', icon: '✨' },
-  { to: '/profile', label: 'Prompt History', icon: '📜' },
+  { to: '/history', label: 'Prompt History', icon: '📜' },
   { to: '/chat', label: 'Chat', icon: '💬' },
   { to: '/image-upload', label: 'Image Upload', icon: '🖼' },
   { to: '/voice', label: 'Voice', icon: '🎤' },
