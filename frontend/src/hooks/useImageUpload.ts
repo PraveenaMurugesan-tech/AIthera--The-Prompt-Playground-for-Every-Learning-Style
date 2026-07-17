@@ -57,10 +57,10 @@ export function useImageUpload() {
         setProgress(p);
       });
       setUploadState('success');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       setError({
-        message: err.message || 'An unknown error occurred during upload',
+        message: err instanceof Error ? err.message : 'An unknown error occurred during upload',
         code: 'unknown'
       });
       setUploadState('error');

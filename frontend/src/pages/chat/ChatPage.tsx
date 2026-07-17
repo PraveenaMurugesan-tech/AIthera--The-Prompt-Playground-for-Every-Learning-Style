@@ -3,6 +3,7 @@ import { ChatWindow } from '../../components/chat/ChatWindow';
 import { ChatInput } from '../../components/chat/ChatInput';
 import { chatService } from '../../services/chatService';
 import type { ChatMessage } from '../../services/chatService';
+import toast from 'react-hot-toast';
 
 export const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -11,6 +12,7 @@ export const ChatPage: React.FC = () => {
 
   useEffect(() => {
     // Load initial mock messages
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessages(chatService.getInitialMessages());
   }, []);
 
@@ -33,6 +35,10 @@ export const ChatPage: React.FC = () => {
       setMessages(prev => [...prev, response]);
     } catch (error) {
       console.error('Failed to send message:', error);
+      toast.error('Failed to send message. Please try again.');
+      
+      // Optionally remove the user message if it failed, or add an error message bubble
+      // For this implementation, we just show a toast
     } finally {
       setIsTyping(false);
     }

@@ -11,7 +11,7 @@ export const ConsensusMeter: React.FC<ConsensusMeterProps> = ({ score, label, co
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    let timer: any;
+    let timer: ReturnType<typeof setTimeout>;
     if (current < score) {
       timer = setTimeout(() => setCurrent(prev => prev + 1), 15);
     }

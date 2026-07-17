@@ -8,6 +8,7 @@ import { StudyTimeCard } from '../../components/recommendations/StudyTimeCard';
 import { RelatedTopics } from '../../components/recommendations/RelatedTopics';
 import { ProgressTracker } from '../../components/recommendations/ProgressTracker';
 import { EmptyRecommendations } from '../../components/recommendations/EmptyRecommendations';
+import { ErrorState } from '../../components/common/ErrorState';
 import { motion } from 'framer-motion';
 
 export const RecommendationPage = () => {
@@ -36,14 +37,8 @@ export const RecommendationPage = () => {
 
   if (error) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 text-center">
-        <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>
-        <button 
-          onClick={refresh}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-        >
-          Try Again
-        </button>
+      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
+        <ErrorState message={error} onRetry={refresh} />
       </div>
     );
   }

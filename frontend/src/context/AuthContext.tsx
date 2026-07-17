@@ -1,5 +1,8 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { fetchCurrentUser, loginUser, logoutUser, registerUser } from '../services/api'
+import toast from 'react-hot-toast'
 
 type User = {
   id: number
@@ -37,7 +40,6 @@ const getStoredToken = () => {
   if (typeof window === 'undefined') {
     return null
   }
-
   return window.localStorage.getItem('auth_token')
 }
 
@@ -45,10 +47,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const navigate = useNavigate()
+  const location = useLocation()
 
-  const clearError = () => setError(null)
+  const clearError = useCallback(() => setError(null), [])
 
-  const getCurrentUser = async () => {
+  const getCurrentUser = useCallback(async () => {
     const token = getStoredToken()
 
     if (!token) {
@@ -69,9 +74,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const login = async (credentials: LoginRequest) => {
+  const login = useCallback(async (credentials: LoginRequest) => {
     setLoading(true)
     setError(null)
 
@@ -80,6 +85,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       window.localStorage.setItem('auth_token', response.access_token)
       const user = await fetchCurrentUser()
       setCurrentUser(user)
+      toast.success('Successfully logged in!')
+      
+      const origin = location.state?.from?.pathname || '/dashboard'
+      navigate(origin, { replace: true })
     } catch (requestError) {
       setCurrentUser(null)
       window.localStorage.removeItem('auth_token')
@@ -88,22 +97,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [navigate, location.state])
 
-  const register = async (payload: RegisterRequest) => {
+  const register = useCallback(async (payload: RegisterRequest) => {
     setLoading(true)
     setError(null)
 
     try {
       await registerUser(payload)
-    } catch (requestError) {
-      throw requestError
+      toast.success('Account created successfully!')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await logoutUser()
     } catch {
@@ -112,21 +120,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       window.localStorage.removeItem('auth_token')
       setCurrentUser(null)
       setError(null)
+      navigate('/login')
     }
-  }
+  }, [navigate])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void getCurrentUser()
     
     // Listen for unauthorized events from api.ts interceptor
     const handleUnauthorized = () => {
       setCurrentUser(null)
       window.localStorage.removeItem('auth_token')
+      if (location.pathname !== '/login' && location.pathname !== '/register') {
+        navigate('/login', { state: { from: location } })
+      }
     }
     
     window.addEventListener('auth:unauthorized', handleUnauthorized)
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
-  }, [])
+  }, [navigate, location, getCurrentUser])
 
   const value = useMemo(
     () => ({
@@ -140,7 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       getCurrentUser,
       clearError,
     }),
-    [currentUser, loading, error],
+    [currentUser, loading, error, login, register, logout, getCurrentUser, clearError],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

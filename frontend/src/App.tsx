@@ -24,8 +24,8 @@ import './styles/global.css'
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<LoginPage />} />
@@ -53,8 +53,8 @@ function App() {
             </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ThemeProvider>
   )
 }

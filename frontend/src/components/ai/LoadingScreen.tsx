@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles, AlertCircle } from 'lucide-react';
 import { ProviderCard } from './ProviderCard';
@@ -10,7 +10,7 @@ import type { ProviderState } from '../../services/promptService';
 export const LoadingScreen: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const formData = location.state?.formData || {};
+  const formData = useMemo(() => location.state?.formData || {}, [location.state?.formData]);
   const [providers, setProviders] = useState<ProviderState[]>(promptService.getInitialProviders());
   const [progress, setProgress] = useState(0);
   const [estimatedTime] = useState(15);
@@ -46,11 +46,12 @@ export const LoadingScreen: React.FC = () => {
         
         // Pass the result along with formData to the ResultPage
         navigate('/result', { state: { formData, resultData: result } });
-      } catch (err: any) {
+      } catch (err: unknown) {
         clearInterval(interval);
         if (!isMounted) return;
         setProviders(prev => prev.map(p => ({ ...p, status: 'Failed' })));
-        setError(err.message || 'An error occurred during prompt generation.');
+        const errorMessage = err instanceof Error ? err.message : 'An error occurred during prompt generation.';
+        setError(errorMessage);
       }
     };
 

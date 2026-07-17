@@ -39,7 +39,8 @@ export const historyService = {
     }
   },
   
-  toggleFavorite: async (_id: string, _isFavorite: boolean): Promise<void> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  toggleFavorite: async (_unused1: string, _unused2: boolean): Promise<void> => {
     // Backend doesn't support favorites yet, simulate success
     await new Promise(resolve => setTimeout(resolve, 300));
     console.warn('Favorite toggle not supported by backend.');

@@ -11,7 +11,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({ percentage, colorCl
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    let timer: any;
+    let timer: ReturnType<typeof setTimeout>;
     if (current < percentage) {
       timer = setTimeout(() => setCurrent(prev => prev + 1), 20);
     }

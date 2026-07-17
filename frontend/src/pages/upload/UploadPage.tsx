@@ -10,6 +10,8 @@ import { FileDetails } from '../../components/upload/FileDetails';
 import { UploadTips } from '../../components/upload/UploadTips';
 import { Image } from 'lucide-react';
 import { analyzeImage } from '../../services/api';
+import toast from 'react-hot-toast';
+import { validateFileSize, validateFileType } from '../../utils/validation';
 
 export const UploadPage = () => {
   const {
@@ -23,6 +25,7 @@ export const UploadPage = () => {
   } = useImageUpload();
 
   const [showCamera, setShowCamera] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -32,16 +35,42 @@ export const UploadPage = () => {
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      handleFileSelect(e.target.files[0]);
+      const file = e.target.files[0];
+      
+      if (!validateFileType(file)) {
+        toast.error('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
+        return;
+      }
+      if (!validateFileSize(file, 5)) {
+        toast.error('File is too large. Maximum size is 5MB.');
+        return;
+      }
+      
+      handleFileSelect(file);
     }
+  };
+
+  const handleFileDrop = (file: File) => {
+    if (!validateFileType(file)) {
+      toast.error('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
+      return;
+    }
+    if (!validateFileSize(file, 5)) {
+      toast.error('File is too large. Maximum size is 5MB.');
+      return;
+    }
+    handleFileSelect(file);
   };
 
   const handleAnalyze = async () => {
     if (!selectedFile?.file) return;
 
+    setIsAnalyzing(true);
+    const toastId = toast.loading('Analyzing image...');
+
     try {
-      // In a real implementation we would set a loading state here
       const result = await analyzeImage(selectedFile.file);
+      toast.success('Analysis complete!', { id: toastId });
       
       navigate('/loading', {
         state: {
@@ -56,7 +85,9 @@ export const UploadPage = () => {
       });
     } catch (err) {
       console.error("Analysis failed:", err);
-      // We could add toast notification here
+      toast.error('Failed to analyze image.', { id: toastId });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -85,7 +116,7 @@ export const UploadPage = () => {
             {!selectedFile ? (
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm">
                 <UploadDropzone 
-                  onFileSelect={handleFileSelect} 
+                  onFileSelect={handleFileDrop} 
                   onCameraClick={() => setShowCamera(true)}
                   error={error}
                 />
@@ -110,6 +141,7 @@ export const UploadPage = () => {
                   onRemove={removeFile}
                   onAnalyze={handleAnalyze}
                   previewUrl={selectedFile.previewUrl}
+                  disabled={isAnalyzing}
                 />
 
                 {/* Hidden input for the Replace action */}
@@ -119,6 +151,7 @@ export const UploadPage = () => {
                   onChange={handleFileInput}
                   className="hidden" 
                   accept="image/jpeg, image/png, image/webp" 
+                  aria-label="Upload image"
                 />
               </div>
             )}
@@ -135,7 +168,7 @@ export const UploadPage = () => {
       {showCamera && (
         <CameraCapture 
           onCapture={(file) => {
-            handleFileSelect(file);
+            handleFileDrop(file);
             setShowCamera(false);
           }} 
           onCancel={() => setShowCamera(false)} 

@@ -27,6 +27,7 @@ export const chatService = {
     ];
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   sendMessage: async (content: string, _history: ChatMessage[]): Promise<ChatMessage> => {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500));

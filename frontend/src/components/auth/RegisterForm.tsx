@@ -1,26 +1,54 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { AlertCircle, Mail, Lock, User, UserPlus, Sparkles } from 'lucide-react';
+import { isValidEmail, checkPasswordStrength } from '../../utils/validation';
 
 export const RegisterForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
+  
   const { register, login, loading, error, clearError } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError(null);
+    clearError();
+
+    if (!name.trim()) {
+      setValidationError('Name is required');
+      return;
+    }
+    
+    if (!isValidEmail(email)) {
+      setValidationError('Please enter a valid email address');
+      return;
+    }
+
+    const strength = checkPasswordStrength(password);
+    if (strength.score < 2) {
+      setValidationError('Password is too weak. Please use a stronger password.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setValidationError('Passwords do not match');
+      return;
+    }
+
     try {
       await register({ name, email, password });
-      // After successful registration, log them in automatically
       await login({ email, password });
-      navigate('/dashboard', { replace: true });
-    } catch (err) {
+    } catch {
       // Error is handled by AuthContext and exposed via the `error` state
     }
   };
+
+  const passwordStrength = password ? checkPasswordStrength(password) : null;
+  const displayError = validationError || error;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-slate-950 p-4 relative overflow-hidden">
@@ -37,15 +65,15 @@ export const RegisterForm = () => {
           <p className="text-slate-500 dark:text-slate-400">Join AIthera to start your learning journey.</p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 text-red-600 dark:text-red-400">
+        {displayError && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 text-red-600 dark:text-red-400" role="alert" aria-live="assertive">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div className="flex-1 text-sm font-medium">{error}</div>
-            <button onClick={clearError} className="opacity-70 hover:opacity-100 transition-opacity">×</button>
+            <div className="flex-1 text-sm font-medium">{displayError}</div>
+            <button onClick={() => { clearError(); setValidationError(null); }} className="opacity-70 hover:opacity-100 transition-opacity" aria-label="Dismiss error">×</button>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Full Name</label>
             <div className="relative">
@@ -57,6 +85,7 @@ export const RegisterForm = () => {
                 className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                 placeholder="John Doe"
                 required
+                aria-required="true"
               />
             </div>
           </div>
@@ -72,6 +101,7 @@ export const RegisterForm = () => {
                 className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                 placeholder="you@example.com"
                 required
+                aria-required="true"
               />
             </div>
           </div>
@@ -87,7 +117,33 @@ export const RegisterForm = () => {
                 className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                 placeholder="••••••••"
                 required
-                minLength={6}
+                aria-required="true"
+              />
+            </div>
+            {passwordStrength && (
+              <div className="mt-2 text-xs flex justify-between items-center px-1">
+                <span className="text-slate-500 dark:text-slate-400">Password strength:</span>
+                <span className={`font-semibold ${
+                  passwordStrength.score < 2 ? 'text-red-500' : passwordStrength.score < 4 ? 'text-yellow-500' : 'text-green-500'
+                }`}>
+                  {passwordStrength.label}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Confirm Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                placeholder="••••••••"
+                required
+                aria-required="true"
               />
             </div>
           </div>
@@ -95,7 +151,7 @@ export const RegisterForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-2 shadow-lg shadow-blue-600/20"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-2 shadow-lg shadow-blue-600/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

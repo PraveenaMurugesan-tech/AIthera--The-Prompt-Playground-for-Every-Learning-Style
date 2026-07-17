@@ -47,15 +47,17 @@ export function useRecommendations() {
       setRelatedTopics(topics);
       setSkillProgress(skills);
       setStudyEstimate(estimate);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch recommendations:', err);
-      setError(err.message || 'An error occurred while fetching recommendations.');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching recommendations.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllData();
   }, [fetchAllData]);
 

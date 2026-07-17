@@ -1,8 +1,13 @@
 import React from 'react';
 import { Filter } from 'lucide-react';
 
+export interface FilterValues {
+  learningStyle?: string;
+  difficulty?: string;
+}
+
 interface HistoryFiltersProps {
-  onFilterChange: (filters: any) => void;
+  onFilterChange: (filters: FilterValues) => void;
 }
 
 export const HistoryFilters: React.FC<HistoryFiltersProps> = ({ onFilterChange }) => {

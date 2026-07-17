@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { voiceService } from '../services/voiceService';
+import { voiceService, type SpeechRecognitionEvent } from '../services/voiceService';
 import type { ListeningState } from '../types/voice';
 
 export function useSpeechRecognition() {
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported] = useState(() => voiceService.isRecognitionSupported());
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [listeningState, setListeningState] = useState<ListeningState>('idle');
@@ -16,17 +16,16 @@ export function useSpeechRecognition() {
   }, [listeningState]);
 
   useEffect(() => {
-    setIsSupported(voiceService.isRecognitionSupported());
-    
-    if (voiceService.isRecognitionSupported()) {
+    if (isSupported) {
       const recognition = voiceService.getRecognition();
+      if (!recognition) return;
       
       recognition.onstart = () => {
         setListeningState('listening');
         setError(null);
       };
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTrans = '';
         let interimTrans = '';
 
@@ -44,7 +43,7 @@ export function useSpeechRecognition() {
         setInterimTranscript(interimTrans);
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: Event & { error?: string }) => {
         console.error('Speech recognition error', event.error);
         if (event.error === 'not-allowed') {
           setError('Microphone permission denied. Please allow microphone access.');
@@ -69,7 +68,7 @@ export function useSpeechRecognition() {
         recognition.onend = null;
       };
     }
-  }, []);
+  }, [isSupported]);
 
   const startListening = useCallback(() => {
     if (!voiceService.isRecognitionSupported()) {
@@ -78,9 +77,11 @@ export function useSpeechRecognition() {
     }
     setError(null);
     try {
-      voiceService.getRecognition().start();
-    } catch (err) {
-      console.error(err);
+      const recognition = voiceService.getRecognition();
+      if (recognition) {
+        recognition.start();
+      }
+    } catch {
       // Already started or other error
     }
   }, []);
@@ -88,7 +89,10 @@ export function useSpeechRecognition() {
   const stopListening = useCallback(() => {
     if (voiceService.isRecognitionSupported()) {
       setListeningState('idle');
-      voiceService.getRecognition().stop();
+      const recognition = voiceService.getRecognition();
+      if (recognition) {
+        recognition.stop();
+      }
       setInterimTranscript('');
     }
   }, []);

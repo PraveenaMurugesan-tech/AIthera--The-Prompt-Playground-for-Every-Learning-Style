@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, RefreshCw } from 'lucide-react';
 import { OptimizedPromptCard } from '../../components/result/OptimizedPromptCard';
 import { ConsensusSummary } from '../../components/result/ConsensusSummary';
 import { ScoreCards } from '../../components/result/ScoreCards';
 import { EducationalMetrics } from '../../components/result/EducationalMetrics';
 import { LearningRecommendations } from '../../components/result/LearningRecommendations';
 import { PromptVariants } from '../../components/result/PromptVariants';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import type { GenerationResult } from '../../services/promptService';
 
 export const ResultPage: React.FC = () => {
@@ -14,6 +15,7 @@ export const ResultPage: React.FC = () => {
   const location = useLocation();
   
   const [result] = useState<GenerationResult | null>(location.state?.resultData || null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     // If someone navigated directly here without state, redirect to prompt page
@@ -26,6 +28,11 @@ export const ResultPage: React.FC = () => {
     return null;
   }
 
+  const handleRegenerate = () => {
+    setShowConfirm(false);
+    navigate('/prompt');
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -35,6 +42,7 @@ export const ResultPage: React.FC = () => {
             <button
               onClick={() => navigate('/prompt')}
               className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400"
+              aria-label="Go back to prompt generator"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -46,10 +54,11 @@ export const ResultPage: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => navigate('/prompt')}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-sm self-start md:self-auto"
+            onClick={() => setShowConfirm(true)}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-sm self-start md:self-auto flex items-center gap-2"
           >
-            Create New Prompt
+            <RefreshCw className="w-4 h-4" />
+            Regenerate Prompt
           </button>
         </header>
 
@@ -85,6 +94,16 @@ export const ResultPage: React.FC = () => {
         </div>
 
       </div>
+
+      <ConfirmDialog
+        isOpen={showConfirm}
+        title="Regenerate Prompt"
+        message="Are you sure you want to discard this prompt and generate a new one? Your current results will be lost unless saved to history."
+        confirmLabel="Regenerate"
+        cancelLabel="Cancel"
+        onConfirm={handleRegenerate}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   );
 };

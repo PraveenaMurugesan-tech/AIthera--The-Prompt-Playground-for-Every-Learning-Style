@@ -14,6 +14,7 @@ export const RecordingIndicator = ({ isRecording }: RecordingIndicatorProps) => 
     if (isRecording) {
       interval = setInterval(() => setDuration(prev => prev + 1), 1000);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDuration(0);
     }
     return () => clearInterval(interval);

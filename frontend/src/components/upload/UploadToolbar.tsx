@@ -8,6 +8,7 @@ interface UploadToolbarProps {
   onRemove: () => void;
   onAnalyze: () => void;
   previewUrl?: string;
+  disabled?: boolean;
 }
 
 export const UploadToolbar = ({
@@ -16,7 +17,8 @@ export const UploadToolbar = ({
   onReplace,
   onRemove,
   onAnalyze,
-  previewUrl
+  previewUrl,
+  disabled = false
 }: UploadToolbarProps) => {
   
   const isUploading = uploadState === 'uploading';
@@ -78,11 +80,11 @@ export const UploadToolbar = ({
         <div className="relative group">
           <button
             onClick={onAnalyze}
-            disabled={!isSuccess}
+            disabled={!isSuccess || disabled}
             className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl font-medium transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500"
           >
             <Wand2 className="w-4 h-4" />
-            Analyze Image
+            {disabled ? 'Analyzing...' : 'Analyze Image'}
           </button>
         </div>
       </div>

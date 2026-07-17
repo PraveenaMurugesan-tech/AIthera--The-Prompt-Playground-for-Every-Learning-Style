@@ -18,7 +18,7 @@ export function useSpeechSynthesis() {
     if (saved) {
       try {
         return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
-      } catch (e) {
+      } catch {
         return DEFAULT_SETTINGS;
       }
     }
@@ -28,6 +28,7 @@ export function useSpeechSynthesis() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsSupported(voiceService.isSynthesisSupported());
 
     if (voiceService.isSynthesisSupported()) {

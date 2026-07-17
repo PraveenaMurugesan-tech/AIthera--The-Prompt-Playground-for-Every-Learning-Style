@@ -1,4 +1,6 @@
 import axios, { AxiosError } from 'axios'
+import type { AxiosRequestConfig } from 'axios'
+import toast from 'react-hot-toast'
 
 export type RegisterRequest = {
   name: string
@@ -37,36 +39,86 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Centralized error handling
+interface RetryConfig extends AxiosRequestConfig {
+  _retryCount?: number;
+}
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
+// Response Interceptor: Centralized error handling and Retry Mechanism
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryConfig;
+    
+    // Handle 401 Unauthorized
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');
-      // Dispatch custom event to trigger logout in AuthContext
       window.dispatchEvent(new Event('auth:unauthorized'));
+      return Promise.reject(error);
     }
+
+    // Determine if we should retry (Network error, timeout, or 5xx server error)
+    const isNetworkError = !error.response;
+    const is5xxError = error.response?.status && error.response.status >= 500;
+    const isRateLimited = error.response?.status === 429;
+    
+    if (originalRequest && (isNetworkError || is5xxError || isRateLimited)) {
+      originalRequest._retryCount = originalRequest._retryCount || 0;
+      
+      if (originalRequest._retryCount < MAX_RETRIES) {
+        originalRequest._retryCount += 1;
+        
+        // Exponential backoff
+        const delay = isRateLimited 
+          ? (parseInt(error.response?.headers['retry-after'] || '1', 10) * 1000)
+          : (RETRY_DELAY_MS * Math.pow(2, originalRequest._retryCount - 1));
+          
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return api(originalRequest);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
 
-const normalizeError = (error: unknown) => {
+export const normalizeError = (error: unknown, showToast: boolean = false) => {
+  let errorMessage = 'Unexpected server error.';
+
   if (error instanceof AxiosError) {
-    const message = error.response?.data?.detail || error.message
+    const dataMessage = error.response?.data?.detail || error.response?.data?.message || error.message;
+    
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return 'The request timed out. Please try again.'
+      errorMessage = 'The request timed out. Please try again.';
+    } else if (!error.response) {
+      errorMessage = 'Network error. Please check your connection.';
+    } else if (error.response.status === 400) {
+      errorMessage = typeof dataMessage === 'string' ? dataMessage : 'Invalid request.';
+    } else if (error.response.status === 401) {
+      errorMessage = 'Your session has expired. Please sign in again.';
+    } else if (error.response.status === 403) {
+      errorMessage = 'You do not have permission to perform this action.';
+    } else if (error.response.status === 404) {
+      errorMessage = 'Resource not found.';
+    } else if (error.response.status === 429) {
+      errorMessage = 'Too many requests. Please wait a moment.';
+    } else if (error.response.status >= 500) {
+      errorMessage = 'Server error. Please try again later.';
+    } else {
+      errorMessage = typeof dataMessage === 'string' ? dataMessage : errorMessage;
     }
-    if (error.response?.status === 401) {
-      return 'Your session has expired. Please sign in again.'
-    }
-    if (error.response?.status === 403) {
-      return 'You do not have permission to perform this action.'
-    }
-    return typeof message === 'string' ? message : 'Unexpected server error.'
+  } else if (error instanceof Error) {
+    errorMessage = error.message;
   }
 
-  return 'Unexpected server error.'
-}
+  if (showToast) {
+    toast.error(errorMessage);
+  }
+
+  return errorMessage;
+};
 
 export const loginUser = async (email: string, password: string): Promise<AuthResponse> => {
   const params = new URLSearchParams()
@@ -81,7 +133,7 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
     })
     return response.data
   } catch (error) {
-    throw new Error(normalizeError(error))
+    throw new Error(normalizeError(error), { cause: error })
   }
 }
 
@@ -90,7 +142,7 @@ export const registerUser = async (payload: RegisterRequest): Promise<User> => {
     const response = await api.post<User>('/auth/register', payload)
     return response.data
   } catch (error) {
-    throw new Error(normalizeError(error))
+    throw new Error(normalizeError(error), { cause: error })
   }
 }
 
@@ -106,17 +158,16 @@ export const analyzeImage = async (file: File): Promise<{ topic: string, instruc
     });
     return response.data;
   } catch (error) {
-    throw new Error(normalizeError(error))
+    throw new Error(normalizeError(error, true), { cause: error })
   }
 }
 
 export const fetchCurrentUser = async (): Promise<User> => {
   try {
-    // Interceptor will attach token
     const response = await api.get<User>('/auth/me')
     return response.data
   } catch (error) {
-    throw new Error(normalizeError(error))
+    throw new Error(normalizeError(error), { cause: error })
   }
 }
 

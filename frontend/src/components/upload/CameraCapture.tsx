@@ -24,7 +24,7 @@ export const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
         videoRef.current.srcObject = mediaStream;
       }
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       setError('Camera access denied or unavailable. Please use file upload instead.');
     }
