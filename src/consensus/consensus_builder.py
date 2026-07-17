@@ -179,7 +179,7 @@ class ConsensusBuilder:
             winner_provider=winner_provider,
             winner_model=best_response.model,
             prompt_score=winner_scores["prompt_score"],
-            agreement_score=winner_scores["agreement_score"],
+            agreement_score=winner_scores["agreement_score"] * 100.0,
             learning_style_score=winner_scores["learning_style_score"],
             completeness_score=winner_scores["completeness_score"],
             overall_consensus_score=best_weighted_score,
@@ -497,9 +497,9 @@ class ConsensusBuilder:
         success_ratio = (num_successful / total_providers) if total_providers > 0 else 0.0
         
         confidence = (
-            (prompt_score * 0.40) +
+            (prompt_score * 100 * 0.40) +
             (agreement * 100 * 0.30) +
-            (completeness * 0.20) +
+            (completeness * 100 * 0.20) +
             (success_ratio * 100 * 0.10)
         )
         return min(100.0, max(0.0, confidence))
