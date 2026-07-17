@@ -1,5 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { fetchCurrentUser, loginUser, logoutUser, registerUser, type RegisterRequest, type User } from '../services/api'
+import {
+  fetchCurrentUser,
+  loginUser,
+  logoutUser,
+  registerUser,
+  type RegisterRequest,
+  type User,
+} from '../services/api'
 
 type LoginRequest = {
   email: string
@@ -41,7 +48,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const getCurrentUser = async () => {
     const activeToken = getStoredToken()
 
+    console.log('===========================')
+    console.log('GET CURRENT USER')
+    console.log('Stored Token:', activeToken)
+
     if (!activeToken) {
+      console.log('No token found')
       setCurrentUser(null)
       setToken(null)
       setLoading(false)
@@ -50,15 +62,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       setLoading(true)
+
+      console.log('Calling fetchCurrentUser...')
+
       const user = await fetchCurrentUser(activeToken)
+
+      console.log('User fetched successfully:', user)
+
       setCurrentUser(user)
       setToken(activeToken)
       setError(null)
     } catch (requestError) {
+      console.error('GET CURRENT USER FAILED:', requestError)
+
       setCurrentUser(null)
       setToken(null)
       window.localStorage.removeItem('auth_token')
-      setError(requestError instanceof Error ? requestError.message : 'Your session has expired. Please sign in again.')
+
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Your session has expired. Please sign in again.',
+      )
     } finally {
       setLoading(false)
     }
@@ -69,17 +94,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null)
 
     try {
-      const response = await loginUser(credentials.email, credentials.password)
+      console.log('===========================')
+      console.log('STEP 1 - Calling loginUser')
+
+      const response = await loginUser(
+        credentials.email,
+        credentials.password,
+      )
+
+      console.log('STEP 2 - Login response:')
+      console.log(response)
+
       const nextToken = response.access_token
+
+      console.log('STEP 3 - Token received:')
+      console.log(nextToken)
+
       window.localStorage.setItem('auth_token', nextToken)
       setToken(nextToken)
+
+      console.log('STEP 4 - Calling fetchCurrentUser')
+
       const user = await fetchCurrentUser(nextToken)
+
+      console.log('STEP 5 - User received:')
+      console.log(user)
+
       setCurrentUser(user)
       setError(null)
+
+      console.log('STEP 6 - Login completed successfully')
     } catch (requestError) {
+      console.error('LOGIN FAILED:')
+      console.error(requestError)
+
       setCurrentUser(null)
       setToken(null)
       window.localStorage.removeItem('auth_token')
+
       throw requestError
     } finally {
       setLoading(false)
@@ -91,8 +143,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null)
 
     try {
+      console.log('Registering user...')
       await registerUser(payload)
+      console.log('Registration successful')
     } catch (requestError) {
+      console.error('Registration failed:', requestError)
       throw requestError
     } finally {
       setLoading(false)
@@ -103,8 +158,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await logoutUser()
     } catch {
-      // Keep the UI responsive even if logout request fails.
+      // Ignore logout failures
     } finally {
+      console.log('Logging out')
+
       window.localStorage.removeItem('auth_token')
       setCurrentUser(null)
       setToken(null)
@@ -113,6 +170,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   useEffect(() => {
+    console.log('AuthProvider mounted')
     void getCurrentUser()
   }, [])
 
@@ -132,7 +190,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [currentUser, loading, error, token],
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export const useAuth = () => {
