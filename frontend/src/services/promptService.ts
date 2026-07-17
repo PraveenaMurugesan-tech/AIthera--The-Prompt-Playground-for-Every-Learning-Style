@@ -99,7 +99,7 @@ export const promptService = {
       options: data.instructions ? { instructions: data.instructions } : {}
     };
 
-    console.log('Sending prompt generation request with payload:', JSON.stringify(payload, null, 2));
+
 
     const response = await api.post<BackendGenerationResponse>('/prompts/generate', payload);
     const backendData = response.data;

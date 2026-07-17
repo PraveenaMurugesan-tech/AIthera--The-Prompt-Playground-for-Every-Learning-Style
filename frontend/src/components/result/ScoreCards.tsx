@@ -59,7 +59,7 @@ interface ScoreCardsProps {
   agreement: number;
 }
 
-export const ScoreCards: React.FC<ScoreCardsProps> = ({ confidence, agreement }) => {
+export const ScoreCards: React.FC<ScoreCardsProps> = React.memo(({ confidence, agreement }) => {
   return (
     <div className="grid grid-cols-2 gap-4">
       <motion.div
@@ -89,4 +89,4 @@ export const ScoreCards: React.FC<ScoreCardsProps> = ({ confidence, agreement })
       </motion.div>
     </div>
   );
-};
+});

@@ -10,7 +10,7 @@ interface HistoryCardProps {
   onReopen: (id: string) => void;
 }
 
-export const HistoryCard: React.FC<HistoryCardProps> = ({ item, onToggleFavorite, onDelete, onReopen }) => {
+export const HistoryCard: React.FC<HistoryCardProps> = React.memo(({ item, onToggleFavorite, onDelete, onReopen }) => {
   return (
     <motion.div
       layout
@@ -61,4 +61,4 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ item, onToggleFavorite
       </div>
     </motion.div>
   );
-};
+});

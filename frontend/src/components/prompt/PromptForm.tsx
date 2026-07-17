@@ -28,7 +28,7 @@ export const PromptForm: React.FC = () => {
       instructions
     };
     
-    console.log('Generating prompt with data:', formData);
+
     navigate('/loading', { state: { formData } });
   };
 

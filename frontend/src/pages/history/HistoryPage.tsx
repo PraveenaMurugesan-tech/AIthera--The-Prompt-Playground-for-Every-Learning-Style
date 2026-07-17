@@ -10,6 +10,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const HistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export const HistoryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [filters, setFilters] = useState<{ learningStyle?: string; difficulty?: string }>({});
   
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -85,8 +87,8 @@ export const HistoryPage: React.FC = () => {
   };
 
   const filteredItems = items.filter(item => {
-    const matchesSearch = item.topic.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          item.prompt.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = item.topic.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+                          item.prompt.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesStyle = !filters.learningStyle || item.learningStyle === filters.learningStyle;
     const matchesDifficulty = !filters.difficulty || item.difficulty === filters.difficulty;
     

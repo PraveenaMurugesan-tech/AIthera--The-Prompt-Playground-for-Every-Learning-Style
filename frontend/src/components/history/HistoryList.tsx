@@ -9,7 +9,7 @@ interface HistoryListProps {
   onReopen: (id: string) => void;
 }
 
-export const HistoryList: React.FC<HistoryListProps> = ({ items, onToggleFavorite, onDelete, onReopen }) => {
+export const HistoryList: React.FC<HistoryListProps> = React.memo(({ items, onToggleFavorite, onDelete, onReopen }) => {
   // Group items by date
   const grouped = items.reduce((acc, item) => {
     const date = new Date(item.createdAt);
@@ -60,4 +60,4 @@ export const HistoryList: React.FC<HistoryListProps> = ({ items, onToggleFavorit
       })}
     </div>
   );
-};
+});

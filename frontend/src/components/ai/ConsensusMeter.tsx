@@ -7,7 +7,7 @@ interface ConsensusMeterProps {
   strokeColor: string;
 }
 
-export const ConsensusMeter: React.FC<ConsensusMeterProps> = ({ score, label, color, strokeColor }) => {
+export const ConsensusMeter: React.FC<ConsensusMeterProps> = React.memo(({ score, label, color, strokeColor }) => {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -55,4 +55,4 @@ export const ConsensusMeter: React.FC<ConsensusMeterProps> = ({ score, label, co
       <span className="mt-4 font-semibold text-slate-700 dark:text-slate-300">{label}</span>
     </div>
   );
-};
+});
