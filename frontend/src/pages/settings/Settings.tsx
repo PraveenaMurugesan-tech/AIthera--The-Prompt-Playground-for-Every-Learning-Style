@@ -1,11 +1,11 @@
-import { Card } from '../../components/common/Card'
+import { SettingsFormCard } from '../../components/settings/SettingsFormCard'
+import { SettingsProfileCard } from '../../components/settings/SettingsProfileCard'
 
 export const SettingsPage = () => {
   return (
-    <div className="page-shell">
-      <Card title="Settings">
-        <p>Application configuration and preferences will be managed here.</p>
-      </Card>
+    <div className="settings-page">
+      <SettingsProfileCard />
+      <SettingsFormCard />
     </div>
   )
 }
