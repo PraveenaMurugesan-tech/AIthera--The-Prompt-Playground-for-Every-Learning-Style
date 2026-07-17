@@ -113,7 +113,12 @@ export const normalizeError = (error: unknown, showToast: boolean = false) => {
     } else if (error.response.status === 400) {
       errorMessage = typeof dataMessage === 'string' ? dataMessage : 'Invalid request.';
     } else if (error.response.status === 401) {
-      errorMessage = 'Your session has expired. Please sign in again.';
+      const lowerMessage = typeof dataMessage === 'string' ? dataMessage.toLowerCase() : '';
+      if (lowerMessage.includes('credential') || lowerMessage.includes('invalid') || lowerMessage.includes('password') || lowerMessage.includes('incorrect')) {
+        errorMessage = 'Invalid credentials. Please check your email and password.';
+      } else {
+        errorMessage = 'Your session has expired. Please sign in again.';
+      }
     } else if (error.response.status === 403) {
       errorMessage = 'You do not have permission to perform this action.';
     } else if (error.response.status === 404) {
@@ -248,6 +253,15 @@ export const generateLearningPrompt = async (
   }
 
   return buildMockPrompt(payload)
+}
+
+export const sendChatMessage = async (messages: { role: string; content: string }[]): Promise<{ content: string }> => {
+  try {
+    const response = await api.post('/prompts/chat', { messages })
+    return response.data
+  } catch (error) {
+    throw new Error(normalizeError(error), { cause: error })
+  }
 }
 
 export default api

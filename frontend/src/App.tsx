@@ -39,9 +39,9 @@ const RecommendationPage = lazy(() => import('./pages/recommendations/Recommenda
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <ToastProvider>
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -73,9 +73,9 @@ function App() {
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
-          </BrowserRouter>
-        </ToastProvider>
-      </AuthProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ThemeProvider>
   )
 }

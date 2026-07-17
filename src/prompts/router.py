@@ -314,3 +314,33 @@ async def analyze_image(
     except Exception as e:
         logger.error(f"Failed to analyze image: {e}")
         raise HTTPException(status_code=500, detail="Image analysis failed")
+
+@router.post("/chat")
+async def chat_endpoint(
+    payload: schemas.ChatRequest,
+    current_user: User = Depends(get_current_user)
+):
+    try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="Gemini API Key not configured")
+        
+        client = genai.Client(api_key=api_key)
+        
+        prompt = "You are the AIthera Council, a helpful and expert educational AI. Answer the user's questions clearly and concisely.\n\n"
+        for msg in payload.messages:
+            role = "User" if msg.role == "user" else "AI"
+            prompt += f"{role}: {msg.content}\n"
+        
+        prompt += "AI:"
+        
+        response = await client.aio.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        
+        return {"content": response.text.strip()}
+    except Exception as e:
+        logger.error(f"Failed to generate chat response: {e}")
+        raise HTTPException(status_code=500, detail="Chat generation failed")
+

@@ -1,3 +1,5 @@
+import { sendChatMessage } from './api';
+
 export type MessageRole = 'user' | 'ai';
 
 export interface ChatMessage {
@@ -20,24 +22,35 @@ export const chatService = {
       {
         id: '2',
         role: 'ai',
-        content: 'I can help with that! Here is a visual breakdown of how the React Context API works:\\n\\n1. **Provider**: Think of this as a global broadcasting tower.\\n2. **Consumer**: These are the radios tuning into the broadcast.\\n\\nWould you like me to generate a tailored prompt to dive deeper into this?',
+        content: 'I can help with that! Here is a visual breakdown of how the React Context API works:\n\n1. **Provider**: Think of this as a global broadcasting tower.\n2. **Consumer**: These are the radios tuning into the broadcast.\n\nWould you like me to generate a tailored prompt to dive deeper into this?',
         timestamp: new Date(Date.now() - 50000).toISOString(),
         senderName: 'AI Council',
       },
     ];
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  sendMessage: async (content: string, _history: ChatMessage[]): Promise<ChatMessage> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+  sendMessage: async (content: string, history: ChatMessage[]): Promise<ChatMessage> => {
+    const formattedHistory = history.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
     
-    return {
-      id: Math.random().toString(36).substr(2, 9),
-      role: 'ai',
-      content: `I've received your message: "${content}". This is a mock response from the AIthera Council. We're currently simulating the conversation flow.`,
-      timestamp: new Date().toISOString(),
-      senderName: 'AI Council',
-    };
+    // add the new user message to the history we send
+    formattedHistory.push({ role: 'user', content });
+
+    try {
+      const response = await sendChatMessage(formattedHistory);
+      
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        role: 'ai',
+        content: response.content,
+        timestamp: new Date().toISOString(),
+        senderName: 'AI Council',
+      };
+    } catch (error) {
+       console.error("Failed to send chat message", error);
+       throw error;
+    }
   }
 };
