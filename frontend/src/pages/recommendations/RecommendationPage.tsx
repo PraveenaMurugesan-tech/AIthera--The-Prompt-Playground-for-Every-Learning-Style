@@ -11,7 +11,10 @@ import { EmptyRecommendations } from '../../components/recommendations/EmptyReco
 import { ErrorState } from '../../components/common/ErrorState';
 import { motion } from 'framer-motion';
 
+import { useNavigate } from 'react-router-dom';
+
 export const RecommendationPage = () => {
+  const navigate = useNavigate();
   const {
     loading,
     error,
@@ -93,7 +96,10 @@ export const RecommendationPage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <RecommendationCard recommendation={rec} />
+                    <RecommendationCard 
+                      recommendation={rec} 
+                      onStart={(r) => navigate('/prompt', { state: { topic: r.title } })}
+                    />
                   </motion.div>
                 ))}
               </div>
@@ -105,9 +111,22 @@ export const RecommendationPage = () => {
                 Explore Topics
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <TopicCard title="Zero-Shot Prompting" difficulty="Beginner" isRecommendedNext />
-                <TopicCard title="Chain of Thought" difficulty="Intermediate" />
-                <TopicCard title="Fine-Tuning Concepts" difficulty="Advanced" />
+                <TopicCard 
+                  title="Zero-Shot Prompting" 
+                  difficulty="Beginner" 
+                  isRecommendedNext 
+                  onClick={() => navigate('/prompt', { state: { topic: "Zero-Shot Prompting" } })}
+                />
+                <TopicCard 
+                  title="Chain of Thought" 
+                  difficulty="Intermediate" 
+                  onClick={() => navigate('/prompt', { state: { topic: "Chain of Thought Prompting" } })}
+                />
+                <TopicCard 
+                  title="Fine-Tuning Concepts" 
+                  difficulty="Advanced" 
+                  onClick={() => navigate('/prompt', { state: { topic: "AI Model Fine-Tuning" } })}
+                />
               </div>
             </section>
 

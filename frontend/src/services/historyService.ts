@@ -30,7 +30,7 @@ export const historyService = {
         learningStyle: item.learning_style,
         difficulty: item.difficulty,
         prompt: item.generated_prompt || 'No prompt generated.',
-        createdAt: item.created_at,
+        createdAt: item.created_at.endsWith('Z') ? item.created_at : `${item.created_at}Z`,
         isFavorite: false, // Not supported by backend yet
       }));
     } catch (error) {
@@ -51,6 +51,15 @@ export const historyService = {
       await api.delete(`/prompts/${id}`);
     } catch (error) {
       console.error(`Failed to delete history item ${id}:`, error);
+      throw error;
+    }
+  },
+
+  clearHistory: async (): Promise<void> => {
+    try {
+      await api.delete('/prompts/');
+    } catch (error) {
+      console.error('Failed to clear history:', error);
       throw error;
     }
   }

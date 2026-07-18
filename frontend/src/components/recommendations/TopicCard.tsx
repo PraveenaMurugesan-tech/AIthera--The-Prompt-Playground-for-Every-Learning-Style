@@ -6,9 +6,10 @@ interface TopicCardProps {
   title: string;
   difficulty: Difficulty;
   isRecommendedNext?: boolean;
+  onClick?: () => void;
 }
 
-export const TopicCard = ({ title, difficulty, isRecommendedNext }: TopicCardProps) => {
+export const TopicCard = ({ title, difficulty, isRecommendedNext, onClick }: TopicCardProps) => {
   const renderStars = () => {
     let activeStars = 1;
     if (difficulty === 'Intermediate') activeStars = 2;
@@ -31,7 +32,9 @@ export const TopicCard = ({ title, difficulty, isRecommendedNext }: TopicCardPro
   };
 
   return (
-    <div className={`p-4 rounded-xl border flex flex-col gap-3 ${
+    <div 
+      onClick={onClick}
+      className={`p-4 rounded-xl border flex flex-col gap-3 ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} ${
       isRecommendedNext 
         ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800' 
         : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'

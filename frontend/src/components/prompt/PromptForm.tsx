@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { TopicInput } from './TopicInput';
 import { LearningStyleSelect } from './LearningStyleSelect';
 import { DifficultySelect } from './DifficultySelect';
@@ -9,8 +9,10 @@ import { GenerateButton } from './GenerateButton';
 
 export const PromptForm: React.FC = () => {
   const navigate = useNavigate();
-  const [topic, setTopic] = useState('');
+  const location = useLocation();
+  const [topic, setTopic] = useState(location.state?.topic || '');
   const [learningStyle, setLearningStyle] = useState('');
+
   const [difficulty, setDifficulty] = useState('');
   const [bloomLevel, setBloomLevel] = useState('');
   const [instructions, setInstructions] = useState('');

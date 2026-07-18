@@ -107,6 +107,18 @@ def delete_prompt(
 
 
 
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+def clear_prompts(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    """
+    Clear all PromptRequests owned by the authenticated user.
+    """
+    crud.clear_user_prompt_requests(db, user_id=int(current_user.id))
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 logger = logging.getLogger("aithera.api")
 
 _ai_service_instance: Optional[AIService] = None
@@ -205,6 +217,12 @@ async def generate_prompt(
     consensus = council_result.get("consensus")
     if not consensus:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No consensus reached")
+
+    try:
+        if consensus.final_prompt:
+            crud.update_generated_prompt(db, request_record.id, consensus.final_prompt)
+    except Exception as e:
+        logger.warning(f"Failed to save generated prompt to DB: {e}")
 
     # 3. Generate secondary assets (learning path, variants, recommendations)
     learning_path = None

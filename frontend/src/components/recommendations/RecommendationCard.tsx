@@ -4,9 +4,10 @@ import { DifficultyBadge } from './DifficultyBadge';
 
 interface RecommendationCardProps {
   recommendation: Recommendation;
+  onStart?: (recommendation: Recommendation) => void;
 }
 
-export const RecommendationCard = ({ recommendation }: RecommendationCardProps) => {
+export const RecommendationCard = ({ recommendation, onStart }: RecommendationCardProps) => {
   return (
     <div className={`p-5 rounded-xl border transition-all hover:shadow-md ${
       recommendation.isPriority 
@@ -50,7 +51,10 @@ export const RecommendationCard = ({ recommendation }: RecommendationCardProps) 
           </div>
         </div>
         
-        <button className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+        <button 
+          onClick={() => onStart?.(recommendation)}
+          className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+        >
           <PlayCircle className="w-4 h-4" />
           Start
         </button>

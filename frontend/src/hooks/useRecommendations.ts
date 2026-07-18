@@ -23,6 +23,7 @@ export function useRecommendations() {
   const fetchAllData = useCallback(async () => {
     setLoading(true);
     setError(null);
+    recommendationService.invalidateCache();
     try {
       // Fetch all data concurrently
       const [
@@ -47,9 +48,16 @@ export function useRecommendations() {
       setRelatedTopics(topics);
       setSkillProgress(skills);
       setStudyEstimate(estimate);
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Failed to fetch recommendations:', err);
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching recommendations.';
+      
+      let errorMessage = 'An error occurred while fetching recommendations.';
+      if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);

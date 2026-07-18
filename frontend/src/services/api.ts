@@ -81,6 +81,10 @@ api.interceptors.response.use(
     const isRateLimited = error.response?.status === 429;
     
     if (originalRequest && (isNetworkError || is5xxError || isRateLimited)) {
+      // Do not automatically retry POST, PUT, DELETE, PATCH requests to prevent duplicates
+      if (originalRequest.method && originalRequest.method.toLowerCase() !== 'get') {
+        return Promise.reject(error);
+      }
       originalRequest._retryCount = originalRequest._retryCount || 0;
       
       if (originalRequest._retryCount < MAX_RETRIES) {

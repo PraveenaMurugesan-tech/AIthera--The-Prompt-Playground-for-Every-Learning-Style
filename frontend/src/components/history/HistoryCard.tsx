@@ -48,9 +48,21 @@ export const HistoryCard: React.FC<HistoryCardProps> = React.memo(({ item, onTog
       </p>
 
       <div className="flex justify-between items-center">
-        <span className="text-xs text-slate-400">
-          {new Date(item.createdAt).toLocaleDateString()}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${item.prompt === 'No prompt generated.' || item.prompt === '' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+            {item.prompt === 'No prompt generated.' || item.prompt === '' ? 'Failed' : 'Success'}
+          </span>
+          <span className="text-xs text-slate-400">
+            {new Date(item.createdAt).toLocaleString(undefined, {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })}
+          </span>
+        </div>
         <button
           onClick={() => onReopen(item.id)}
           className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400"
