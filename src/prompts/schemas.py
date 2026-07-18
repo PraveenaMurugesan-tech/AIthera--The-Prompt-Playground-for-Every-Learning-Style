@@ -70,3 +70,10 @@ class GeneratePromptResponse(BaseModel):
     prompt_variants: Optional[List[PromptVariant]] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]

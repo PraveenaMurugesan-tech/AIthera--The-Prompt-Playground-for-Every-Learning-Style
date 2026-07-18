@@ -69,7 +69,7 @@ class ClaudeClient(BaseProvider):
         super().__init__(config)
 
         # Load API key and timeout from environment
-        self.api_key = os.getenv("CLAUDE_API_KEY")
+        self.api_key = self.validate_api_key("CLAUDE_API_KEY")
         try:
             self.timeout = float(os.getenv("CLAUDE_TIMEOUT", "30"))
         except (ValueError, TypeError):
@@ -87,7 +87,8 @@ class ClaudeClient(BaseProvider):
         learning_style: str,
         difficulty: str,
         education_level: str,
-        output_length: str
+        output_length: str,
+        bloom_level: str = 'understand'
     ) -> str:
         """Load prompt template from prompts/claude_reasoning.txt and substitute variables."""
         from pathlib import Path
@@ -105,7 +106,8 @@ class ClaudeClient(BaseProvider):
                 f"Learning Style: {learning_style}\\n"
                 f"Difficulty: {difficulty}\\n"
                 f"Education Level: {education_level}\\n"
-                f"Output Length: {output_length}"
+                f"Output Length: {output_length}\n" \
+                f"Bloom's Level: {bloom_level}"
             )
 
         try:
@@ -118,7 +120,8 @@ class ClaudeClient(BaseProvider):
                 learning_style=learning_style,
                 difficulty=difficulty,
                 education_level=education_level,
-                output_length=output_length
+                output_length=output_length,
+                bloom_level=bloom_level
             )
         except Exception as e:
             logger.error("Failed to load/format prompt template: %s", str(e))
@@ -132,6 +135,7 @@ class ClaudeClient(BaseProvider):
         difficulty: Optional[str] = None,
         education_level: Optional[str] = None,
         output_length: Optional[str] = None,
+        bloom_level: Optional[str] = None,
         prompt: Optional[str] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
@@ -161,7 +165,8 @@ class ClaudeClient(BaseProvider):
                 learning_style=learning_style or "",
                 difficulty=difficulty or "",
                 education_level=education_level or "",
-                output_length=output_length or ""
+                output_length=output_length or "",
+                bloom_level=bloom_level or "understand"
             )
 
         if not resolved_prompt or not resolved_prompt.strip():
@@ -170,7 +175,8 @@ class ClaudeClient(BaseProvider):
         model = self.get_model_name()
         logger.info("Request start - Provider: Claude, Model: %s", model)
 
-        client = AsyncAnthropic(api_key=self.api_key, timeout=self.timeout)
+        if not getattr(self, '_client', None):
+            self._client = AsyncAnthropic(api_key=self.api_key, timeout=self.timeout)
 
         # Retry logic with tenacity
         def is_transient_error(exception: Exception) -> bool:
@@ -193,7 +199,7 @@ class ClaudeClient(BaseProvider):
                 with attempt:
                     attempt_num = attempt.retry_state.attempt_number
                     logger.info("Sending Claude API request (attempt %d/3)...", attempt_num)
-                    response = await client.messages.create(
+                    response = await self._client.messages.create(
                         model=model,
                         max_tokens=4096,
                         messages=[{"role": "user", "content": resolved_prompt}],

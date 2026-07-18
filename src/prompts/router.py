@@ -1,17 +1,22 @@
 import logging
 import asyncio
-from typing import Annotated, List
+from typing import Optional, Annotated, List
 
 from src.services.ai_service import AIService, AIServiceError
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, File, UploadFile
+from google import genai
+from google.genai import types
+import os
+from PIL import Image
+import io
 from sqlalchemy.orm import Session
 
 from src.auth.router import get_current_user
 from src.database.session import get_db
 from src.models.user import User
 from src.prompts import crud, schemas
-from typing import Dict
+from typing import Optional, Dict
 
 
 router = APIRouter(prefix="/prompts", tags=["prompts"])
@@ -104,8 +109,13 @@ def delete_prompt(
 
 logger = logging.getLogger("aithera.api")
 
+_ai_service_instance: Optional[AIService] = None
+
 def get_ai_service() -> AIService:
-    return AIService()
+    global _ai_service_instance
+    if _ai_service_instance is None:
+        _ai_service_instance = AIService()
+    return _ai_service_instance
 
 @router.post("/generate", response_model=schemas.GeneratePromptResponse, status_code=status.HTTP_200_OK)
 async def generate_prompt(
@@ -117,6 +127,8 @@ async def generate_prompt(
     """
     Generate an optimized prompt and educational metrics via the AI Council.
     """
+    logger.info(f"Received learning_style: {payload.learning_style}")
+    logger.info(f"Received payload: {payload.dict()}")
     # 1. Create DB record
     try:
         request_record = crud.create_prompt_request(
@@ -125,6 +137,7 @@ async def generate_prompt(
             topic=payload.topic,
             learning_style=payload.learning_style,
             difficulty=payload.difficulty,
+            bloom_level=payload.bloom_level,
         )
     except Exception as e:
         logger.error(f"Failed to create prompt request in DB: {e}")
@@ -133,7 +146,7 @@ async def generate_prompt(
     # Options mapping
     skip_variants = payload.options.get("skip_variants", False) if payload.options else False
     skip_learning_path = payload.options.get("skip_learning_path", False) if payload.options else False
-    timeout = payload.options.get("timeout", 300.0) if payload.options else 300.0
+    timeout = payload.options.get("timeout", 120.0) if payload.options else 120.0
 
     # 2. Execute Live Council
     try:
@@ -142,11 +155,52 @@ async def generate_prompt(
         logger.warning(f"Timeout during Live Council generation for request {request_record.id}")
         raise HTTPException(status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Generation timed out")
     except AIServiceError as e:
-        logger.error(f"AIServiceError for request {request_record.id}: {e}")
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+        import traceback
+        tb = traceback.format_exc()
+        logger.error(f"AIServiceError for request {request_record.id}: {e}\n{tb}")
+        error_payload = getattr(e, "error_details", None)
+        
+        failed_providers = []
+        if error_payload and isinstance(error_payload, dict):
+            for provider, err in error_payload.items():
+                failed_providers.append({
+                    "provider": provider,
+                    "status": err.get("status_code", "N/A"),
+                    "message": err.get("message", "Unknown error")
+                })
+        
+        if failed_providers:
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "error": "All providers failed",
+                    "providers": failed_providers,
+                    "traceback": tb
+                }
+            )
+        else:
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "provider": "Unknown",
+                    "exception": str(e),
+                    "traceback": tb,
+                    "status": 502
+                }
+            )
     except Exception as e:
-        logger.error(f"Unexpected error during generation for request {request_record.id}: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal AI service error")
+        import traceback
+        tb = traceback.format_exc()
+        logger.error(f"Unexpected error during generation for request {request_record.id}: {e}\n{tb}")
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "provider": "System",
+                "exception": str(e),
+                "traceback": tb,
+                "status": 502
+            }
+        )
 
     consensus = council_result.get("consensus")
     if not consensus:
@@ -156,7 +210,7 @@ async def generate_prompt(
     learning_path = None
     if not skip_learning_path:
         try:
-            learning_path = await ai_service.generate_learning_path(payload.topic, payload.difficulty)
+            learning_path = await ai_service.generate_learning_path(payload.topic, payload.difficulty, timeout=timeout)
         except Exception as e:
             logger.warning(f"Failed to generate learning path: {e}")
 
@@ -202,3 +256,91 @@ async def generate_prompt(
         learning_path=learning_path,
         prompt_variants=variants
     )
+
+
+@router.post("/analyze-image")
+async def analyze_image(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Analyzes an uploaded image to extract an educational topic or subject.
+    """
+    try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="Gemini API Key not configured")
+        
+        genai.configure(api_key=api_key)
+        
+        # Read the file bytes
+        image_bytes = await file.read()
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        # Use Gemini Vision model
+        # Use the correct google-genai SDK client
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        prompt = (
+            "Analyze this educational image, diagram, or handwritten note. "
+            "Extract the core educational topic or concept it represents. "
+            "Also provide any specific instructions or context visible in the image. "
+            "Return the result strictly as a JSON object with two keys: 'topic' (a concise string) "
+            "and 'instructions' (a string describing the context or additional details, or empty string if none)."
+        )
+        response = await client.aio.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[prompt, image]
+        )
+        
+        # Try to parse the JSON output from the model
+        text = response.text.strip()
+        if text.startswith('```json'):
+            text = text[7:-3]
+        elif text.startswith('```'):
+            text = text[3:-3]
+            
+        import json
+        try:
+            result = json.loads(text)
+        except:
+            # Fallback if the model didn't return perfect JSON
+            result = {
+                "topic": text[:100] + "..." if len(text) > 100 else text,
+                "instructions": "Generated from Image Analysis"
+            }
+            
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to analyze image: {e}")
+        raise HTTPException(status_code=500, detail="Image analysis failed")
+
+@router.post("/chat")
+async def chat_endpoint(
+    payload: schemas.ChatRequest,
+    current_user: User = Depends(get_current_user)
+):
+    try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="Gemini API Key not configured")
+        
+        client = genai.Client(api_key=api_key)
+        
+        prompt = "You are the AIthera Council, a helpful and expert educational AI. Answer the user's questions clearly and concisely.\n\n"
+        for msg in payload.messages:
+            role = "User" if msg.role == "user" else "AI"
+            prompt += f"{role}: {msg.content}\n"
+        
+        prompt += "AI:"
+        
+        response = await client.aio.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        
+        return {"content": response.text.strip()}
+    except Exception as e:
+        logger.error(f"Failed to generate chat response: {e}")
+        raise HTTPException(status_code=500, detail="Chat generation failed")
+

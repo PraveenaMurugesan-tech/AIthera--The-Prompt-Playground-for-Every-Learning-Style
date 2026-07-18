@@ -88,6 +88,23 @@ FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
 ---
 
+## 💻 Frontend Environment Variables
+
+The frontend application requires its own environment configuration to connect to the backend API.
+
+To set up the frontend environment:
+```bash
+cd frontend
+cp .env.example .env
+```
+
+**`VITE_API_URL`**
+Backend API URL (Default: `http://localhost:8000`)
+
+*Note: You must restart the frontend development server (`npm run dev`) for any changes in `.env` to take effect.*
+
+---
+
 ## 🗄️ Database & Migrations
 
 AIthera utilizes **SQLAlchemy** for ORM and **Alembic** to manage database schema updates.

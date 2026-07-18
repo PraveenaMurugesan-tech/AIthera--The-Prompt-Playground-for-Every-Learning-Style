@@ -18,6 +18,7 @@ Learning Style: {learning_style}
 Difficulty Level: {difficulty}
 Education Level: {education_level}
 Output Length: {output_length}
+Bloom's Taxonomy Level: {bloom_level}
 
 ================================================================================
 
@@ -55,11 +56,9 @@ CORE INSTRUCTIONS
    - Avoid jargon or explain it clearly
    - Break complex ideas into digestible chunks
 
-4. ADAPTATION FOR LEARNING STYLE: {learning_style}
-   - If visual: Include descriptions of diagrams, charts, and spatial relationships
-   - If auditory: Use conversational tone, emphasize explanation flow
-   - If kinesthetic: Include hands-on activities and practice opportunities
-   - If reading/writing: Provide detailed written explanations and summaries
+4. ADAPTATION FOR LEARNING STYLE
+   Apply the following specific pedagogical profile:
+   {learning_style}
 
 5. DIFFICULTY CALIBRATION: {difficulty}
    - Beginner: Foundational concepts only, extensive explanations, abundant examples
@@ -76,6 +75,14 @@ CORE INSTRUCTIONS
    - Professional: Industry-specific depth, practical implementation, best practices
 
 7. OUTPUT LENGTH CONFIGURATION: {output_length}
+7a. BLOOM'S TAXONOMY INTEGRATION: {bloom_level}
+   - Remember: Focus on recall, facts, and basic concepts.
+   - Understand: Emphasize explaining ideas, summarizing, and translating.
+   - Apply: Focus on using information in new situations or solving problems.
+   - Analyze: Emphasize drawing connections, breaking down information into parts.
+   - Evaluate: Focus on justifying a stand or decision, appraising or defending.
+   - Create: Focus on producing new or original work, designing or constructing.
+
    - Brief: Concise overview with key points only (250-500 words)
    - Moderate: Balanced explanation with main concepts and examples (500-1000 words)
    - Comprehensive: Thorough coverage with detailed explanations (1000-2000 words)

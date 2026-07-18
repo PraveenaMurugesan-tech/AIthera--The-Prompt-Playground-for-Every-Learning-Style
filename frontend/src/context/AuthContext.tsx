@@ -1,12 +1,14 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import {
-  fetchCurrentUser,
-  loginUser,
-  logoutUser,
-  registerUser,
-  type RegisterRequest,
-  type User,
-} from '../services/api'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { fetchCurrentUser, loginUser, logoutUser, registerUser } from '../services/api'
+import toast from 'react-hot-toast'
+
+type User = {
+  id: number
+  email: string
+  name?: string
+}
 
 type LoginRequest = {
   email: string
@@ -14,12 +16,17 @@ type LoginRequest = {
   rememberMe?: boolean
 }
 
+type RegisterRequest = {
+  name: string
+  email: string
+  password: string
+}
+
 type AuthContextValue = {
   currentUser: User | null
   isAuthenticated: boolean
   loading: boolean
   error: string | null
-  token: string | null
   login: (credentials: LoginRequest) => Promise<void>
   register: (payload: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
@@ -33,168 +40,123 @@ const getStoredToken = () => {
   if (typeof window === 'undefined') {
     return null
   }
-
   return window.localStorage.getItem('auth_token')
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(getStoredToken())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const navigate = useNavigate()
+  const location = useLocation()
 
-  const clearError = () => setError(null)
+  const clearError = useCallback(() => setError(null), [])
 
-  const getCurrentUser = async () => {
-    const activeToken = getStoredToken()
+  const getCurrentUser = useCallback(async () => {
+    const token = getStoredToken()
 
-    console.log('===========================')
-    console.log('GET CURRENT USER')
-    console.log('Stored Token:', activeToken)
-
-    if (!activeToken) {
-      console.log('No token found')
+    if (!token) {
       setCurrentUser(null)
-      setToken(null)
       setLoading(false)
       return
     }
 
     try {
       setLoading(true)
-
-      console.log('Calling fetchCurrentUser...')
-
-      const user = await fetchCurrentUser(activeToken)
-
-      console.log('User fetched successfully:', user)
-
+      const user = await fetchCurrentUser()
       setCurrentUser(user)
-      setToken(activeToken)
       setError(null)
     } catch (requestError) {
-      console.error('GET CURRENT USER FAILED:', requestError)
-
       setCurrentUser(null)
-      setToken(null)
       window.localStorage.removeItem('auth_token')
-
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : 'Your session has expired. Please sign in again.',
-      )
+      setError(requestError instanceof Error ? requestError.message : 'Session expired. Please sign in again.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const login = async (credentials: LoginRequest) => {
+  const login = useCallback(async (credentials: LoginRequest) => {
     setLoading(true)
     setError(null)
 
     try {
-      console.log('===========================')
-      console.log('STEP 1 - Calling loginUser')
-
-      const response = await loginUser(
-        credentials.email,
-        credentials.password,
-      )
-
-      console.log('STEP 2 - Login response:')
-      console.log(response)
-
-      const nextToken = response.access_token
-
-      console.log('STEP 3 - Token received:')
-      console.log(nextToken)
-
-      window.localStorage.setItem('auth_token', nextToken)
-      setToken(nextToken)
-
-      console.log('STEP 4 - Calling fetchCurrentUser')
-
-      const user = await fetchCurrentUser(nextToken)
-
-      console.log('STEP 5 - User received:')
-      console.log(user)
-
+      const response = await loginUser(credentials.email, credentials.password)
+      window.localStorage.setItem('auth_token', response.access_token)
+      const user = await fetchCurrentUser()
       setCurrentUser(user)
-      setError(null)
-
-      console.log('STEP 6 - Login completed successfully')
+      toast.success('Successfully logged in!')
+      
+      const origin = location.state?.from?.pathname || '/dashboard'
+      navigate(origin, { replace: true })
     } catch (requestError) {
-      console.error('LOGIN FAILED:')
-      console.error(requestError)
-
       setCurrentUser(null)
-      setToken(null)
       window.localStorage.removeItem('auth_token')
-
+      setError(requestError instanceof Error ? requestError.message : 'Invalid credentials or network error.')
       throw requestError
     } finally {
       setLoading(false)
     }
-  }
+  }, [navigate, location.state])
 
-  const register = async (payload: RegisterRequest) => {
+  const register = useCallback(async (payload: RegisterRequest) => {
     setLoading(true)
     setError(null)
 
     try {
-      console.log('Registering user...')
       await registerUser(payload)
-      console.log('Registration successful')
-    } catch (requestError) {
-      console.error('Registration failed:', requestError)
-      throw requestError
+      toast.success('Account created successfully!')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await logoutUser()
     } catch {
-      // Ignore logout failures
+      // Keep the UI responsive even if logout request fails.
     } finally {
-      console.log('Logging out')
-
       window.localStorage.removeItem('auth_token')
       setCurrentUser(null)
-      setToken(null)
       setError(null)
+      navigate('/login')
     }
-  }
+  }, [navigate])
 
   useEffect(() => {
-    console.log('AuthProvider mounted')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void getCurrentUser()
-  }, [])
+    
+    // Listen for unauthorized events from api.ts interceptor
+    const handleUnauthorized = () => {
+      setCurrentUser(null)
+      window.localStorage.removeItem('auth_token')
+      if (location.pathname !== '/login' && location.pathname !== '/register') {
+        navigate('/login', { state: { from: location } })
+      }
+    }
+    
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
+  }, [navigate, location, getCurrentUser])
 
   const value = useMemo(
     () => ({
       currentUser,
-      isAuthenticated: Boolean(currentUser && token),
+      isAuthenticated: Boolean(currentUser),
       loading,
       error,
-      token,
       login,
       register,
       logout,
       getCurrentUser,
       clearError,
     }),
-    [currentUser, loading, error, token],
+    [currentUser, loading, error, login, register, logout, getCurrentUser, clearError],
   )
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => {

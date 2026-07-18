@@ -96,15 +96,19 @@ class ConsensusBuilder:
                         prompt_score = r.calculate_overall_score()
                     except Exception:
                         prompt_score = 0.0
-            
-            # 5b. Agreement Score
-            agreement = agreement_scores.get(idx, 0.0)
-            
+                        
             # 5c. Learning Style Score (0-100) -> Normalized to 0-1
             learning_style_score = self.compute_learning_style_alignment(r.prompt, learning_style) / 100.0
             
             # 5d. Completeness Score (0-100) -> Normalized to 0-1
             completeness_score = self.compute_completeness(r.prompt) / 100.0
+            
+            # Fallback if prompt_score is 0 (since it hasn't been evaluated by LLM yet)
+            if prompt_score == 0.0:
+                prompt_score = (learning_style_score + completeness_score) / 2.0
+                
+            # 5b. Agreement Score
+            agreement = agreement_scores.get(idx, 0.0)
             
             # 5e. Weighted Final Score
             weighted_score = (0.4 * prompt_score) + (0.3 * agreement) + (0.2 * learning_style_score) + (0.1 * completeness_score)
@@ -179,7 +183,7 @@ class ConsensusBuilder:
             winner_provider=winner_provider,
             winner_model=best_response.model,
             prompt_score=winner_scores["prompt_score"],
-            agreement_score=winner_scores["agreement_score"],
+            agreement_score=winner_scores["agreement_score"] * 100.0,
             learning_style_score=winner_scores["learning_style_score"],
             completeness_score=winner_scores["completeness_score"],
             overall_consensus_score=best_weighted_score,
@@ -277,11 +281,23 @@ class ConsensusBuilder:
         
         for i in range(n):
             for j in range(i + 1, n):
-                text_i = responses[i].prompt[:2000] # Limit length for performance
-                text_j = responses[j].prompt[:2000]
+                text_i = responses[i].prompt.lower()
+                text_j = responses[j].prompt.lower()
                 
-                # Use difflib for local text similarity
-                similarity = difflib.SequenceMatcher(None, text_i, text_j).ratio()
+                # Use word overlap (Jaccard similarity) instead of sequence matching
+                words_i = set(re.findall(r'\b[a-z]{4,}\b', text_i))
+                words_j = set(re.findall(r'\b[a-z]{4,}\b', text_j))
+                
+                if not words_i and not words_j:
+                    similarity = 1.0
+                elif not words_i or not words_j:
+                    similarity = 0.0
+                else:
+                    intersection = len(words_i.intersection(words_j))
+                    union = len(words_i.union(words_j))
+                    # Scale up slightly as Jaccard can still be low for diverse vocab
+                    similarity = min(1.0, (intersection / union) * 1.5)
+
                 
                 scores[i] += similarity
                 scores[j] += similarity
@@ -497,9 +513,9 @@ class ConsensusBuilder:
         success_ratio = (num_successful / total_providers) if total_providers > 0 else 0.0
         
         confidence = (
-            (prompt_score * 0.40) +
+            (prompt_score * 100 * 0.40) +
             (agreement * 100 * 0.30) +
-            (completeness * 0.20) +
+            (completeness * 100 * 0.20) +
             (success_ratio * 100 * 0.10)
         )
         return min(100.0, max(0.0, confidence))

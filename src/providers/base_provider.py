@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from pydantic import BaseModel, Field
 from src.models.council_response import CouncilResponse
 
+class ProviderInitializationError(Exception):
+    """Exception raised when a provider fails to initialize."""
+    pass
 
 class ProviderConfig(BaseModel):
     """Configuration schema for individual AI providers in the Council."""
@@ -62,6 +65,14 @@ class BaseProvider(ABC):
     def is_enabled(self) -> bool:
         """Check if this provider is currently enabled."""
         return self.config.enabled
+        
+    def validate_api_key(self, env_var: str) -> str:
+        """Validates that an API key is present in the environment."""
+        import os
+        key = os.getenv(env_var)
+        if not key or not key.strip():
+            raise ProviderInitializationError(f"{self.get_provider_name()} provider requires the {env_var} environment variable.")
+        return key.strip()
 
     @abstractmethod
     async def generate_response(

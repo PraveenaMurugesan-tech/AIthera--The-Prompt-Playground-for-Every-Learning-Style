@@ -18,8 +18,17 @@ class PromptRequest(Base):
         self._objective = kwargs.pop("objective", None)
         self._education_level = kwargs.pop("education_level", None)
         self._output_length = kwargs.pop("output_length", None)
+        self._bloom_level = kwargs.pop("bloom_level", None)
         self._status = kwargs.pop("status", "pending")
         super().__init__(**kwargs)
+
+    @property
+    def bloom_level(self):
+        return getattr(self, "_bloom_level", None) or "understand"
+
+    @bloom_level.setter
+    def bloom_level(self, value):
+        self._bloom_level = value
 
     @property
     def objective(self):

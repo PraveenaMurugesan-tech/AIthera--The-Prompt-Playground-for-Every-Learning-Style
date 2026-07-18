@@ -28,8 +28,9 @@ logger = logging.getLogger("aithera.live_council")
 
 class LiveCouncilError(Exception):
     """Exception raised when the live council workflow fails critically."""
-    pass
-
+    def __init__(self, message: str, error_details: Optional[Dict[str, Any]] = None):
+        super().__init__(message)
+        self.error_details = error_details or {}
 
 class LiveCouncil:
     """Live Council Service that runs the complete AI Council workflow."""
@@ -92,10 +93,12 @@ class LiveCouncil:
         
         # Step 1 & 2: Execute providers & normalize responses
         try:
+            logger.info("Before council execution")
             responses = await self.council_executor.execute_council(request, timeout=timeout)
+            logger.info("After council execution")
         except CouncilExecutionError as e:
             logger.error("Provider execution failed during live council: %s", e)
-            raise LiveCouncilError(f"Live Council execution failed: {e}") from e
+            raise LiveCouncilError(f"Live Council execution failed: {e}", getattr(e, "error_details", {})) from e
         except Exception as e:
             logger.error("Unexpected error in provider execution: %s", e)
             raise LiveCouncilError(f"Unexpected execution error: {e}") from e
@@ -103,12 +106,14 @@ class LiveCouncil:
         # Step 3: Build consensus
         request_id = getattr(request, "id", 0) or 0
         try:
+            logger.info("Before consensus generation")
             consensus_result = self.consensus_builder.build_consensus(
                 responses=responses,
                 request_id=request_id,
                 learning_style=request.learning_style,
                 failed_providers=getattr(self.council_executor, "failed_providers", [])
             )
+            logger.info("After consensus generation")
         except ConsensusBuilderError as e:
             logger.error("Consensus building failed: %s", e)
             raise LiveCouncilError(f"Consensus building failed: {e}") from e

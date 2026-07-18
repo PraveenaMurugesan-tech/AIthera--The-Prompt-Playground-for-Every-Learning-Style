@@ -52,7 +52,9 @@ class CouncilExecutionError(Exception):
     - Prompt template cannot be loaded
     - Invalid request data
     """
-    pass
+    def __init__(self, message: str, error_details: Optional[Dict[str, Any]] = None):
+        super().__init__(message)
+        self.error_details = error_details or {}
 
 
 # ============================================================================
@@ -218,6 +220,7 @@ class CouncilExecutor:
         difficulty: str,
         education_level: str,
         output_length: str,
+        bloom_level: str = "understand",
     ) -> str:
         """Inject template variables into a prompt template.
         
@@ -229,6 +232,7 @@ class CouncilExecutor:
             difficulty: The difficulty level
             education_level: The education level
             output_length: The requested output length
+            bloom_level: The target Bloom's taxonomy level
             
         Returns:
             str: The template with all variables substituted
@@ -244,6 +248,7 @@ class CouncilExecutor:
                 "difficulty": difficulty,
                 "education_level": education_level,
                 "output_length": output_length,
+                "bloom_level": bloom_level,
             }
             
             # Validate all variables are non-empty
@@ -365,33 +370,17 @@ class CouncilExecutor:
         difficulty: str,
         education_level: str,
         output_length: str,
-        timeout: float = 300.0,
+        bloom_level: str = "understand",
+        timeout: float = 30.0,
     ) -> Optional[CouncilResponse]:
-        """Execute a single provider and return its response.
-        
-        Args:
-            provider: The provider instance (OpenAIClient, ClaudeClient, etc.)
-            provider_name: Name of the provider for logging
-            topic: The topic of study
-            objective: The pedagogical objective
-            learning_style: The target learning style
-            difficulty: The difficulty level
-            education_level: The education level
-            output_length: The requested output length
-            
-        Returns:
-            CouncilResponse if successful, None if provider fails
-        """
         import time
-        from datetime import datetime
         start_time = time.time()
-        timestamp_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        model_name = getattr(provider, 'model_name', 'Unknown')
-        print(f"\n[Execution Start] Provider: {provider_name}, Model: {model_name}, Timestamp: {timestamp_str}")
         
+        provider_name_to_log = getattr(provider, "name", provider_name)
+        
+        logger.info(f"Calling provider: {provider_name_to_log}")
         try:
-            logger.info("Starting provider: %s", provider_name)
-            
+            logger.info(f"Before prompt generation for {provider_name_to_log}")
             response = await asyncio.wait_for(
                 provider.generate_response(
                     topic=topic,
@@ -400,43 +389,19 @@ class CouncilExecutor:
                     difficulty=difficulty,
                     education_level=education_level,
                     output_length=output_length,
+                    bloom_level=bloom_level,
                 ),
                 timeout=timeout
             )
-            
+            logger.info(f"After prompt generation for {provider_name_to_log}")
             elapsed = time.time() - start_time
-            print(f"[Execution End] Success: True, Provider: {provider_name}, Time: {elapsed:.2f}s, HTTP Status: 200")
-            logger.info("Provider succeeded: %s", provider_name)
+            print(f"Execution time for {provider_name_to_log}: {elapsed:.2f}s")
             return response
-        except asyncio.TimeoutError as e:
+        except Exception:
             elapsed = time.time() - start_time
-            print(f"[Execution End] Success: False, Provider: {provider_name}, Time: {elapsed:.2f}s, HTTP Status: Timeout")
-            logger.error("Provider timed out after %.1fs: %s", timeout, provider_name)
-            raise e
-        except NotImplementedError as e:
-            elapsed = time.time() - start_time
-            print(f"[Execution End] Success: False, Provider: {provider_name}, Time: {elapsed:.2f}s, HTTP Status: N/A")
-            logger.warning("Provider not implemented: %s - %s", provider_name, str(e))
-            raise e
-        except Exception as e:
-            elapsed = time.time() - start_time
-            # Try to extract HTTP status if available in string representation (e.g., Error code: 429)
-            status_code = "N/A"
-            error_str = str(e)
-            if "Error code:" in error_str:
-                import re
-                match = re.search(r"Error code:\s*(\d+)", error_str)
-                if match:
-                    status_code = match.group(1)
-            
-            print(f"[Execution End] Success: False, Provider: {provider_name}, Time: {elapsed:.2f}s, HTTP Status: {status_code}")
-            logger.error(
-                "Provider failed with exception: %s - %s",
-                provider_name,
-                error_str,
-                exc_info=True
-            )
-            raise e
+            print(f"Execution time for {provider_name_to_log}: {elapsed:.2f}s")
+            logger.exception(f"{provider_name_to_log} failed")
+            raise
 
     async def execute(
         self,
@@ -708,6 +673,19 @@ class CouncilExecutor:
         logger.info("Starting execute_council for topic: %s", request.topic)
         self._validate_request(request)
         self._validate_learning_style(request.learning_style)
+        
+        # Get full profile for injection
+        try:
+            profile = self.learning_style_engine.get_style_profile(request.learning_style)
+            style_guidance = (
+                f"{profile.style.upper()} LEARNING STYLE\n"
+                f"Teaching Methods: {', '.join(profile.teaching_methods)}\n"
+                f"Content Focus: {', '.join(style_profile.content_focus if 'style_profile' in locals() else profile.content_focus)}\n"
+                f"Output Preferences: {', '.join(profile.output_preferences)}\n"
+                f"Avoid: {', '.join(profile.avoid)}"
+            )
+        except InvalidLearningStyleError:
+            style_guidance = request.learning_style
 
         active_providers = self.provider_registry.get_active_providers()
         if not active_providers:
@@ -717,26 +695,42 @@ class CouncilExecutor:
         provider_names = list(active_providers.keys())
 
         for name, provider_instance in active_providers.items():
-            task = self.execute_provider(
+            coro = self.execute_provider(
                 provider=provider_instance,
                 provider_name=provider_instance.get_provider_name(),
                 topic=request.topic,
                 objective=request.objective,
-                learning_style=request.learning_style,
+                learning_style=style_guidance,
                 difficulty=request.difficulty,
                 education_level=request.education_level,
+                bloom_level=request.bloom_level,
                 output_length=request.output_length,
-                timeout=timeout,
+                timeout=30.0,
             )
+            task = asyncio.create_task(coro)
             tasks.append(task)
 
         # Generate request ID if missing
         import uuid
         req_id = getattr(request, "id", None) or str(uuid.uuid4())[:8]
 
-        # Execute simultaneously using gather with exceptions returned
-        logger.info("[Req:%s] Gathering %d provider tasks", req_id, len(tasks))
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Execute simultaneously using wait with 30 second strict timeout
+        logger.info("[Req:%s] Gathering %d provider tasks with 30s strict timeout", req_id, len(tasks))
+        done, pending = await asyncio.wait(tasks, timeout=30.0, return_when=asyncio.ALL_COMPLETED)
+        
+        # Cancel any pending tasks that took longer than 30s
+        for p_task in pending:
+            p_task.cancel()
+            
+        results = []
+        for task in tasks:
+            if task in done:
+                try:
+                    results.append(task.result())
+                except Exception as e:
+                    results.append(e)
+            else:
+                results.append(TimeoutError("Provider timed out after 30 seconds"))
 
         normalized_responses: List[CouncilResponse] = []
         self.failed_providers = []
@@ -748,7 +742,7 @@ class CouncilExecutor:
             provider_display_name = provider_instance.get_provider_name()
 
             if isinstance(response, Exception):
-                logger.error("[Req:%s] Provider %s execution failed: %s", req_id, provider_display_name, response)
+                logger.error("[Req:%s] Provider %s execution failed: %s", req_id, provider_display_name, response, exc_info=response)
                 self.failed_providers.append(provider_display_name)
                 
                 error_type = type(response).__name__
@@ -781,6 +775,7 @@ class CouncilExecutor:
                 self.health_tracker.record_failure(provider_display_name, is_timeout=False)
             else:
                 try:
+                    logger.info(f"Before response normalization for {provider_display_name}")
                     if isinstance(response, dict):
                         # Normalize raw dict response
                         normalized = self.response_normalizer.normalize(
@@ -794,6 +789,7 @@ class CouncilExecutor:
                             normalized.provider_name = provider_display_name
                     else:
                         raise ValueError(f"Unexpected response type: {type(response)}")
+                    logger.info(f"After response normalization for {provider_display_name}")
 
                     normalized_responses.append(normalized)
                     self.successful_providers.append(provider_display_name)
@@ -813,9 +809,9 @@ class CouncilExecutor:
                     self.health_tracker.record_failure(provider_display_name, is_timeout=False)
 
         if not normalized_responses:
-            error_msg = f"[Req:{req_id}] All providers failed. Council cannot proceed."
+            error_msg = f"[Req:{req_id}] All providers failed. Error details: {self.error_details}"
             logger.error(error_msg)
-            raise CouncilExecutionError(error_msg)
+            raise CouncilExecutionError(error_msg, error_details=self.error_details)
 
         logger.info(
             "[Req:%s] execute_council completed. Successful: %s, Failed: %s",

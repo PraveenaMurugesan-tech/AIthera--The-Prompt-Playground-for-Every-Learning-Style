@@ -1,33 +1,27 @@
 import { NavLink } from 'react-router-dom'
 
 const links = [
-  { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
-  { to: '/workspace', label: 'AI Workspace', icon: '✨' },
-  { to: '/profile', label: 'Profile', icon: '👤' },
-  { to: '/settings', label: 'Settings', icon: '⚙️' },
-  { to: '/help', label: 'Help', icon: '❓' },
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/prompt', label: 'Generate Prompt' },
+  { to: '/chat', label: 'AI Chat' },
+  { to: '/council', label: 'AI Council' },
+  { to: '/history', label: 'History' },
+  { to: '/voice', label: 'Voice Learning' },
+  { to: '/upload', label: 'Image Upload' },
+  { to: '/recommendations', label: 'AI Recommendations' },
 ]
 
 export const Sidebar = () => {
   return (
-    <aside className="sidebar" aria-label="Sidebar navigation">
-      <div className="sidebar-section">
-        <p className="sidebar-heading">Main</p>
-        <nav className="sidebar-nav">
-          {links.map((link) => (
-            <NavLink
-              key={link.to + link.label}
-              to={link.to}
-              className={({ isActive }) =>
-                `sidebar-link${isActive ? ' active' : ''}`
-              }
-            >
-              <span className="sidebar-icon">{link.icon}</span>
-              <span>{link.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-      </div>
+    <aside className="sidebar">
+      <h2>Explore</h2>
+      <nav className="sidebar-nav">
+        {links.map((link) => (
+          <NavLink key={link.to} to={link.to}>
+            {link.label}
+          </NavLink>
+        ))}
+      </nav>
     </aside>
   )
 }

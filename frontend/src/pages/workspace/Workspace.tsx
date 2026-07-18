@@ -1,9 +1,9 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Button } from '../../components/common/Button'
 import { Card } from '../../components/common/Card'
-import { useAuth } from '../../context/AuthContext'
 import { generateLearningPrompt, type PromptFormat } from '../../services/api'
-import { generateLearningPrompt, type PromptFormat } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
+
 type WorkspaceFormState = {
   topic: string
   learningStyle: 'adaptive' | 'visual' | 'step_by_step' | 'conversational' | 'exam_focused'
@@ -26,13 +26,7 @@ const initialFormState: WorkspaceFormState = {
 }
 
 export const WorkspacePage = () => {
-  const { token } = useAuth()
-<<<<<<< HEAD
-=======
   const { showToast, dismissToast } = useToast()
-  const navigate = useNavigate()
-  const location = useLocation()
->>>>>>> d6ccfb2 (feat(ui): finalize notifications, help center, and user feedback flows)
   const [form, setForm] = useState<WorkspaceFormState>(initialFormState)
   const [result, setResult] = useState<PromptResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -65,13 +59,10 @@ export const WorkspacePage = () => {
           learningStyle: form.learningStyle,
           difficulty: form.difficulty,
           format: form.format,
-        },
-        token ?? undefined,
+        }
       )
 
       setResult(generated)
-<<<<<<< HEAD
-=======
       dismissToast(toastId)
       showToast('Consensus prompt ready!', 'success')
 
@@ -92,7 +83,6 @@ export const WorkspacePage = () => {
       } catch (err) {
         console.error('Failed to update local prompt history backup:', err)
       }
->>>>>>> d6ccfb2 (feat(ui): finalize notifications, help center, and user feedback flows)
     } catch (requestError) {
       if (toastId) dismissToast(toastId)
       showToast('Failed to generate prompt.', 'error')

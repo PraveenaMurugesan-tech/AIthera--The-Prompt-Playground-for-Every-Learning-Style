@@ -7,7 +7,7 @@ from src.models.prompt_request import PromptRequest
 
 
 def create_prompt_request(
-    db: Session, user_id: int, topic: str, learning_style: str, difficulty: str
+    db: Session, user_id: int, topic: str, learning_style: str, difficulty: str, bloom_level: str = "understand"
 ) -> PromptRequest:
     """Create and persist a new PromptRequest."""
 
@@ -16,6 +16,7 @@ def create_prompt_request(
         topic=topic,
         learning_style=learning_style,
         difficulty=difficulty,
+        bloom_level=bloom_level,
     )
 
     db.add(request)

@@ -31,6 +31,7 @@ export const SettingsFormCard = () => {
     }
     try {
       const parsed = JSON.parse(stored) as SettingsFormState
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSettings(parsed)
     } catch {
       // Ignore malformed saved data and keep defaults.

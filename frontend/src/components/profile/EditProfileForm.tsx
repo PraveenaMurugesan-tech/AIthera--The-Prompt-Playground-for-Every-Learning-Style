@@ -34,6 +34,7 @@ export const EditProfileForm = () => {
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as ProfileFormState
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setForm(parsed)
       } catch {
         // Ignore malformed saved data and fall back to defaults.
@@ -42,6 +43,7 @@ export const EditProfileForm = () => {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm((current) => ({
       ...current,
       name: currentUser?.name || current.name,

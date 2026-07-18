@@ -18,6 +18,7 @@ Learning Style: {learning_style}
 Difficulty Level: {difficulty}
 Education Level: {education_level}
 Output Length: {output_length}
+Bloom's Taxonomy Level: {bloom_level}
 
 ================================================================================
 
@@ -65,11 +66,9 @@ CORE INSTRUCTIONS
    - Show why steps must occur in this order
    - Include logical justification for each step
 
-5. ADAPTATION FOR LEARNING STYLE: {learning_style}
-   - Primary Focus (Kinesthetic): Include hands-on logical exercises
-   - Secondary (Visual): Use structured diagrams and logical flowcharts
-   - Secondary (Auditory): Explain logical reasoning conversationally
-   - Secondary (Reading/Writing): Provide thorough written logical explanations
+5. ADAPTATION FOR LEARNING STYLE
+   Apply the following specific pedagogical profile:
+   {learning_style}
 
 6. DIFFICULTY CALIBRATION: {difficulty}
    - Beginner: Basic logical structures, simple sequential reasoning
@@ -106,6 +105,15 @@ CORE INSTRUCTIONS
     - Use formal reasoning patterns
 
 ================================================================================
+
+
+7. BLOOM'S TAXONOMY INTEGRATION: {bloom_level}
+   - Remember: Focus on recall, facts, and basic concepts.
+   - Understand: Emphasize explaining ideas, summarizing, and translating.
+   - Apply: Focus on using information in new situations or solving problems.
+   - Analyze: Emphasize drawing connections, breaking down information into parts.
+   - Evaluate: Focus on justifying a stand or decision, appraising or defending.
+   - Create: Focus on producing new or original work, designing or constructing.
 
 EXPECTED OUTPUT FORMAT
 

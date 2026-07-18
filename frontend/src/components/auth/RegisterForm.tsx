@@ -1,182 +1,176 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
-import { Button } from '../common/Button'
-import { Card } from '../common/Card'
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { AlertCircle, Mail, Lock, User, UserPlus, Sparkles } from 'lucide-react';
+import { isValidEmail, checkPasswordStrength } from '../../utils/validation';
 
-type RegisterFormProps = {
-  onSuccess?: () => void
-}
+export const RegisterForm = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
+  
+  const { register, login, loading, error, clearError } = useAuth();
 
-type FormState = {
-  name: string
-  email: string
-  password: string
-  confirmPassword: string
-}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setValidationError(null);
+    clearError();
 
-const initialState: FormState = {
-  name: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-}
-
-export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
-  const [form, setForm] = useState<FormState>(initialState)
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
-  const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle')
-  const [message, setMessage] = useState('')
-  const { register, loading, error, clearError, isAuthenticated } = useAuth()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard', { replace: true })
+    if (!name.trim()) {
+      setValidationError('Name is required');
+      return;
     }
-  }, [isAuthenticated, navigate])
-
-  const validate = useMemo(() => {
-    return () => {
-      const nextErrors: Partial<Record<keyof FormState, string>> = {}
-
-      if (!form.name.trim()) {
-        nextErrors.name = 'Name is required.'
-      }
-
-      if (!form.email.trim()) {
-        nextErrors.email = 'Email is required.'
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-        nextErrors.email = 'Enter a valid email address.'
-      }
-
-      if (!form.password) {
-        nextErrors.password = 'Password is required.'
-      } else if (form.password.length < 8) {
-        nextErrors.password = 'Password must be at least 8 characters.'
-      }
-
-      if (!form.confirmPassword) {
-        nextErrors.confirmPassword = 'Please confirm your password.'
-      } else if (form.confirmPassword !== form.password) {
-        nextErrors.confirmPassword = 'Passwords do not match.'
-      }
-
-      return nextErrors
-    }
-  }, [form.confirmPassword, form.email, form.name, form.password])
-
-  const handleChange = (field: keyof FormState, value: string) => {
-    setForm((current) => ({ ...current, [field]: value }))
-    setErrors((current) => ({ ...current, [field]: undefined }))
-    if (message) {
-      setMessage('')
-    }
-    if (error) {
-      clearError()
-    }
-  }
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const nextErrors = validate()
-    setErrors(nextErrors)
-
-    if (Object.keys(nextErrors).length > 0) {
-      return
+    
+    if (!isValidEmail(email)) {
+      setValidationError('Please enter a valid email address');
+      return;
     }
 
-    setStatus('loading')
-    setMessage('')
+    const strength = checkPasswordStrength(password);
+    if (strength.score < 2) {
+      setValidationError('Password is too weak. Please use a stronger password.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setValidationError('Passwords do not match');
+      return;
+    }
 
     try {
-      await register({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        password: form.password,
-      })
-      setStatus('success')
-      setMessage('Registration successful. Please login.')
-      onSuccess?.()
-      setTimeout(() => navigate('/login', { replace: true }), 1200)
-    } catch (submissionError) {
-      setStatus('error')
-      setMessage(submissionError instanceof Error ? submissionError.message : 'Unable to create your account right now.')
+      await register({ name, email, password });
+      await login({ email, password });
+    } catch {
+      // Error is handled by AuthContext and exposed via the `error` state
     }
-  }
+  };
 
-  const isSubmitting = loading || status === 'loading'
+  const passwordStrength = password ? checkPasswordStrength(password) : null;
+  const displayError = validationError || error;
 
   return (
-    <div className="page-shell">
-      <Card title="Create your account">
-        <p className="muted">Start your AI Thera journey.</p>
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <label className="field">
-            <span>Name</span>
-            <input
-              type="text"
-              autoComplete="name"
-              value={form.name}
-              onChange={(event) => handleChange('name', event.target.value)}
-              aria-invalid={Boolean(errors.name)}
-              disabled={isSubmitting}
-            />
-            {errors.name ? <small className="field-error">{errors.name}</small> : null}
-          </label>
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-slate-950 p-4 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 dark:bg-blue-600/10 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 dark:bg-indigo-600/10 blur-[120px] rounded-full" />
+      
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-blue-900/5 border border-slate-200/60 dark:border-slate-800 p-8 relative z-10 backdrop-blur-sm">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center p-3 bg-blue-50 dark:bg-blue-500/10 rounded-2xl mb-4">
+            <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Create Account</h2>
+          <p className="text-slate-500 dark:text-slate-400">Join AIthera to start your learning journey.</p>
+        </div>
 
-          <label className="field">
-            <span>Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={(event) => handleChange('email', event.target.value)}
-              aria-invalid={Boolean(errors.email)}
-              disabled={isSubmitting}
-            />
-            {errors.email ? <small className="field-error">{errors.email}</small> : null}
-          </label>
+        {displayError && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 text-red-600 dark:text-red-400" role="alert" aria-live="assertive">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm font-medium">{displayError}</div>
+            <button onClick={() => { clearError(); setValidationError(null); }} className="opacity-70 hover:opacity-100 transition-opacity" aria-label="Dismiss error">×</button>
+          </div>
+        )}
 
-          <label className="field">
-            <span>Password</span>
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={form.password}
-              onChange={(event) => handleChange('password', event.target.value)}
-              aria-invalid={Boolean(errors.password)}
-              disabled={isSubmitting}
-            />
-            {errors.password ? <small className="field-error">{errors.password}</small> : null}
-          </label>
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Full Name</label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                placeholder="John Doe"
+                required
+                aria-required="true"
+              />
+            </div>
+          </div>
 
-          <label className="field">
-            <span>Confirm password</span>
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={form.confirmPassword}
-              onChange={(event) => handleChange('confirmPassword', event.target.value)}
-              aria-invalid={Boolean(errors.confirmPassword)}
-              disabled={isSubmitting}
-            />
-            {errors.confirmPassword ? <small className="field-error">{errors.confirmPassword}</small> : null}
-          </label>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                placeholder="you@example.com"
+                required
+                aria-required="true"
+              />
+            </div>
+          </div>
 
-          {message ? <div className={`status-banner ${status}`} aria-live="polite">{message}</div> : null}
-          {error ? <div className="status-banner error" aria-live="polite">{error}</div> : null}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                placeholder="••••••••"
+                required
+                aria-required="true"
+              />
+            </div>
+            {passwordStrength && (
+              <div className="mt-2 text-xs flex justify-between items-center px-1">
+                <span className="text-slate-500 dark:text-slate-400">Password strength:</span>
+                <span className={`font-semibold ${
+                  passwordStrength.score < 2 ? 'text-red-500' : passwordStrength.score < 4 ? 'text-yellow-500' : 'text-green-500'
+                }`}>
+                  {passwordStrength.label}
+                </span>
+              </div>
+            )}
+          </div>
 
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Registering…' : 'Create account'}
-          </Button>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Confirm Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                placeholder="••••••••"
+                required
+                aria-required="true"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-2 shadow-lg shadow-blue-600/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+          >
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <UserPlus className="w-5 h-5" />
+                Sign Up
+              </>
+            )}
+          </button>
         </form>
 
-        <div className="page-actions">
-          <span className="muted">Already have an account?</span>
-          <Link to="/login">Sign in</Link>
-        </div>
-      </Card>
+        <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          Already have an account?{' '}
+          <Link to="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
     </div>
-  )
-}
+  );
+};
