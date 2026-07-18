@@ -85,6 +85,9 @@ const mockProviders: ProviderState[] = [
   { id: 'openrouter', name: 'OpenRouter', status: 'Waiting' },
 ];
 
+let currentGenerationPromise: Promise<GenerationResult> | null = null;
+let currentGenerationPayload: string | null = null;
+
 export const promptService = {
   getInitialProviders: (): ProviderState[] => {
     return [...mockProviders];
@@ -99,34 +102,49 @@ export const promptService = {
       options: data.instructions ? { instructions: data.instructions } : {}
     };
 
+    const payloadStr = JSON.stringify(payload);
+    if (currentGenerationPromise && currentGenerationPayload === payloadStr) {
+      return currentGenerationPromise;
+    }
 
+    currentGenerationPayload = payloadStr;
+    currentGenerationPromise = (async () => {
+      try {
+        const response = await api.post<BackendGenerationResponse>('/prompts/generate', payload);
+        const backendData = response.data;
 
-    const response = await api.post<BackendGenerationResponse>('/prompts/generate', payload);
-    const backendData = response.data;
+        return {
+          optimizedPrompt: backendData.optimized_prompt || 'No prompt generated.',
+          consensusSummary: backendData.consensus_reasoning || 'No consensus reasoning provided.',
+          confidenceScore: backendData.confidence_score || 0,
+          agreementScore: backendData.agreement_score || 0,
+          educationalMetrics: {
+            difficulty: backendData.educational_metrics?.difficulty || data.difficulty,
+            bloomLevel: backendData.educational_metrics?.bloomLevel || (data.bloomLevel || 'understand'),
+            learningStyle: backendData.educational_metrics?.learningStyle || data.learningStyle,
+            estimatedStudyTime: backendData.educational_metrics?.estimatedStudyTime || '30 mins',
+            complexity: backendData.educational_metrics?.complexity || 'Medium',
+          },
+          recommendations: {
+            followUpTopics: backendData.recommendations?.filter(r => r.category === 'Topics' || r.category === 'Follow Up').map(r => r.suggestion) || [],
+            learningPath: backendData.learning_path?.steps?.map(s => s.title) || [],
+            practiceSuggestions: backendData.recommendations?.filter(r => r.category !== 'Topics' && r.category !== 'Follow Up').map(r => r.suggestion) || [],
+          },
+          variants: backendData.prompt_variants?.map(v => ({
+            id: v.style || Math.random().toString(),
+            name: v.title,
+            content: v.prompt_text,
+          })) || []
+        };
+      } finally {
+        if (currentGenerationPayload === payloadStr) {
+          currentGenerationPromise = null;
+          currentGenerationPayload = null;
+        }
+      }
+    })();
 
-    return {
-      optimizedPrompt: backendData.optimized_prompt || 'No prompt generated.',
-      consensusSummary: backendData.consensus_reasoning || 'No consensus reasoning provided.',
-      confidenceScore: backendData.confidence_score || 0,
-      agreementScore: backendData.agreement_score || 0,
-      educationalMetrics: {
-        difficulty: backendData.educational_metrics?.difficulty || data.difficulty,
-        bloomLevel: backendData.educational_metrics?.bloomLevel || (data.bloomLevel || 'understand'),
-        learningStyle: backendData.educational_metrics?.learningStyle || data.learningStyle,
-        estimatedStudyTime: backendData.educational_metrics?.estimatedStudyTime || '30 mins',
-        complexity: backendData.educational_metrics?.complexity || 'Medium',
-      },
-      recommendations: {
-        followUpTopics: backendData.recommendations?.filter(r => r.category === 'Topics' || r.category === 'Follow Up').map(r => r.suggestion) || [],
-        learningPath: backendData.learning_path?.steps?.map(s => s.title) || [],
-        practiceSuggestions: backendData.recommendations?.filter(r => r.category !== 'Topics' && r.category !== 'Follow Up').map(r => r.suggestion) || [],
-      },
-      variants: backendData.prompt_variants?.map(v => ({
-        id: v.style || Math.random().toString(),
-        name: v.title,
-        content: v.prompt_text,
-      })) || []
-    };
+    return currentGenerationPromise;
   },
 
   getPromptResult: async (_jobId: string, formData: Partial<PromptRequestData> = {}): Promise<GenerationResult> => {

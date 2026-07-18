@@ -16,6 +16,7 @@ export const LoadingScreen: React.FC = () => {
   const [estimatedTime] = useState(15);
   
   const [error, setError] = useState<string | null>(null);
+  const generationPromiseRef = React.useRef<Promise<any> | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,8 +32,12 @@ export const LoadingScreen: React.FC = () => {
           setProgress(prev => Math.min(prev + 1, 95)); // Cap at 95% until done
         }, 600);
 
-        // Await the real backend call
-        const result = await promptService.generatePrompt(formData);
+        // Await the real backend call, caching the promise to prevent StrictMode duplicate calls
+        if (!generationPromiseRef.current) {
+          generationPromiseRef.current = promptService.generatePrompt(formData);
+        }
+        
+        const result = await generationPromiseRef.current;
         
         clearInterval(interval);
         
