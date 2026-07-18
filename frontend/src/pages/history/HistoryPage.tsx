@@ -71,8 +71,7 @@ export const HistoryPage: React.FC = () => {
 
   const handleClearAll = async () => {
     try {
-      // Assuming a clearAll method exists, or deleting all items iteratively
-      // await historyService.clearHistory();
+      await historyService.clearHistory();
       setItems([]);
       toast.success('History cleared');
     } catch {
@@ -83,7 +82,30 @@ export const HistoryPage: React.FC = () => {
   };
 
   const handleReopen = (id: string) => {
-    navigate('/result', { state: { historyId: id } });
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    const fakeResult = {
+      optimizedPrompt: item.prompt,
+      consensusSummary: "This prompt was retrieved from your history.",
+      confidenceScore: 100,
+      agreementScore: 100,
+      educationalMetrics: {
+        difficulty: item.difficulty,
+        bloomLevel: 'understand',
+        learningStyle: item.learningStyle,
+        estimatedStudyTime: 'Self-paced',
+        complexity: 'Moderate'
+      },
+      recommendations: {
+        followUpTopics: [],
+        learningPath: [],
+        practiceSuggestions: []
+      },
+      variants: []
+    };
+
+    navigate('/result', { state: { resultData: fakeResult, historyId: id } });
   };
 
   const filteredItems = items.filter(item => {
