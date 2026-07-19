@@ -77,6 +77,11 @@ class RecommendationService {
       completedMinutes: 0
     };
   }
+
+  async generateMorePracticeQuestions(): Promise<PracticeQuestion[]> {
+    const response = await api.get<{ practiceQuestions: PracticeQuestion[] }>('/recommendations/practice-questions/generate');
+    return response.data.practiceQuestions || [];
+  }
 }
 
 export const recommendationService = new RecommendationService();
