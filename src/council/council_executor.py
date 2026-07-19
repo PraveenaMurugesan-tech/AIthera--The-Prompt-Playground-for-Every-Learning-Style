@@ -705,7 +705,7 @@ class CouncilExecutor:
                 education_level=request.education_level,
                 bloom_level=request.bloom_level,
                 output_length=request.output_length,
-                timeout=30.0,
+                timeout=timeout,
             )
             task = asyncio.create_task(coro)
             tasks.append(task)
@@ -714,11 +714,11 @@ class CouncilExecutor:
         import uuid
         req_id = getattr(request, "id", None) or str(uuid.uuid4())[:8]
 
-        # Execute simultaneously using wait with 30 second strict timeout
-        logger.info("[Req:%s] Gathering %d provider tasks with 30s strict timeout", req_id, len(tasks))
-        done, pending = await asyncio.wait(tasks, timeout=30.0, return_when=asyncio.ALL_COMPLETED)
+        # Execute simultaneously using wait with strict timeout
+        logger.info("[Req:%s] Gathering %d provider tasks with %.1fs strict timeout", req_id, len(tasks), timeout)
+        done, pending = await asyncio.wait(tasks, timeout=timeout, return_when=asyncio.ALL_COMPLETED)
         
-        # Cancel any pending tasks that took longer than 30s
+        # Cancel any pending tasks that took longer than timeout
         for p_task in pending:
             p_task.cancel()
             
@@ -730,7 +730,7 @@ class CouncilExecutor:
                 except Exception as e:
                     results.append(e)
             else:
-                results.append(TimeoutError("Provider timed out after 30 seconds"))
+                results.append(TimeoutError(f"Provider timed out after {timeout} seconds"))
 
         normalized_responses: List[CouncilResponse] = []
         self.failed_providers = []

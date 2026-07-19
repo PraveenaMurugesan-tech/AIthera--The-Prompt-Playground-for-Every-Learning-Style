@@ -20,6 +20,8 @@ export function useRecommendations() {
   const [skillProgress, setSkillProgress] = useState<SkillProgress[]>([]);
   const [studyEstimate, setStudyEstimate] = useState<StudyEstimate | null>(null);
 
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+
   const fetchAllData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -64,6 +66,19 @@ export function useRecommendations() {
     }
   }, []);
 
+  const generateMoreQuestions = useCallback(async () => {
+    setIsGeneratingQuestions(true);
+    try {
+      const newQuestions = await recommendationService.generateMorePracticeQuestions();
+      // Combine new and old questions, ensuring uniqueness could be done if needed
+      setPracticeQuestions(prev => [...newQuestions, ...prev]);
+    } catch (err: any) {
+      console.error('Failed to generate more practice questions:', err);
+    } finally {
+      setIsGeneratingQuestions(false);
+    }
+  }, []);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllData();
@@ -78,6 +93,8 @@ export function useRecommendations() {
     relatedTopics,
     skillProgress,
     studyEstimate,
+    isGeneratingQuestions,
+    generateMoreQuestions,
     refresh: fetchAllData
   };
 }

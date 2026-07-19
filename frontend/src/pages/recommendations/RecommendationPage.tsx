@@ -24,6 +24,8 @@ export const RecommendationPage = () => {
     relatedTopics,
     skillProgress,
     studyEstimate,
+    isGeneratingQuestions,
+    generateMoreQuestions,
     refresh
   } = useRecommendations();
 
@@ -132,7 +134,12 @@ export const RecommendationPage = () => {
 
             {/* Practice Questions */}
             <section>
-              <PracticeQuestions questions={practiceQuestions} />
+              <PracticeQuestions 
+                questions={practiceQuestions} 
+                onGenerateMore={generateMoreQuestions}
+                isGeneratingQuestions={isGeneratingQuestions}
+                onQuestionClick={(q) => navigate('/prompt', { state: { topic: q.question } })}
+              />
             </section>
 
           </div>

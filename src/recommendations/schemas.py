@@ -43,3 +43,6 @@ class RecommendationDashboard(BaseModel):
     relatedTopics: List[RelatedTopic]
     skillProgress: List[SkillProgress]
     studyEstimate: StudyEstimate
+
+class PracticeQuestionsResponse(BaseModel):
+    practiceQuestions: List[PracticeQuestion]
