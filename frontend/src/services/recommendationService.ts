@@ -5,7 +5,8 @@ import type {
   PracticeQuestion,
   StudyEstimate,
   SkillProgress,
-  RelatedTopic
+  RelatedTopic,
+  TopicDetail
 } from '../types/recommendation';
 
 interface DashboardResponse {
@@ -81,6 +82,11 @@ class RecommendationService {
   async generateMorePracticeQuestions(): Promise<PracticeQuestion[]> {
     const response = await api.get<{ practiceQuestions: PracticeQuestion[] }>('/recommendations/practice-questions/generate');
     return response.data.practiceQuestions || [];
+  }
+
+  async getTopicDetail(topicName: string): Promise<TopicDetail> {
+    const response = await api.get<TopicDetail>(`/recommendations/topic/${encodeURIComponent(topicName)}`);
+    return response.data;
   }
 }
 

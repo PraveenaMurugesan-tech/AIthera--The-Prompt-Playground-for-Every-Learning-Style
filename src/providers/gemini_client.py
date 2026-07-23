@@ -185,17 +185,16 @@ class GeminiClient(BaseProvider):
         model_name = self.get_model_name()
         logger.info("Request start - Provider: Gemini, Model: %s", model_name)
 
-        # Client instantiation
-        if not getattr(self, '_client', None):
-            self._client = genai.Client(api_key=self.api_key)
-
+        import httpx
+        
         # Retry logic with tenacity
         def is_transient_error(exception: Exception) -> bool:
             if isinstance(exception, asyncio.TimeoutError):
                 return True
-            if isinstance(exception, APIError):
+            if isinstance(exception, httpx.HTTPStatusError):
+                code = exception.response.status_code
                 # Status codes: 408 (Timeout), 429 (Rate Limit), 5xx (Server errors)
-                if exception.code in (408, 429) or (exception.code and exception.code >= 500):
+                if code in (408, 429) or code >= 500:
                     return True
             return False
 
@@ -210,31 +209,39 @@ class GeminiClient(BaseProvider):
             ):
                 with attempt:
                     attempt_num = attempt.retry_state.attempt_number
-                    logger.info("Sending Gemini API request (attempt %d/2)...", attempt_num)
-                    
-                    # Call async generation with timeout via config
-                    config = types.GenerateContentConfig(
-                        temperature=0.7,
-                    )
+                    logger.info("Sending Gemini API HTTP request (attempt %d/2)...", attempt_num)
                     
                     # Ensure timeout wrapper
                     async def fetch_with_timeout():
-                        return await self._client.aio.models.generate_content(
-                            model=model_name,
-                            contents=resolved_prompt,
-                            config=config
-                        )
+                        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
+                        payload = {
+                            "contents": [
+                                {
+                                    "parts": [
+                                        {"text": resolved_prompt}
+                                    ]
+                                }
+                            ],
+                            "generationConfig": {
+                                "temperature": 0.7
+                            }
+                        }
+                        async with httpx.AsyncClient(timeout=self.timeout) as client:
+                            resp = await client.post(url, json=payload)
+                            resp.raise_for_status()
+                            return resp.json()
                         
-                    response = await asyncio.wait_for(fetch_with_timeout(), timeout=self.timeout)
+                    response = await fetch_with_timeout()
                     
                     duration = time.time() - start_time
                     logger.info("Request completed successfully in %.2f seconds", duration)
 
                     # Extract generated text and token count
-                    generated_text = response.text
-                    total_tokens = 0
-                    if hasattr(response, "usage_metadata") and response.usage_metadata:
-                        total_tokens = getattr(response.usage_metadata, "total_token_count", 0)
+                    try:
+                        generated_text = response["candidates"][0]["content"]["parts"][0]["text"]
+                    except (KeyError, IndexError):
+                        generated_text = ""
+                    total_tokens = response.get("usageMetadata", {}).get("totalTokenCount", 0)
 
                     # Return formatted dictionary satisfying both Gemini features and ResponseNormalizer candidate structure
                     return {
@@ -262,11 +269,12 @@ class GeminiClient(BaseProvider):
                         "response_time": duration
                     }
 
-        except APIError as e:
-            if getattr(e, 'code', None) in (401, 403):
+        except httpx.HTTPStatusError as e:
+            code = e.response.status_code
+            if code in (401, 403):
                 logger.error("Authentication failed: %s", str(e))
                 raise GeminiAuthError(f"Gemini Authentication failed: {str(e)}") from e
-            elif getattr(e, 'code', None) in (408, 429) or (getattr(e, 'code', 0) >= 500):
+            elif code in (408, 429) or code >= 500:
                 logger.error("Transient error encountered: %s", str(e))
                 raise GeminiTransientError(f"Gemini transient error: {str(e)}") from e
             else:

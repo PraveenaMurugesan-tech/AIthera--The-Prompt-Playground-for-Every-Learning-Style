@@ -40,3 +40,9 @@ export interface RelatedTopic {
   title: string;
   relevanceScore: number; // 0 to 1
 }
+
+export interface TopicDetail {
+  topic: string;
+  description: string;
+  suggestedPrompts: string[];
+}
