@@ -51,12 +51,7 @@ Based on this activity, generate a JSON object matching the following structure:
   ],
   "skillProgress": [
     {{ "skill": "...", "percentage": 85 }}
-  ],
-  "studyEstimate": {{
-    "totalMinutes": 120,
-    "dailyGoalMinutes": 60,
-    "completedMinutes": 15
-  }}
+  ]
 }}
 
 Ensure that:
@@ -78,8 +73,17 @@ Ensure that:
                 )
             )
             
-            # response.text should now be a perfect JSON string matching the schema
             data = json.loads(response.text)
+            
+            # Calculate actual time based on history
+            total_minutes = len(prompt_history) * 15
+            completed_minutes = min(total_minutes, 60) # cap daily goal at 60 for now
+            data["studyEstimate"] = {
+                "totalMinutes": total_minutes,
+                "dailyGoalMinutes": 60,
+                "completedMinutes": completed_minutes
+            }
+            
             return RecommendationDashboard.model_validate(data)
             
         except Exception as e:
@@ -130,6 +134,41 @@ Generate a JSON object matching the following structure:
             
         except Exception as e:
             logger.error(f"Failed to generate practice questions: {str(e)}")
+            raise e
+
+    async def generate_topic_detail(self, topic: str) -> dict:
+        """
+        Generate details and suggested prompts for a related topic.
+        """
+        from src.recommendations.schemas import TopicDetail
+        prompt = f"""
+You are an AI learning assistant. A user is exploring the topic "{topic}".
+Please provide a brief, engaging description of this topic and 3 suggested prompts they could use to learn more about it in a prompt playground.
+
+Generate a JSON object matching the following structure:
+{{
+  "topic": "{topic}",
+  "description": "...",
+  "suggestedPrompts": ["...", "...", "..."]
+}}
+"""
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=TopicDetail,
+                    temperature=0.7
+                )
+            )
+            
+            data = json.loads(response.text)
+            validated = TopicDetail.model_validate(data)
+            return validated.model_dump()
+            
+        except Exception as e:
+            logger.error(f"Failed to generate topic detail for {topic}: {str(e)}")
             raise e
 
 recommendation_generator = RecommendationGenerator()

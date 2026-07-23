@@ -46,3 +46,8 @@ class RecommendationDashboard(BaseModel):
 
 class PracticeQuestionsResponse(BaseModel):
     practiceQuestions: List[PracticeQuestion]
+
+class TopicDetail(BaseModel):
+    topic: str
+    description: str
+    suggestedPrompts: List[str]

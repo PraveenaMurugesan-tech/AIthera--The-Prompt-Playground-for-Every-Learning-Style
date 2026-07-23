@@ -67,3 +67,27 @@ async def generate_more_practice_questions(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate practice questions: {error_msg}"
         )
+
+@router.get("/topic/{topic_name}", response_model=schemas.TopicDetail)
+async def get_topic_detail(
+    topic_name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> schemas.TopicDetail:
+    """
+    Get deep dive details and suggested prompts for a related topic.
+    """
+    try:
+        detail_dict = await recommendation_generator.generate_topic_detail(topic_name)
+        return schemas.TopicDetail(**detail_dict)
+    except Exception as e:
+        error_msg = str(e)
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="You have hit the Gemini API rate limit. Please try again tomorrow or upgrade your AI Studio tier."
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate topic details: {error_msg}"
+        )
