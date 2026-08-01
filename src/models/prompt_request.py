@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
@@ -20,6 +20,7 @@ class PromptRequest(Base):
         self._output_length = kwargs.pop("output_length", None)
         self._bloom_level = kwargs.pop("bloom_level", None)
         self._status = kwargs.pop("status", "pending")
+        self._image_data = kwargs.pop("image_data", None)
         super().__init__(**kwargs)
 
     @property
@@ -62,12 +63,25 @@ class PromptRequest(Base):
     def status(self, value):
         self._status = value
 
+    @property
+    def image_data(self):
+        return getattr(self, "_image_data", None)
+
+    @image_data.setter
+    def image_data(self, value):
+        self._image_data = value
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
-    topic: Mapped[str] = mapped_column(String(255), nullable=False)
-    learning_style: Mapped[str] = mapped_column(String(100), nullable=False)
-    difficulty: Mapped[str] = mapped_column(String(50), nullable=False)
+    topic: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    learning_style: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    difficulty: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    intent: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    task_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    input_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, server_default="text")
+    task_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     generated_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 

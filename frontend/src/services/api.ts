@@ -26,6 +26,7 @@ export type LearningPromptRequest = {
   learningStyle: 'adaptive' | 'visual' | 'step_by_step' | 'conversational' | 'exam_focused'
   difficulty: 'beginner' | 'intermediate' | 'advanced'
   format: PromptFormat
+  imageData?: string
 }
 
 export type GeneratedPromptResponse = {
@@ -236,6 +237,7 @@ export const generateLearningPrompt = async (
       learning_style: payload.learningStyle,
       difficulty: payload.difficulty,
       bloom_level: 'understand',
+      image_data: payload.imageData,
       options: {
         skip_variants: true,
         skip_learning_path: true,

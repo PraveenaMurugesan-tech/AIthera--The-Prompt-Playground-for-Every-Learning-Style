@@ -16,7 +16,7 @@ export const LoadingScreen: React.FC = () => {
   const [estimatedTime] = useState(15);
   
   const [error, setError] = useState<string | null>(null);
-  const generationPromiseRef = React.useRef<Promise<any> | null>(null);
+  const generationPromiseRef = React.useRef<Promise<unknown> | null>(null);
 
   useEffect(() => {
     let isMounted = true;
