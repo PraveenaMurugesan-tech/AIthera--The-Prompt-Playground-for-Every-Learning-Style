@@ -12,6 +12,7 @@ import re
 from pydantic import BaseModel, Field
 
 from src.models.consensus_result import ConsensusResult
+from src.workflow.task_profiles import TaskProfileRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -353,21 +354,45 @@ class PromptScorer:
         prompt = consensus_result.final_prompt
         self._validate_prompt(prompt)
 
-        # Resolve learning style if not explicitly passed
-        if learning_style is None:
-            if hasattr(consensus_result, "request") and consensus_result.request is not None:
+        # Resolve learning style and task_type
+        task_type = "learning"
+        if hasattr(consensus_result, "request") and consensus_result.request is not None:
+            if learning_style is None:
                 learning_style = getattr(consensus_result.request, "learning_style", None)
+            task_type = getattr(consensus_result.request, "task_type", "learning") or "learning"
 
         if learning_style is not None and not isinstance(learning_style, str):
             raise PromptScoringError("learning_style must be a string or None.")
 
+        profile = TaskProfileRegistry.get_profile(task_type)
+        weights = profile.scoring_priorities
+
         clarity = self.score_clarity(prompt)
         structure = self.score_structure(prompt)
-        personalization = self.score_personalization(prompt, learning_style)
-        educational_effectiveness = self.score_educational_effectiveness(prompt)
+        
+        # If personalization isn't a priority for this task type, max it out or skip
+        if weights.get("personalization", 0) > 0:
+            personalization = self.score_personalization(prompt, learning_style)
+        else:
+            personalization = 20.0
+            
+        if weights.get("educational_effectiveness", 0) > 0:
+            educational_effectiveness = self.score_educational_effectiveness(prompt)
+        else:
+            educational_effectiveness = 20.0
+            
         depth = self.score_depth(prompt)
 
-        overall_score = round(clarity + structure + personalization + educational_effectiveness + depth, 2)
+        # Calculate weighted overall score (0-100 scale)
+        overall_score = (
+            (clarity / 20.0) * weights.get("clarity", 0) +
+            (structure / 20.0) * weights.get("structure", 0) +
+            (personalization / 20.0) * weights.get("personalization", 0) +
+            (educational_effectiveness / 20.0) * weights.get("educational_effectiveness", 0) +
+            (depth / 20.0) * weights.get("depth", 0)
+        ) * 100.0
+
+        overall_score = round(overall_score, 2)
         
         # Ensure the consensus_result tracks its own final computed score
         consensus_result.quality_score = overall_score
@@ -386,7 +411,7 @@ class PromptScorer:
         notes = (
             f"Clarity: {clarity}/20, Structure: {structure}/20, Personalization: {personalization}/20, "
             f"Educational Effectiveness: {educational_effectiveness}/20, Depth: {depth}/20. "
-            f"Target style: '{learning_style or 'None'}'. Classification: {classification}."
+            f"Task Profile: '{task_type}', Target style: '{learning_style or 'None'}'. Classification: {classification}."
         )
 
         logger.info("Scored prompt with overall score %f: %s", overall_score, notes)

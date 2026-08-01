@@ -35,6 +35,8 @@ from src.providers.cerebras_client import CerebrasClient
 from src.providers.sambanova_client import SambaNovaClient
 from src.providers.provider_registry import ProviderRegistry
 from src.providers.provider_health import ProviderHealthTracker
+from src.workflow.task_profiles import TaskProfileRegistry
+from src.workflow.schemas import UniversalInput, DetectedIntent
 
 # Configure logging
 logger = logging.getLogger("aithera.council_executor")
@@ -325,6 +327,10 @@ class CouncilExecutor:
         Raises:
             CouncilExecutionError: If required fields are missing
         """
+        # Universal prompts might not have educational fields
+        if getattr(request, "task_type", None) != "learning" and request.topic:
+            return
+            
         if not request.topic or not request.objective:
             raise CouncilExecutionError(
                 "PromptRequest must have topic and objective"
@@ -372,6 +378,8 @@ class CouncilExecutor:
         output_length: str,
         bloom_level: str = "understand",
         timeout: float = 30.0,
+        prompt: Optional[str] = None,
+        suitability_score: Optional[float] = None,
     ) -> Optional[CouncilResponse]:
         import time
         start_time = time.time()
@@ -390,9 +398,18 @@ class CouncilExecutor:
                     education_level=education_level,
                     output_length=output_length,
                     bloom_level=bloom_level,
+                    prompt=prompt,
                 ),
                 timeout=timeout
             )
+            
+            # Inject suitability score if we have a CouncilResponse directly
+            if isinstance(response, CouncilResponse) and suitability_score is not None:
+                if getattr(response, "metadata", None) is None:
+                    from src.models.council_response import ResponseMetadata
+                    response.metadata = ResponseMetadata()
+                response.metadata.suitability_score = suitability_score
+                
             logger.info(f"After prompt generation for {provider_name_to_log}")
             elapsed = time.time() - start_time
             print(f"Execution time for {provider_name_to_log}: {elapsed:.2f}s")
@@ -672,29 +689,67 @@ class CouncilExecutor:
         """
         logger.info("Starting execute_council for topic: %s", request.topic)
         self._validate_request(request)
-        self._validate_learning_style(request.learning_style)
         
-        # Get full profile for injection
-        try:
-            profile = self.learning_style_engine.get_style_profile(request.learning_style)
-            style_guidance = (
-                f"{profile.style.upper()} LEARNING STYLE\n"
-                f"Teaching Methods: {', '.join(profile.teaching_methods)}\n"
-                f"Content Focus: {', '.join(style_profile.content_focus if 'style_profile' in locals() else profile.content_focus)}\n"
-                f"Output Preferences: {', '.join(profile.output_preferences)}\n"
-                f"Avoid: {', '.join(profile.avoid)}"
-            )
-        except InvalidLearningStyleError:
-            style_guidance = request.learning_style
+        # Build Task Profile and Prompt from intent
+        task_type = getattr(request, "task_type", "learning") or "learning"
+        intent_val = getattr(request, "intent", "learn") or "learn"
+        profile = TaskProfileRegistry.get_profile(task_type)
+        
+        image_data = getattr(request, "image_data", None)
+        input_type = "image" if image_data else "text"
+        
+        univ_input = UniversalInput(
+            raw_content=request.topic, 
+            input_type=input_type,
+            image_data=image_data
+        )
+        
+        # safely extract subject/domain if they exist in request, or use defaults
+        subject_val = getattr(request, "subject", "unknown") or "unknown"
+        domain_val = getattr(request, "domain", "unknown") or "unknown"
+        intent = DetectedIntent(
+            intent=intent_val, 
+            task_type=task_type,
+            subject=subject_val,
+            domain=domain_val
+        )
+        
+        generated_prompt = None
+        if task_type != "learning":
+            generated_prompt = profile.build_prompt(univ_input, intent)
+            style_guidance = ""
+        else:
+            self._validate_learning_style(request.learning_style)
+            # Get full profile for injection
+            try:
+                style_prof = self.learning_style_engine.get_style_profile(request.learning_style)
+                style_guidance = (
+                    f"{style_prof.style.upper()} LEARNING STYLE\n"
+                    f"Teaching Methods: {', '.join(style_prof.teaching_methods)}\n"
+                    f"Content Focus: {', '.join(style_prof.content_focus)}\n"
+                    f"Output Preferences: {', '.join(style_prof.output_preferences)}\n"
+                    f"Avoid: {', '.join(style_prof.avoid)}"
+                )
+            except InvalidLearningStyleError:
+                style_guidance = request.learning_style
 
-        active_providers = self.provider_registry.get_active_providers()
-        if not active_providers:
-            raise CouncilExecutionError("No active providers found in the registry.")
+        # Add vision capability filtering if needed
+        require_vision = (univ_input.input_type == "image" or getattr(request, "image_data", None) is not None)
+        
+        if require_vision:
+            active_providers = self.provider_registry.get_providers_with_capability("vision")
+            if not active_providers:
+                raise CouncilExecutionError("No active vision-capable providers found in the registry.")
+        else:
+            active_providers = self.provider_registry.get_active_providers()
+            if not active_providers:
+                raise CouncilExecutionError("No active providers found in the registry.")
 
         tasks = []
         provider_names = list(active_providers.keys())
 
         for name, provider_instance in active_providers.items():
+            suitability = profile.get_provider_suitability(provider_instance.get_provider_name())
             coro = self.execute_provider(
                 provider=provider_instance,
                 provider_name=provider_instance.get_provider_name(),
@@ -706,6 +761,8 @@ class CouncilExecutor:
                 bloom_level=request.bloom_level,
                 output_length=request.output_length,
                 timeout=timeout,
+                prompt=generated_prompt,
+                suitability_score=suitability,
             )
             task = asyncio.create_task(coro)
             tasks.append(task)
@@ -789,6 +846,14 @@ class CouncilExecutor:
                             normalized.provider_name = provider_display_name
                     else:
                         raise ValueError(f"Unexpected response type: {type(response)}")
+                        
+                    # Ensure suitability_score is passed along if normalized from dict
+                    if isinstance(response, dict):
+                        suitability = profile.get_provider_suitability(provider_display_name)
+                        if getattr(normalized, "metadata", None) is None:
+                            from src.models.council_response import ResponseMetadata
+                            normalized.metadata = ResponseMetadata()
+                        normalized.metadata.suitability_score = suitability
                     logger.info(f"After response normalization for {provider_display_name}")
 
                     normalized_responses.append(normalized)

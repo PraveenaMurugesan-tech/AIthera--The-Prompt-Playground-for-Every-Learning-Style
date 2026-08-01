@@ -51,6 +51,12 @@ class ResponseMetadata(BaseModel):
         None,
         description="Version string of the specific provider model used",
     )
+    suitability_score: Optional[float] = Field(
+        None,
+        description="Provider's suitability score for the specific task profile (0.0 to 1.0)",
+        ge=0.0,
+        le=1.0,
+    )
 
 
 class ResponseScore(BaseModel):
