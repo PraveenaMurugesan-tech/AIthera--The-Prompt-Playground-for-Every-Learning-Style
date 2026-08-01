@@ -185,3 +185,18 @@ class ProviderRegistry:
         """
         all_providers = self.get_all_providers()
         return {name: prov for name, prov in all_providers.items() if prov.is_enabled()}
+
+    def get_providers_with_capability(self, capability: str) -> Dict[str, BaseProvider]:
+        """Return all active provider instances that support a given capability.
+        
+        Args:
+            capability: The capability to filter by (e.g., 'vision', 'text').
+            
+        Returns:
+            Dict[str, BaseProvider]: Dictionary mapping capable provider names to instances.
+        """
+        active_providers = self.get_active_providers()
+        return {
+            name: prov for name, prov in active_providers.items() 
+            if capability in prov.get_capabilities()
+        }

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 from src.models.council_response import CouncilResponse
 
@@ -24,6 +25,10 @@ class ProviderConfig(BaseModel):
     enabled: bool = Field(
         True,
         description="Flags whether this provider is active and should participate in prompt generation",
+    )
+    capabilities: List[str] = Field(
+        default_factory=lambda: ["text"],
+        description="List of capabilities (e.g. text, vision, audio) this provider supports",
     )
 
     def get_provider_name(self) -> str:
@@ -65,6 +70,10 @@ class BaseProvider(ABC):
     def is_enabled(self) -> bool:
         """Check if this provider is currently enabled."""
         return self.config.enabled
+
+    def get_capabilities(self) -> List[str]:
+        """Retrieve the capabilities of this provider."""
+        return self.config.capabilities
         
     def validate_api_key(self, env_var: str) -> str:
         """Validates that an API key is present in the environment."""
@@ -77,13 +86,16 @@ class BaseProvider(ABC):
     @abstractmethod
     async def generate_response(
         self,
-        topic: str,
-        objective: str,
-        learning_style: str,
-        difficulty: str,
-        education_level: str,
-        output_length: str,
-    ) -> CouncilResponse:
+        topic: str = "",
+        objective: Optional[str] = None,
+        learning_style: Optional[str] = None,
+        difficulty: Optional[str] = None,
+        education_level: Optional[str] = None,
+        output_length: Optional[str] = None,
+        bloom_level: Optional[str] = None,
+        prompt: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """Generate a standardized CouncilResponse based on the educational parameters.
 
         Args:
