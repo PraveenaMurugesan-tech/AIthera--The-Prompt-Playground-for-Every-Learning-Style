@@ -50,14 +50,18 @@ export function useRecommendations() {
       setRelatedTopics(topics);
       setSkillProgress(skills);
       setStudyEstimate(estimate);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch recommendations:', err);
       
       let errorMessage = 'An error occurred while fetching recommendations.';
-      if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
+      if (err instanceof Error) {
+        // use a safe type check instead of any
+        const e = err as { response?: { data?: { detail?: string } }, message: string };
+        if (e.response?.data?.detail) {
+          errorMessage = e.response.data.detail;
+        } else {
+          errorMessage = e.message;
+        }
       }
       
       setError(errorMessage);
@@ -72,7 +76,7 @@ export function useRecommendations() {
       const newQuestions = await recommendationService.generateMorePracticeQuestions();
       // Combine new and old questions, ensuring uniqueness could be done if needed
       setPracticeQuestions(prev => [...newQuestions, ...prev]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to generate more practice questions:', err);
     } finally {
       setIsGeneratingQuestions(false);
