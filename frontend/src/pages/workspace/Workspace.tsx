@@ -25,9 +25,39 @@ const initialFormState: WorkspaceFormState = {
   format: 'notes',
 }
 
+interface ISpeechRecognitionEvent {
+  resultIndex: number
+  results: {
+    length: number
+    [index: number]: {
+      isFinal: boolean
+      [index: number]: {
+        transcript: string
+      }
+    }
+  }
+}
+
+interface ISpeechRecognition extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  onresult: ((event: ISpeechRecognitionEvent) => void) | null
+  onerror: ((event: Event) => void) | null
+  onend: ((event: Event) => void) | null
+  start(): void
+  stop(): void
+}
+
+interface WindowWithSpeech extends Window {
+  SpeechRecognition?: new () => ISpeechRecognition
+  webkitSpeechRecognition?: new () => ISpeechRecognition
+}
+
 export const WorkspacePage = () => {
   const { showToast, dismissToast } = useToast()
   const [form, setForm] = useState<WorkspaceFormState>(initialFormState)
+  const [imageData, setImageData] = useState<string | null>(null)
+  const [isRecording, setIsRecording] = useState(false)
   const [result, setResult] = useState<PromptResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,10 +85,11 @@ export const WorkspacePage = () => {
       toastId = showToast('Consulting AI Council & refining prompt...', 'loading', 0)
       const generated = await generateLearningPrompt(
         {
-          topic: form.topic.trim(),
+          topic: form.topic.trim() || 'Analyze attached image',
           learningStyle: form.learningStyle,
           difficulty: form.difficulty,
           format: form.format,
+          imageData: imageData || undefined,
         }
       )
 
@@ -93,6 +124,70 @@ export const WorkspacePage = () => {
     }
   }
 
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      if (file.size > 4 * 1024 * 1024) {
+        showToast('Image must be less than 4MB', 'error')
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImageData(e.target?.result as string)
+        if (!form.topic) {
+          setForm(prev => ({ ...prev, topic: 'Analyze attached image' }))
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      setIsRecording(false)
+      // Stop logic will go here in actual implementation
+      return
+    }
+
+    const win = window as unknown as WindowWithSpeech
+    if (!win.SpeechRecognition && !win.webkitSpeechRecognition) {
+      showToast('Speech recognition not supported in this browser.', 'error')
+      return
+    }
+
+    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition
+    if (!SpeechRecognition) return
+
+    const recognition = new SpeechRecognition()
+    recognition.continuous = true
+    recognition.interimResults = true
+
+    recognition.onresult = (event: ISpeechRecognitionEvent) => {
+      let finalTranscript = ''
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript
+        }
+      }
+      if (finalTranscript) {
+        setForm(prev => ({ ...prev, topic: prev.topic + ' ' + finalTranscript.trim() }))
+      }
+    }
+
+    recognition.onerror = () => {
+      setIsRecording(false)
+      showToast('Voice recognition failed.', 'error')
+    }
+
+    recognition.onend = () => {
+      setIsRecording(false)
+    }
+
+    recognition.start()
+    setIsRecording(true)
+    showToast('Listening...', 'success')
+  }
+
   const helperText = useMemo(() => {
     return `Tailored for ${form.learningStyle.replace(/_/g, ' ')} learners at ${form.difficulty} difficulty.`
   }, [form.difficulty, form.learningStyle])
@@ -113,8 +208,29 @@ export const WorkspacePage = () => {
                 value={form.topic}
                 placeholder="What would you like to learn today?"
                 onChange={(event: ChangeEvent<HTMLInputElement>) => handleChange('topic', event.target.value)}
+                style={{ flex: 1 }}
               />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingRight: '8px' }}>
+                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <span title="Attach Image">📎</span>
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+                </label>
+                <button 
+                  type="button" 
+                  onClick={toggleRecording} 
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: isRecording ? 'red' : 'inherit' }}
+                  title="Voice dictation"
+                >
+                  🎙️
+                </button>
+              </div>
             </div>
+            {imageData && (
+              <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--primary-color)' }}>
+                ✓ Image attached ({Math.round(imageData.length / 1024)} KB)
+                <button type="button" onClick={() => setImageData(null)} style={{ marginLeft: '8px', background: 'none', border: 'none', color: 'red', cursor: 'pointer' }}>Remove</button>
+              </div>
+            )}
           </label>
 
           <div className="workspace-form-grid">
