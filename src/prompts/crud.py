@@ -9,7 +9,7 @@ from src.models.prompt_request import PromptRequest
 import datetime
 
 def create_prompt_request(
-    db: Session, user_id: int, topic: str, learning_style: str, difficulty: str, bloom_level: str = "understand"
+    db: Session, user_id: int, topic: str, learning_style: str, difficulty: str, bloom_level: str = "understand", image_data: Optional[str] = None
 ) -> PromptRequest:
     """Create and persist a new PromptRequest, avoiding duplicates within 10 seconds."""
     
@@ -39,6 +39,7 @@ def create_prompt_request(
         learning_style=learning_style,
         difficulty=difficulty,
         bloom_level=bloom_level,
+        image_data=image_data,
     )
 
     db.add(request)
