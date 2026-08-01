@@ -150,6 +150,7 @@ async def generate_prompt(
             learning_style=payload.learning_style,
             difficulty=payload.difficulty,
             bloom_level=payload.bloom_level,
+            image_data=payload.image_data,
         )
     except Exception as e:
         logger.error(f"Failed to create prompt request in DB: {e}")

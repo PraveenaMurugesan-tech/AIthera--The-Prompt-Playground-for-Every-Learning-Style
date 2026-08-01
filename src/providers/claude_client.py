@@ -65,6 +65,7 @@ class ClaudeClient(BaseProvider):
                 role=self.DEFAULT_ROLE,
                 model_name=env_model,
                 enabled=True,
+                capabilities=["text", "vision"],
             )
         super().__init__(config)
 
@@ -198,11 +199,32 @@ class ClaudeClient(BaseProvider):
             ):
                 with attempt:
                     attempt_num = attempt.retry_state.attempt_number
+                    image_data = kwargs.get("image_data")
+                    content = []
+                    if image_data:
+                        mime_type = "image/jpeg"
+                        if image_data.startswith("data:image"):
+                            data_parts = image_data.split(",", 1)
+                            if len(data_parts) == 2:
+                                mime_type = data_parts[0].split(":")[1].split(";")[0]
+                                image_data = data_parts[1]
+                        
+                        content.append({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": mime_type,
+                                "data": image_data,
+                            }
+                        })
+                    
+                    content.append({"type": "text", "text": resolved_prompt})
+                    
                     logger.info("Sending Claude API request (attempt %d/3)...", attempt_num)
                     response = await self._client.messages.create(
                         model=model,
                         max_tokens=4096,
-                        messages=[{"role": "user", "content": resolved_prompt}],
+                        messages=[{"role": "user", "content": content}],
                     )
                     duration = time.time() - start_time
                     logger.info("Request completed successfully in %.2f seconds", duration)

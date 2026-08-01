@@ -69,6 +69,7 @@ class GeminiClient(BaseProvider):
                 role=self.DEFAULT_ROLE,
                 model_name=env_model,
                 enabled=True,
+                capabilities=["text", "vision"],
             )
         else:
             # Override model name from environment if defined
@@ -214,12 +215,28 @@ class GeminiClient(BaseProvider):
                     # Ensure timeout wrapper
                     async def fetch_with_timeout():
                         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
+                        image_data = kwargs.get("image_data")
+                        parts = [{"text": resolved_prompt}]
+                        if image_data:
+                            # Try to extract mime type, otherwise assume jpeg
+                            mime_type = "image/jpeg"
+                            if image_data.startswith("data:image"):
+                                data_parts = image_data.split(",", 1)
+                                if len(data_parts) == 2:
+                                    mime_type = data_parts[0].split(":")[1].split(";")[0]
+                                    image_data = data_parts[1]
+                                    
+                            parts.append({
+                                "inlineData": {
+                                    "mimeType": mime_type,
+                                    "data": image_data
+                                }
+                            })
+                            
                         payload = {
                             "contents": [
                                 {
-                                    "parts": [
-                                        {"text": resolved_prompt}
-                                    ]
+                                    "parts": parts
                                 }
                             ],
                             "generationConfig": {
