@@ -38,6 +38,8 @@ export interface PromptRequestData {
   difficulty: string;
   bloomLevel?: string;
   instructions?: string;
+  modality?: string;
+  imageData?: string;
 }
 
 export interface BackendRecommendation {
@@ -47,31 +49,31 @@ export interface BackendRecommendation {
 
 export interface BackendLearningPathStep {
   title: string;
-  description?: string;
+  description: string;
+  duration: string;
 }
 
 export interface BackendPromptVariant {
-  style?: string;
+  style: string;
   title: string;
   prompt_text: string;
-}
-
-export interface BackendEducationalMetrics {
-  difficulty?: string;
-  bloomLevel?: string;
-  learningStyle?: string;
-  estimatedStudyTime?: string;
-  complexity?: string;
+  rationale: string;
 }
 
 export interface BackendGenerationResponse {
-  optimized_prompt?: string;
-  consensus_reasoning?: string;
-  confidence_score?: number;
-  agreement_score?: number;
-  educational_metrics?: BackendEducationalMetrics;
+  optimized_prompt: string;
+  consensus_reasoning: string;
+  confidence_score: number;
+  agreement_score: number;
+  educational_metrics?: {
+    difficulty: string;
+    bloomLevel: string;
+    learningStyle: string;
+    estimatedStudyTime: string;
+    complexity: string;
+  };
   recommendations?: BackendRecommendation[];
-  learning_path?: { steps?: BackendLearningPathStep[] };
+  learning_path?: { steps: BackendLearningPathStep[] };
   prompt_variants?: BackendPromptVariant[];
 }
 
@@ -99,6 +101,8 @@ export const promptService = {
       learning_style: data.learningStyle,
       difficulty: data.difficulty,
       bloom_level: data.bloomLevel || 'understand',
+      modality: data.modality || 'text',
+      image_data: data.imageData,
       options: data.instructions ? { instructions: data.instructions } : {}
     };
 

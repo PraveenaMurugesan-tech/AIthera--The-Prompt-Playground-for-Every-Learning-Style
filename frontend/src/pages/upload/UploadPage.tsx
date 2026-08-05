@@ -62,6 +62,15 @@ export const UploadPage = () => {
     handleFileSelect(file);
   };
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
   const handleAnalyze = async () => {
     if (!selectedFile?.file) return;
 
@@ -70,6 +79,8 @@ export const UploadPage = () => {
 
     try {
       const result = await analyzeImage(selectedFile.file);
+      const base64Image = await fileToBase64(selectedFile.file);
+      
       toast.success('Analysis complete!', { id: toastId });
       
       navigate('/loading', {
@@ -79,7 +90,9 @@ export const UploadPage = () => {
             learningStyle: 'visual',
             difficulty: 'intermediate',
             bloomLevel: 'apply',
-            instructions: result.instructions || 'Generated from Image Analysis'
+            instructions: result.instructions || 'Generated from Image Analysis',
+            modality: 'image',
+            imageData: base64Image
           }
         }
       });

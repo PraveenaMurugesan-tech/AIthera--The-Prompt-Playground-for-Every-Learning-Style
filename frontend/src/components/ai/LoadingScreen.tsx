@@ -5,13 +5,18 @@ import { ProviderCard } from './ProviderCard';
 import { CouncilProgress } from './CouncilProgress';
 import { ConsensusAnimation } from './ConsensusAnimation';
 import { promptService } from '../../services/promptService';
+import { analyzeImage } from '../../services/api';
 import type { ProviderState } from '../../services/promptService';
 
 export const LoadingScreen: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const formData = useMemo(() => location.state?.formData || {}, [location.state?.formData]);
-  const [providers, setProviders] = useState<ProviderState[]>(promptService.getInitialProviders());
+  const [providers, setProviders] = useState<ProviderState[]>(
+    promptService.getInitialProviders().filter(p => 
+      formData.file ? ['gemini', 'claude'].includes(p.id) : true
+    )
+  );
   const [progress, setProgress] = useState(0);
   const [estimatedTime] = useState(15);
   
@@ -34,7 +39,21 @@ export const LoadingScreen: React.FC = () => {
 
         // Await the real backend call, caching the promise to prevent StrictMode duplicate calls
         if (!generationPromiseRef.current) {
-          generationPromiseRef.current = promptService.generatePrompt(formData);
+          const createGenerationPromise = async () => {
+            let finalFormData = { ...formData };
+            if (finalFormData.file) {
+              const analyzeResult = await analyzeImage(finalFormData.file);
+              finalFormData = {
+                ...finalFormData,
+                topic: (finalFormData.topic ? `${finalFormData.topic} (Image context: ${analyzeResult.topic})` : analyzeResult.topic).substring(0, 250),
+                instructions: finalFormData.instructions || analyzeResult.instructions || 'Generated from Image Analysis',
+                learningStyle: finalFormData.learningStyle || 'visual',
+                modality: 'image'
+              };
+            }
+            return promptService.generatePrompt(finalFormData);
+          };
+          generationPromiseRef.current = createGenerationPromise();
         }
         
         const result = await generationPromiseRef.current;
@@ -54,8 +73,33 @@ export const LoadingScreen: React.FC = () => {
       } catch (err: unknown) {
         clearInterval(interval);
         if (!isMounted) return;
-        setProviders(prev => prev.map(p => ({ ...p, status: 'Failed' })));
-        const errorMessage = err instanceof Error ? err.message : 'An error occurred during prompt generation.';
+        
+        let errorMessage = 'An error occurred during prompt generation.';
+        
+        // Check if the backend provided detailed provider failures
+        const error = err as { response?: { data?: { detail?: { providers?: Array<{ provider: string, status?: string, message?: string }>, error?: string } } } };
+        const backendDetail = error.response?.data?.detail;
+        
+        if (backendDetail && backendDetail.providers && Array.isArray(backendDetail.providers)) {
+          setProviders(prev => prev.map(p => {
+            const backendProvider = backendDetail.providers!.find(bp => bp.provider.toLowerCase() === p.id.toLowerCase() || bp.provider.toLowerCase() === p.name.toLowerCase());
+            if (backendProvider) {
+              return { ...p, status: 'Failed' };
+            }
+            // If it failed generally and this provider isn't in the error list, keep it as failed or processing
+            return { ...p, status: 'Failed' }; 
+          }));
+          
+          if (backendDetail.error) {
+             errorMessage = backendDetail.error;
+          }
+        } else {
+          setProviders(prev => prev.map(p => ({ ...p, status: 'Failed' })));
+          if (err instanceof Error) {
+            errorMessage = err.message;
+          }
+        }
+        
         setError(errorMessage);
       }
     };
