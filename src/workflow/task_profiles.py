@@ -68,6 +68,11 @@ class ImageGenerationProfile(BaseTaskProfile):
             "You are an expert AI image prompt engineer. Your goal is to take the user's intent "
             "and create a highly detailed, evocative, and structurally perfect prompt for an image generator (like Midjourney or DALL-E).\n\n"
         )
+        if input_data.input_type == "image":
+            base += (
+                "The user has provided an image. If the user did not provide a text request, your primary task is to write a prompt that accurately describes and would recreate the provided image in detail. "
+                "Do not invent unrelated concepts like 'AI scanning' or 'data visualization' unless they are present in the image or explicitly requested.\n"
+            )
         if input_data.raw_content:
             base += f"User Request: {input_data.raw_content}\n"
         if intent.domain:

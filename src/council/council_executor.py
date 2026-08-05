@@ -223,6 +223,7 @@ class CouncilExecutor:
         education_level: str,
         output_length: str,
         bloom_level: str = "understand",
+        modality: str = "text",
     ) -> str:
         """Inject template variables into a prompt template.
         
@@ -251,8 +252,10 @@ class CouncilExecutor:
                 "education_level": education_level,
                 "output_length": output_length,
                 "bloom_level": bloom_level,
+                "modality": modality,
             }
             
+            # Simple string format works if template uses {variable} syntax
             # Validate all variables are non-empty
             for var_name, var_value in variables.items():
                 if not var_value or not str(var_value).strip():
@@ -279,6 +282,7 @@ class CouncilExecutor:
         difficulty: str,
         education_level: str,
         output_length: str,
+        modality: str = "text",
     ) -> str:
         """Build a provider-specific prompt from template and variables.
         
@@ -313,6 +317,7 @@ class CouncilExecutor:
             difficulty=difficulty,
             education_level=education_level,
             output_length=output_length,
+            modality=modality,
         )
         
         logger.debug("Built prompt for provider: %s", provider_name)
@@ -377,9 +382,11 @@ class CouncilExecutor:
         education_level: str,
         output_length: str,
         bloom_level: str = "understand",
+        modality: str = "text",
         timeout: float = 30.0,
         prompt: Optional[str] = None,
         suitability_score: Optional[float] = None,
+        image_data: Optional[str] = None,
     ) -> Optional[CouncilResponse]:
         import time
         start_time = time.time()
@@ -399,6 +406,8 @@ class CouncilExecutor:
                     output_length=output_length,
                     bloom_level=bloom_level,
                     prompt=prompt,
+                    modality=modality,
+                    image_data=image_data,
                 ),
                 timeout=timeout
             )
@@ -470,9 +479,10 @@ class CouncilExecutor:
                 ("sambanova", "SambaNova"),
             ]
             
+            provider_prompts = {}
             for provider_key, _ in providers_info:
                 try:
-                    _ = self.build_provider_prompt(
+                    provider_prompts[provider_key] = self.build_provider_prompt(
                         provider_name=provider_key,
                         topic=request.topic,
                         objective=request.objective,
@@ -480,6 +490,7 @@ class CouncilExecutor:
                         difficulty=request.difficulty,
                         education_level=request.education_level,
                         output_length=request.output_length,
+                        modality=getattr(request, "modality", "text"),
                     )
                 except CouncilExecutionError as e:
                     logger.error("Failed to build prompt for %s: %s", provider_key, str(e))
@@ -560,6 +571,8 @@ class CouncilExecutor:
                     difficulty=request.difficulty,
                     education_level=request.education_level,
                     output_length=request.output_length,
+                    modality=getattr(request, "modality", "text"),
+                    prompt=provider_prompts.get(provider_name.lower()),
                 )
                 tasks.append(task)
                 provider_names.append(provider_name)
@@ -763,6 +776,8 @@ class CouncilExecutor:
                 timeout=timeout,
                 prompt=generated_prompt,
                 suitability_score=suitability,
+                modality=getattr(request, "modality", "text"),
+                image_data=image_data,
             )
             task = asyncio.create_task(coro)
             tasks.append(task)

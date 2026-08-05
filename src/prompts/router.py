@@ -37,7 +37,7 @@ def create_prompt(
     request = crud.create_prompt_request(
         db,
         user_id=int(current_user.id),
-        topic=payload.topic,
+        topic=payload.topic[:250] if payload.topic else 'No topic provided',
         learning_style=payload.learning_style,
         difficulty=payload.difficulty,
     )
@@ -146,12 +146,17 @@ async def generate_prompt(
         request_record = crud.create_prompt_request(
             db,
             user_id=int(current_user.id),
-            topic=payload.topic,
+            topic=payload.topic[:250] if payload.topic else 'No topic provided',
             learning_style=payload.learning_style,
             difficulty=payload.difficulty,
             bloom_level=payload.bloom_level,
             image_data=payload.image_data,
         )
+        
+        # Explicitly set task_type to image_generation if modality is image
+        request_record.modality = getattr(payload, "modality", "text")
+        if request_record.modality == "image":
+            request_record.task_type = "image_generation"
     except Exception as e:
         logger.error(f"Failed to create prompt request in DB: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
@@ -290,21 +295,18 @@ async def analyze_image(
         if not api_key:
             raise HTTPException(status_code=500, detail="Gemini API Key not configured")
         
-        genai.configure(api_key=api_key)
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         
         # Read the file bytes
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes))
-        
-        # Use Gemini Vision model
-        # Use the correct google-genai SDK client
-        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         prompt = (
-            "Analyze this educational image, diagram, or handwritten note. "
-            "Extract the core educational topic or concept it represents. "
-            "Also provide any specific instructions or context visible in the image. "
-            "Return the result strictly as a JSON object with two keys: 'topic' (a concise string) "
-            "and 'instructions' (a string describing the context or additional details, or empty string if none)."
+            "Analyze this image. Extract the primary subject or topic it represents. "
+            "If it is a picture of an object, artwork, or general scene (e.g., a t-shirt, a room, a character), describe it clearly as the topic. "
+            "If it is an educational diagram or note, extract the core concept. "
+            "Also provide any specific text, instructions, or visual context present in the image. "
+            "Return the result strictly as a JSON object with two keys: 'topic' (a concise string describing the main subject/concept) "
+            "and 'instructions' (a string describing the context, text, or visual details, or empty string if none)."
         )
         response = await client.aio.models.generate_content(
             model='gemini-2.5-flash',
@@ -332,7 +334,11 @@ async def analyze_image(
         
     except Exception as e:
         logger.error(f"Failed to analyze image: {e}")
-        raise HTTPException(status_code=500, detail="Image analysis failed")
+        status_code = getattr(e, 'code', 500)
+        # Check if it's a 429 from Google API
+        if "429" in str(e):
+            status_code = 429
+        raise HTTPException(status_code=status_code, detail=f"Image analysis failed: {e}")
 
 @router.post("/chat")
 async def chat_endpoint(

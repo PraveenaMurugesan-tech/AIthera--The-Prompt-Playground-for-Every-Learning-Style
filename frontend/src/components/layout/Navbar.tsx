@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { Button } from '../common/Button'
@@ -11,6 +11,15 @@ type AppNotification = {
   time: string
   read: boolean
 }
+
+const navLinks = [
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/prompt', label: 'Generate Prompt' },
+  { to: '/chat', label: 'AI Chat' },
+  { to: '/council', label: 'AI Council' },
+  { to: '/history', label: 'History' },
+  { to: '/recommendations', label: 'AI Recommendations' },
+]
 
 export const Navbar = () => {
   const { theme, toggleTheme } = useTheme()
@@ -89,6 +98,14 @@ export const Navbar = () => {
           <div className="brand-subtitle">Learning workspace</div>
         </div>
       </div>
+
+      <nav className="top-nav-links">
+        {navLinks.map((link) => (
+          <NavLink key={link.to} to={link.to} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            {link.label}
+          </NavLink>
+        ))}
+      </nav>
 
       <div className="navbar-actions">
         <button

@@ -99,9 +99,10 @@ class GeminiClient(BaseProvider):
         difficulty: str,
         education_level: str,
         output_length: str,
-        bloom_level: str = 'understand'
+        bloom_level: str = 'understand',
+        modality: str = "text",
     ) -> str:
-        """Load prompt template from prompts/gemini_visual.txt and substitute variables."""
+        """Construct the full prompt string using the appropriate template."""
         from pathlib import Path
 
         # Resolve template file path
@@ -132,7 +133,8 @@ class GeminiClient(BaseProvider):
                 difficulty=difficulty,
                 education_level=education_level,
                 output_length=output_length,
-                bloom_level=bloom_level
+                bloom_level=bloom_level,
+                modality=modality
             )
         except Exception as e:
             logger.error("Failed to load/format prompt template: %s", str(e))
@@ -161,6 +163,8 @@ class GeminiClient(BaseProvider):
         """
         self.validate_config()
 
+        modality = kwargs.get("modality", "text")
+
         # Resolve the prompt string
         resolved_prompt = ""
         if prompt is not None:
@@ -177,7 +181,8 @@ class GeminiClient(BaseProvider):
                 difficulty=difficulty or "",
                 education_level=education_level or "",
                 output_length=output_length or "",
-                bloom_level=bloom_level or "understand"
+                bloom_level=bloom_level or "understand",
+                modality=modality
             )
 
         if not resolved_prompt or not resolved_prompt.strip():
@@ -203,8 +208,8 @@ class GeminiClient(BaseProvider):
 
         try:
             async for attempt in AsyncRetrying(
-                stop=stop_after_attempt(2),
-                wait=wait_exponential(multiplier=1, min=1, max=5),
+                stop=stop_after_attempt(5),
+                wait=wait_exponential(multiplier=1, min=2, max=10),
                 retry=retry_if_exception(is_transient_error),
                 reraise=True
             ):

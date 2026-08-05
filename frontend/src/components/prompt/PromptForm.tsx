@@ -11,15 +11,16 @@ export const PromptForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [topic, setTopic] = useState(location.state?.topic || '');
-  const [learningStyle, setLearningStyle] = useState('');
-
-  const [difficulty, setDifficulty] = useState('');
+  const [learningStyle, setLearningStyle] = useState('visual');
+  const [difficulty, setDifficulty] = useState('beginner');
   const [bloomLevel, setBloomLevel] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [file, setFile] = useState<File | null>(null);
 
-  const isFormValid = topic.trim() !== '' && learningStyle !== '' && difficulty !== '' && bloomLevel !== '';
+  const isFormValid = topic.trim() !== '' || file !== null;
 
   const handleGenerate = () => {
+    console.log("Submit triggered. isFormValid:", isFormValid, "topic:", topic, "file:", file);
     if (!isFormValid) return;
     
     const formData = {
@@ -27,7 +28,9 @@ export const PromptForm: React.FC = () => {
       learningStyle,
       difficulty,
       bloomLevel,
-      instructions
+      instructions,
+      file,
+      modality: file ? 'image' : 'text'
     };
     
 
@@ -36,7 +39,21 @@ export const PromptForm: React.FC = () => {
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8 flex flex-col gap-8">
-      <TopicInput value={topic} onChange={setTopic} />
+      <TopicInput 
+        value={topic} 
+        onChange={setTopic} 
+        onModalityChange={(modality) => {
+          if (modality === 'visual') {
+            setLearningStyle('visual');
+            if (!difficulty) setDifficulty('beginner');
+          } else if (modality === 'conversational') {
+            setLearningStyle('conversational');
+            if (!difficulty) setDifficulty('beginner');
+          }
+        }}
+        onFileSelect={setFile}
+        onSubmit={handleGenerate}
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <LearningStyleSelect value={learningStyle} onChange={setLearningStyle} />
