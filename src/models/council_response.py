@@ -184,9 +184,7 @@ class CouncilResponse(BaseModel):
     @field_validator("strengths")
     @classmethod
     def validate_strengths(cls, v: List[str]) -> List[str]:
-        """Validate that strengths contains at least one strength and all strengths are non-empty."""
-        if not v:
-            raise ValueError("Strengths list cannot be empty.")
+        """Validate that all strengths are non-empty."""
         for strength in v:
             if not strength or not strength.strip():
                 raise ValueError("Strengths must be non-empty strings.")

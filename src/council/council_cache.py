@@ -34,7 +34,8 @@ class CouncilCache:
             "difficulty": str(request.difficulty).lower().strip(),
             "objective": str(request.objective).lower().strip(),
             "output_length": str(request.output_length).lower().strip(),
-            "education_level": str(request.education_level).lower().strip()
+            "education_level": str(request.education_level).lower().strip(),
+            "modality": str(getattr(request, "modality", "text")).lower().strip()
         }
         
         # Create a stable JSON string and hash it
