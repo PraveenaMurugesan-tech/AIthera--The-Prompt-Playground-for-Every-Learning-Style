@@ -50,6 +50,7 @@ class GeneratePromptRequest(BaseModel):
     difficulty: str = Field(..., min_length=1, example="beginner")
     bloom_level: Optional[str] = Field("understand", example="understand")
     image_data: Optional[str] = Field(None, description="Base64 encoded image string")
+    modality: str = Field("text", description="Whether to generate an educational text prompt or an image generation prompt")
     options: Optional[Dict[str, Any]] = Field(
         default_factory=dict, 
         description="Optional flags for controlling generation (e.g., skip_variants)"
