@@ -95,7 +95,8 @@ class SambaNovaClient(BaseProvider):
         difficulty: str,
         education_level: str,
         output_length: str,
-        bloom_level: str = 'understand'
+        bloom_level: str = 'understand',
+        modality: str = 'text'
     ) -> str:
         """Load prompt template from prompts/gpt_teacher.txt and substitute variables."""
         from pathlib import Path
@@ -113,8 +114,9 @@ class SambaNovaClient(BaseProvider):
                 f"Learning Style: {learning_style}\n"
                 f"Difficulty: {difficulty}\n"
                 f"Education Level: {education_level}\n"
-                f"Output Length: {output_length}\n" \
-                f"Bloom's Level: {bloom_level}"
+                f"Output Length: {output_length}\n"
+                f"Bloom's Level: {bloom_level}\n"
+                f"Modality: {modality}"
             )
 
         try:
@@ -128,7 +130,8 @@ class SambaNovaClient(BaseProvider):
                 difficulty=difficulty,
                 education_level=education_level,
                 output_length=output_length,
-                bloom_level=bloom_level
+                bloom_level=bloom_level,
+                modality=modality,
             )
         except Exception as e:
             logger.error("Failed to load/format prompt template: %s", str(e))
@@ -157,6 +160,8 @@ class SambaNovaClient(BaseProvider):
         """
         self.validate_config()
 
+        modality = kwargs.get("modality", "text")
+
         # Resolve the prompt string
         resolved_prompt = ""
         if prompt is not None:
@@ -173,7 +178,8 @@ class SambaNovaClient(BaseProvider):
                 difficulty=difficulty or "",
                 education_level=education_level or "",
                 output_length=output_length or "",
-                bloom_level=bloom_level or "understand"
+                bloom_level=bloom_level or "understand",
+                modality=modality
             )
 
         if not resolved_prompt or not resolved_prompt.strip():
