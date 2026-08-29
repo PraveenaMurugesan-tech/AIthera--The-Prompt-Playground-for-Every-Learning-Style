@@ -335,17 +335,29 @@ AIthera/
 *   **[Completed]** Response Normalizer & Council Executor (concurrent processing).
 *   **[Completed]** Consensus Builder (merging logic & provider prioritization).
 *   **[Completed]** Prompt Scorer (Phase 17 scoring engine for consensus evaluation).
+<<<<<<< HEAD
 *   **[Completed]** Phase 6: AI Chat Experience (timeline logs, markdown highlights, response regeneration).
 *   **[Completed]** Phase 7: Voice & Image Multimodal Support (Speech-to-Text, playback Synthesis, webcam captures, and file validation).
 *   **[Completed]** Phase 8: Prompt History & Learning preferences logs (Keyword searches, parameter filters, and text downloads).
 *   **[Completed]** Phase 9: AI Council Workflow Visualization (interactive node diagrams, flow lines, and expandable raw logs).
 *   **[Completed]** Phase 10: Performance optimizations (code-splitting route lazy-loaders, global notification badges, toast contexts, accessibility polish).
+=======
+*   **[Completed]** Explanation Generator (Human-readable rationales showing model contributions).
+*   **[Completed]** API Layer Completion (Prompt request endpoints and pipeline execution hooks).
+*   **[Completed]** Frontend Dashboard Integration (React playground UI for visual interaction).
+*   **[Completed]** Universal Pipeline & Task Profiles (Recommendation engine and learning paths).
+>>>>>>> b64ba90 (Docs: update project progress and roadmap)
 
 ---
 
 ## 🗺️ Future Roadmap
 
+<<<<<<< HEAD
 *   **[Telemetry & Feedback Loops]** Implement user rating features to track prompt efficacy and update weights.
 *   **[Live Vector Embeddings]** Incorporate semantic search matches over prompt histories.
 *   **[Exporting PDF formats]** Complete local client PDF rendering hooks for prompt downloads.
 
+=======
+*   **[Phase 21]** **Telemetry & Feedback Loops**: Implement user rating features to track prompt efficacy and update weights.
+*   **[Phase 22]** **Advanced Analytics**: User progress tracking and learning style evolution over time.
+>>>>>>> b64ba90 (Docs: update project progress and roadmap)
