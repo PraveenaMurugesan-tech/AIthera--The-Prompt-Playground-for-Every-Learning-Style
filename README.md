@@ -13,7 +13,7 @@ AIthera is a multi-model educational AI platform designed to generate personaliz
 6. [Authentication API Endpoints](#-authentication-api-endpoints)
 7. [Prompt Request System](#-prompt-request-system)
 8. [Current Project Progress](#-current-project-progress)
-9. [Future Roadmap](#-future-roadmap)
+
 
 ---
 
