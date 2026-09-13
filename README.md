@@ -346,7 +346,7 @@ AIthera/
 *   **[Completed]** API Layer Completion (Prompt request endpoints and pipeline execution hooks).
 *   **[Completed]** Frontend Dashboard Integration (React playground UI for visual interaction).
 *   **[Completed]** Universal Pipeline & Task Profiles (Recommendation engine and learning paths).
->>>>>>> b64ba90 (Docs: update project progress and roadmap)
+>>>>>>> b64ba90 (Docs: update project progress )
 
 ---
 
