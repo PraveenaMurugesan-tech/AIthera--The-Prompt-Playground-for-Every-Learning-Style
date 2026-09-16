@@ -107,7 +107,7 @@ Backend API URL (Default: `http://localhost:8000`)
 
 ## 🗄️ Database & Migrations
 
-AIthera utilizes **SQLAlchemy** for ORM and **Alembic** to manage database schema updates.
+AIthera utilizes **SQLAlchemy** for ORM and **Alembic** to manage database updates.
 
 ### Migration Commands
 
