@@ -64,7 +64,7 @@ Prompt Scorer (Scoring categories 0-20, overall 0-100)
 Explanation Generator (Transparent pedagogical rationale)
     │
     ▼
-Final persisting & Output (Persisted PromptRequest & ConsensusResult)
+Final persisting & Output (Persisted PromptRequest )
 ```
 
 ---
