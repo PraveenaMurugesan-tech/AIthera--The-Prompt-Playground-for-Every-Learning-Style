@@ -90,7 +90,7 @@ FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
 ## 💻 Frontend Environment Variables
 
-The frontend application requires its own environment configuration to connect to the backend API.
+The frontend application requires its own environment configuration to connect backend API.
 
 To set up the frontend environment:
 ```bash
