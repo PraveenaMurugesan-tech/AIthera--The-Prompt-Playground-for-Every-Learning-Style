@@ -164,7 +164,7 @@ AIthera utilizes **SQLAlchemy** for ORM and **Alembic** to manage database updat
 
 5.  **Run Database Migrations:**
     ```bash
-    alembic upgrade head
+    alembic upgrade 
     ```
 
 6.  **Start the Local Development Server:**
