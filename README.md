@@ -23,7 +23,7 @@ Traditional AI prompt generation relies on a single model, which can lead to gen
 
 Each council member contributes specialized strengths to craft the final educational prompt:
 *   **GPT** (OpenAI) — *Educational Structure Expert* (Layout, Scaffolding, and Organization)
-*   **Claude**  — *Deep Reasoning Expert* (Conceptual Depth, Critical Reflection)
+*   **Claude** (Anthropic) — *Deep Reasoning Expert* (Conceptual Depth, Critical Reflection)
 *   **Gemini** (Google) — *Visual Learning Expert* (Analogies, Imagery, and Spatial Prompts)
 *   **DeepSeek** — *Technical Logic Expert* (Step-by-step progressions, Code/Math validation)
 
