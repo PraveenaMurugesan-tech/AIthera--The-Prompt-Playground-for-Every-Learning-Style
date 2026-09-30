@@ -19,11 +19,11 @@ AIthera is a multi-model educational AI platform designed to generate personaliz
 
 ## 🌟 Project Overview
 
-Traditional AI prompt generation often relies on a single model, which can lead to generic or one-dimensional outputs. AIthera solves this by leveraging an ensemble of top-tier AI providers (GPT, Claude, Gemini, and DeepSeek) acting as a **Multi-Model AI Council**. 
+Traditional AI prompt generation relies on a single model, which can lead to generic or one-dimensional outputs. AIthera solves this by leveraging an ensemble of top-tier AI providers (GPT, Claude, Gemini, and DeepSeek) acting as a **Multi-Model AI Council**. 
 
 Each council member contributes specialized strengths to craft the final educational prompt:
 *   **GPT** (OpenAI) — *Educational Structure Expert* (Layout, Scaffolding, and Organization)
-*   **Claude** (Anthropic) — *Deep Reasoning Expert* (Conceptual Depth, Critical Reflection)
+*   **Claude**  — *Deep Reasoning Expert* (Conceptual Depth, Critical Reflection)
 *   **Gemini** (Google) — *Visual Learning Expert* (Analogies, Imagery, and Spatial Prompts)
 *   **DeepSeek** — *Technical Logic Expert* (Step-by-step progressions, Code/Math validation)
 
