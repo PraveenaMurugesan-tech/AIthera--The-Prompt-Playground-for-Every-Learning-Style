@@ -92,7 +92,7 @@ FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
 The frontend application requires its own environment configuration to connect backend API.
 
-To set up the frontend environment:
+To set up the frontend :
 ```bash
 cd frontend
 cp .env.example .env
