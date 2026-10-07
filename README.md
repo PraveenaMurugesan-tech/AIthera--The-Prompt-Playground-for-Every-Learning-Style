@@ -61,7 +61,7 @@ Consensus Builder (Aggregating strengths & merging drafts)
 Prompt Scorer (Scoring categories 0-20, overall 0-100)
     │
     ▼
-Explanation Generator (Transparent pedagogical rationale)
+Explanation Generator (Transparent pedagogical)
     │
     ▼
 Final persisting & Output (Persisted PromptRequest )
