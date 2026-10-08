@@ -25,7 +25,7 @@ Each council member contributes specialized strengths to craft the final educati
 *   **GPT** (OpenAI) — *Educational Structure Expert* (Layout, Scaffolding, and Organization)
 *   **Claude** (Anthropic) — *Deep Reasoning Expert* (Conceptual Depth, Critical Reflection)
 *   **Gemini** (Google) — *Visual Learning Expert* (Analogies, Imagery, and Spatial Prompts)
-*   **DeepSeek** — *Technical Logic Expert* (Step-by-step progressions, Code/Math validation)
+*   **DeepSeek** — *Technical Logic Expert* (Step-by-step progressions, Code validation)
 
 The resulting prompts are synthesized and scored to ensure maximum educational effectiveness, clarity, structure, and customised personalization.
 
