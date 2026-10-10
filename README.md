@@ -71,7 +71,7 @@ Final persisting & Output (Persisted PromptRequest )
 
 ## 🔑 Environment Variables
 
-Create a `.env` file in the root of the project to configure database access, server environments, and JWT authentication:
+Create a `.env` file in the root of the project to configure database access, server environments, and jwtauthentication:
 
 ```env
 # Database configuration
