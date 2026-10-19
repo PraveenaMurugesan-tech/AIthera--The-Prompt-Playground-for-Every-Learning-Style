@@ -58,7 +58,7 @@ Response Normalizer (Parsing & Semantic Alignment)
 Consensus Builder (Aggregating strengths & merging drafts)
     │
     ▼
-Prompt Scorer (Scoring categories 0-20, overall 0-100)
+Prompt Scorer (Scoring categories 0-20)
     │
     ▼
 Explanation Generator (Transparent pedagogical)
